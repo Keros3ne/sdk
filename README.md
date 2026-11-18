@@ -38,7 +38,7 @@ harbour-lights/
   maths/index.ts                  how its book is made: every way its reels can stop
   maths/maths.spec.ts             its own tests: the rules, the manifest and the guide
   books/books.json                what its book comes to (the book itself is not committed)
-  client/index.html, src/         what the player sees, in Svelte and Pixi, run sandboxed
+  client/src/, public/            what the player sees, in Svelte and Pixi, run sandboxed
   client/src/*.stories.ts         its stories
   client/public/card.svg          its picture on the site's game card
 .github/workflows/check.yml       the site's checks, run on every push
@@ -51,7 +51,8 @@ bun run books        # make each game's books from its maths, and say what they 
 bun run dev          # play Harbour Lights at http://localhost:4190/ against a stand-in for the site
 bun run stories      # the studio's stories, and the SDK's own, in Storybook
 bun run check        # the site's checks on each game's books, guide, maths and client
-bun run pack         # pack each game's books into release/, to send with a tag
+bun run client       # build each game's client, and put what was built on record
+bun run pack         # pack each game's books and built client into release/, to send with a tag
 bun run test         # the tests: your games' own, and the SDK's
 bun run typecheck
 ```
@@ -73,17 +74,18 @@ bun run typecheck
 
 ## Sending a release
 
-1. Run `bun run books`, `bun run check` and `bun run test`, or let CI.
+1. Run `bun run books`, `bun run client`, `bun run check` and `bun run test`.
 2. Set `sdk` in `studio.json` to the version of the SDK you built on.
 3. Commit, tag the release (`git tag v0.1.0`) and push the tag.
-4. Pack the books and send them as the release's files: `bun run pack`, then
+4. Pack the books and the built client and send them as the release's files: `bun run pack`, then
    `gh release create v0.1.0 release/*`.
 5. Send KEROS3NE the repository and the tag.
 
 The site takes in your manifest, readme, licence, games and any folders you list as
 `shared`, and nothing else (not `sdk/`); a person reads your maths; then it fetches each
-game's books from the release, holds them to the `books/books.json` you committed, checks
-them, builds the client and lists the game. It never runs your maths. A game earns players
+game's books and built client from the release, holds them to the `books/books.json` and
+`client/client.json` you committed, checks them and lists the game. It never runs your
+maths, and never builds or runs your client's code. A game earns players
 rewards once it is listed. A release may not drop a game: past bets on it must stay
 verifiable.
 

@@ -129,7 +129,11 @@ export function clientConfig(folder: string): InlineConfig {
 				// A game's own files where they have always been, and the page's frame the SDK's.
 				files: { assets: "public", appTemplate: ownFile("./client-app.html") },
 				// Served from whatever folder the site likes.
-				paths: { relative: true }
+				paths: { relative: true },
+				// The same every time: SvelteKit would name each build by the moment it was made,
+				// for a page to find it has been replaced, and a client's files are held to the
+				// record of them (./client-pack.ts), so the same source must build the same files.
+				version: { name: "client" }
 			}),
 			noteCode(client)
 		]

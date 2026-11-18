@@ -4,6 +4,7 @@
  * keros3ne-studio: a studio's tools for building games for KEROS3NE.
  *
  *   keros3ne-studio books [slug...]   make a game's books from its maths, and say what they hold
+ *   keros3ne-studio client [slug...]  build a game's client, and put what was built on record
  *   keros3ne-studio check [slug...]   the site's checks: books, guide, maths, client
  *   keros3ne-studio dev <slug>        play the game against a stand-in for the site
  *   keros3ne-studio stories           the studio's stories, and the SDK's own, in Storybook
@@ -12,6 +13,7 @@
  * pass `--root <folder>`. It runs on Bun, which imports a game's TypeScript as it is.
  */
 import { buildClient } from "./client-build.ts";
+import { checkBuiltClient, packClient, writeClientRecord } from "./client-pack.ts";
 import { existsSync, readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { checkGuide } from "./guide.ts";
@@ -36,10 +38,13 @@ Usage:
   keros3ne-studio books [slug...]   play each game's maths into books, weigh them to
                                     96%, run the site's check on them and say what
                                     they hold
+  keros3ne-studio client [slug...]  build each game's client, and write the record of
+                                    what was built (client/client.json), to commit
   keros3ne-studio check [slug...]   the site's checks on each game: its books, its
-                                    guide, its maths and its built client
-  keros3ne-studio pack [slug...]    pack each game's books, checked, into the files a
-                                    release sends with its tag
+                                    guide, its maths, and its client as it was built
+                                    and put on record
+  keros3ne-studio pack [slug...]    pack each game's books and built client, checked,
+                                    into the files a release sends with its tag
   keros3ne-studio dev <slug>        build the client as it changes, and play the game in a
                                     browser against a stand-in for the site
 
@@ -50,7 +55,8 @@ Usage:
 Options:
   --root <folder>    the studio's folder, with its studio.json (default: here)
   --workers <number> books: how many workers to play on (default: one for each core)
-  --no-build         check: check the client as last built, without building it
+  --build            check: build each client again first, and hold what the source
+                     builds now to the record
   --out <folder>     pack: where the files go (default: release)
   --port <number>    dev: where to serve it (default: 4190); stories: (default: 6006)
   --build <folder>   stories: build them as a site into this folder, and stop
@@ -88,7 +94,6 @@ const errorText = (error: unknown) =>
 async function checkOne(
 	folder: GameFolder,
 	root: string,
-	build: boolean,
 	manifest: StudioManifest
 ): Promise<string[]> {
 	if (!isBookGame(folder))
@@ -99,7 +104,7 @@ async function checkOne(
 	return [
 		...(await checkBooksOf(folder)),
 		...scanMaths(folder.maths),
-		...(await checkClient(folder, root, build, manifest))
+		...checkClient(folder, root, manifest)
 	];
 }
 
@@ -139,50 +144,50 @@ async function checkBooksOf(folder: GameFolder): Promise<string[]> {
 	return problems;
 }
 
-/** The checks on a game's client: what it imports, how it is built, and what it built. */
-async function checkClient(
+/**
+ * The checks on a game's client: what its source imports, that it has no configuration of
+ * its own, that what is built is the client its record names, and what was built.
+ */
+function checkClient(
 	folder: GameFolder,
 	root: string,
-	build: boolean,
 	manifest: StudioManifest
-): Promise<string[]> {
+): string[] {
 	const problems: string[] = [];
 
 	if (!existsSync(join(folder.client, "src", "routes"))) {
-		problems.push(
+		return [
 			"there is no client/src/routes: a client is a SvelteKit app, its page in src/routes/+page.svelte"
-		);
-	} else {
-		problems.push(
-			...scanClientSource(
-				folder.client,
-				root,
-				[folder.dir, ...sharedFolders(manifest).map((name) => join(root, name))],
-				Object.keys(sharedPackages(manifest))
-			)
-		);
-		for (const name of [
-			"vite.config.ts",
-			"vite.config.js",
-			"vite.config.mjs",
-			"svelte.config.js",
-			"svelte.config.ts",
-			"index.html",
-			"src/app.html"
-		])
-			if (existsSync(join(folder.client, name)))
-				problems.push(
-					`client/${name} is never used: every client is built the same way, by the SDK. Take it out.`
-				);
-		if (build) {
-			try {
-				await buildClient(folder.client);
-			} catch (error) {
-				problems.push(`its client did not build: ${errorText(error)}`);
-			}
-		}
-		problems.push(...scanClient(join(folder.client, "dist")));
+		];
 	}
+
+	problems.push(
+		...scanClientSource(
+			folder.client,
+			root,
+			[folder.dir, ...sharedFolders(manifest).map((name) => join(root, name))],
+			Object.keys(sharedPackages(manifest))
+		)
+	);
+	for (const name of [
+		"vite.config.ts",
+		"vite.config.js",
+		"vite.config.mjs",
+		"svelte.config.js",
+		"svelte.config.ts",
+		"index.html",
+		"src/app.html"
+	])
+		if (existsSync(join(folder.client, name)))
+			problems.push(
+				`client/${name} is never used: every client is built the same way, by the SDK. Take it out.`
+			);
+
+	// The client a release sends is the one built here and put on record, file for file.
+	const built = checkBuiltClient(folder.dir);
+	problems.push(...built);
+	if (built.length === 0) problems.push(...scanClient(join(folder.client, "dist")));
+
 	return problems;
 }
 
@@ -241,7 +246,7 @@ function checkStudio(root: string, manifest: StudioManifest): string[] {
 	return problems;
 }
 
-async function check(root: string, slugs: string[], build: boolean) {
+async function check(root: string, slugs: string[], build = false) {
 	const manifest = readManifest(root);
 	let failed = false;
 	const studio = checkStudio(root, manifest);
@@ -251,7 +256,17 @@ async function check(root: string, slugs: string[], build: boolean) {
 		for (const problem of studio) console.error(`  - ${problem}`);
 	}
 	for (const folder of pickGames(root, slugs)) {
-		const problems = await checkOne(folder, root, build, manifest);
+		// Built again first, where asked, without touching the record: the source as it
+		// stands must build the client the record names.
+		const unbuilt: string[] = [];
+		if (build)
+			try {
+				await buildClient(folder.client);
+			} catch (error) {
+				unbuilt.push(errorText(error));
+			}
+
+		const problems = [...unbuilt, ...(await checkOne(folder, root, manifest))];
 		if (problems.length === 0) {
 			console.log(`${folder.slug}: passes every check.`);
 		} else {
@@ -329,13 +344,16 @@ async function packAllBooks(root: string, slugs: string[], out: string): Promise
 
 	for (const folder of pickGames(root, slugs).filter(isBookGame))
 		try {
-			const files = await packBooks(folder.dir, out);
+			const files = [
+				...(await packBooks(folder.dir, out)),
+				packClient(folder.dir, folder.slug, out)
+			];
 
 			console.log(`${folder.slug}: ${files.length} files.`);
 		} catch (error) {
 			failed = true;
 			console.error(
-				`${folder.slug}: ${errorText(error)} Make its books with: keros3ne-studio books ${folder.slug}`
+				`${folder.slug}: ${errorText(error)} Make its books with keros3ne-studio books ${folder.slug}, and build its client with keros3ne-studio client ${folder.slug}.`
 			);
 		}
 
@@ -343,6 +361,29 @@ async function packAllBooks(root: string, slugs: string[], out: string): Promise
 		console.log(
 			`\nPacked into ${out}. Send them with the tag, as the files of its release: gh release create <tag> ${out}/*`
 		);
+
+	return failed ? 1 : 0;
+}
+
+/**
+ * Builds each game's client, and writes the record of what was built
+ * (`client/client.json`), to be committed: a release sends exactly that client.
+ */
+async function buildAllClients(root: string, slugs: string[]): Promise<number> {
+	let failed = false;
+
+	for (const folder of pickGames(root, slugs))
+		try {
+			await buildClient(folder.client);
+			const record = writeClientRecord(folder.dir);
+
+			console.log(
+				`${folder.slug}: built, ${Object.keys(record.files).length} files on record in client/client.json.`
+			);
+		} catch (error) {
+			failed = true;
+			console.error(`${folder.slug}: ${errorText(error)}`);
+		}
 
 	return failed ? 1 : 0;
 }
@@ -357,7 +398,7 @@ async function main(argv: string[]): Promise<number> {
 	}
 	switch (command) {
 		case "check":
-			return check(root, slugs, !("no-build" in options));
+			return check(root, slugs, "build" in options && command === "check");
 		case "stories": {
 			// Storybook's own command, with the SDK's configuration and no other.
 			const { createRequire } = await import("node:module");
@@ -398,6 +439,8 @@ async function main(argv: string[]): Promise<number> {
 				running.on("exit", (code) => done(code ?? 0))
 			);
 		}
+		case "client":
+			return buildAllClients(root, slugs);
 		case "pack":
 			return packAllBooks(
 				root,

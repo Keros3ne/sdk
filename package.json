@@ -1,6 +1,6 @@
 {
 	"name": "@keros3ne/studio-sdk",
-	"version": "0.14.5",
+	"version": "0.15.0",
 	"description": "Build games for KEROS3NE: how a game's outcomes are made into books, the client's bridge to the site, the stage, the control bar and controls, Storybook, the site's own checks, and keros3ne-studio, the command line to make a game's books, check it and play it. Clone it to start a studio.",
 	"license": "MIT",
 	"type": "module",
@@ -47,6 +47,7 @@
 		"./loading": "./sdk/loading.ts",
 		"./loading-look": "./sdk/loading-look.ts",
 		"./client-build": "./sdk/client-build.ts",
+		"./client-pack": "./sdk/client-pack.ts",
 		"./controls": "./sdk/controls/index.ts",
 		"./testing": "./sdk/testing.ts",
 		"./verify": "./sdk/verify.ts",
@@ -57,6 +58,7 @@
 	},
 	"scripts": {
 		"books": "bun sdk/cli.ts books",
+		"client": "bun sdk/cli.ts client",
 		"check": "bun sdk/cli.ts check",
 		"dev": "bun sdk/cli.ts dev harbour-lights",
 		"stories": "bun sdk/cli.ts stories",

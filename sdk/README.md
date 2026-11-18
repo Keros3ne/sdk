@@ -48,7 +48,7 @@ studio.json                 what this repository holds
 <slug>/maths/*.spec.ts      your own tests of its rules
 <slug>/books/books.json     what each table comes to: commit it
 <slug>/books/*.index, *.rows   the books themselves: not committed
-<slug>/client/              the client: index.html, src/, public/card.svg
+<slug>/client/              the client: src/routes/, public/card.svg, client.json
 <shared>/                   anything this repository's clients share, named in "shared"
 ```
 
@@ -238,24 +238,43 @@ The client is static files built into `client/dist`: a page, scripts, styles, ar
 The site serves them from a folder of their own and shows the page in a frame inside its own
 game window. It is written in Svelte and drawn with Pixi.
 
-    client/index.html          the page: a script, and nothing in its body
-    client/src/main.ts         the loading screen, `connect()`, and `mount(Game, ...)`
-    client/src/Game.svelte     the game: its stage, its words, its control bar
-    client/src/Reels.svelte    a piece on the stage, told what to do
-    client/src/*.stories.ts    its stories (below)
+    client/src/routes/+layout.ts     `export const prerender = true;`
+    client/src/routes/+page.svelte   the page: the loading screen, `connect()`, then the game
+    client/src/Game.svelte           the game: its stage, its words, its control bar
+    client/src/Reels.svelte          a piece on the stage, told what to do
+    client/src/*.stories.ts          its stories (below)
+    client/public/                   files served as they are: `card.svg`, a logo
+    client/client.json               the record of what was built (below)
 
-**How it is built.** Every client is built the same way, by the SDK (`buildClient` in
-`/client-build`), from `client/index.html`, with `client/public` copied as it is: by the
-site, by `check` and by `dev`. There is no build configuration of your own: a Vite config is
-code, and the site would be running it. A client that shows a loading screen has it written
-into its page by the build, as its call of `createLoadingScreen()` says, with the code to
-wait for (`loadingFirst` in `/client-build`).
-Files the build names by what is in them (everything under `assets/`) are kept by a
-player's browser for good; the page itself and what `public` brought are asked for each
-time. The site builds your client with the SDK and
-nothing of yours installed, so a client imports the SDK, Svelte and Pixi (which the SDK
-brings), its own game's files, its repository's shared folders and the packages its
-`studio.json` names, and nothing else: no other package, and nothing from the network.
+**How it is built.** A client is a SvelteKit app, built with adapter-static by the SDK
+(`keros3ne-studio client`, `buildClient` in `/client-build`): by you, where your code is,
+with the SDK you wrote it for. The site never builds your client and never runs your
+code; it serves the files you built. There is no build configuration of your own (no
+`vite.config`, `svelte.config` or `app.html`: `check` fails a client that has one): the
+SDK's is the only one, with SvelteKit at an exact version, because what SvelteKit builds
+is finished for the frame afterwards (the script a SvelteKit page starts itself with is
+moved into a file, since the frame allows no script written into a page).
+
+**The page is rendered when it is built.** What `+page.svelte` draws first is in
+`index.html` itself, on the screen before any of your code has arrived: that is where
+the loading screen comes from. So the page, and whatever it imports at its top, must be
+able to render with no browser and no site: no `window`, no `document`, no Pixi, no
+`connect()` outside `onMount`. Keep the page small, and ask for the game itself in the
+browser (`await import("../Game.svelte")` in `onMount`), as Harbour Lights' page does:
+the build still asks for that code from the start, with the rest.
+
+**What was built is put on record.** `keros3ne-studio client` builds each client into
+`client/dist` (not committed) and writes `client/client.json` (committed): the digest of
+every file it built. `check` holds the built client to that record, a release sends
+exactly that client, and the site keeps it only if every file is the one recorded. The
+same source builds the same files, so `check --build` (which builds again first, leaving
+the record alone) is how CI holds the record to the source.
+
+Files the build names by what is in them (everything under `_app/immutable/`) are kept
+by a player's browser for good; the page itself and what `public` brought are asked for
+each time. A client imports the SDK, Svelte and Pixi (which the SDK brings), its own
+game's files, its repository's shared folders and the packages its `studio.json` names,
+and nothing else: no other package, and nothing from the network.
 
 **What the sandbox means.** The frame has `sandbox="allow-scripts"`, and the files are served
 under a policy that enforces the same even if one is opened directly:
@@ -366,9 +385,11 @@ and refuses a client built for another version of the protocol.
       (`row-start`, `row-end`, `column-start`, `column-end`).
 
     A layout that breaks these throws when the bar is made. How the bar and each segment look
-    is the `--bar-*` properties listed at the top of `bar.css`: colours, edges, corners, how
-    see-through, and for each segment (`--bar-segment-*`) its own ground, edge, corners and
-    padding. `bets` is a list, or the steps the bet buttons move by
+    is its `look` prop (`BarLook` in `/controls`): colours, typefaces, edges, corners, how
+    see-through, and for every segment (`look.segment`) or one (`look.segments.play`) its
+    own ground, edge, corners and padding:
+    `look={{ surface: "#0f2530", accent: "#ffd56b", segment: { radius: "12px" } }}`.
+    `bets` is a list, or the steps the bet buttons move by
     (`{ steps: [{ under: 100, by: 10 }, { by: 100 }] }`: by 0.10 under 1.00, then by 1.00).
     Pressing the bet lets the player type one, any amount inside the game's limits. On a game
     600px wide or narrower the bar is always the site's two rows across the whole width,
@@ -386,8 +407,8 @@ and refuses a client built for another version of the protocol.
     `true` while free spins or a feature are shown, and turbo quickens everything. The speed
     is the player's choice alone: autoplay never changes it.
     - Never draw another bet control, balance or play button of your own.
-    - Restyle the bar through the `--bar-*` properties and lay it out through `layout`, and
-      nothing else.
+    - Restyle the bar through its `look` prop and lay it out through `layout`, and nothing
+      else: not through a style sheet.
     - What a game adds for itself (a button to buy a bonus) goes outside the bar: above it,
       or on its row beside a narrower bar.
     - Autoplay is chosen in Auto's popup (Off, or a number of plays), which only readies it:
@@ -411,46 +432,46 @@ and refuses a client built for another version of the protocol.
    of `<select>`, `Popup` for what does not fit in the row of controls, `Switch` in place
    of a checkbox, `Choices` in place of radio buttons, `Action` for a line in a popup that
    does something, `Slider` in place of a range input, and `Field` for a value to type.
-   They take their colours from the `--sdk-*` properties. `check` fails a client with a
+   Each takes its colours and corners as a `look` prop (`ControlLook`). `check` fails a client with a
    `<select>` or a checkbox. **Keep the row of controls the same size**: a button that
    appears only while something is running pushes the others about. Put such things in a
    popup, or make one button change what it does.
 7. **Put a button where the thing it does is drawn.** When controls sit over a stage, work
    out their place from the same numbers the drawing uses, not from a second set of sizes
    in CSS.
-8. **Show a loading screen while the game gets ready.** Make one with
-   `createLoadingScreen()` from `/loading` before anything slow starts, and pass it what
-   the game waits for: `loading.track(connect())`, its pictures (the stage's `track`), the
-   bar's typeface (`document.fonts.load`). `loading.done()` takes it away, once the game under it has
-   been drawn. It covers the game from the first moment, however short the wait, so a
-   player never sees the game being put together: call `done()` only when everything is
-   ready to be seen. **Make it look like your game**, so that when it leaves only what is
-   in front changes. Tell `createLoadingScreen()` how:
+8. **Show a loading screen while the game gets ready.** Put `<LoadingScreen>` from
+   `/loading` in your page, and give it a `Loading` from `createLoading()`, which you tell
+   what the game waits for: `loading.track(connect())`, the game's own code
+   (`loading.track(import("../Game.svelte"))`), its pictures (the stage's `track`), the
+   bar's typeface (`document.fonts.load`). `loading.done()` takes the screen away, once
+   the game under it has been drawn. It covers the game from the first moment, however
+   short the wait, so a player never sees the game being put together: call `done()` only
+   when everything is ready to be seen. Because your page is rendered when it is built,
+   the screen is in the page itself, and fills as your code arrives.
 
-    ```ts
-    const loading = createLoadingScreen({
-    	title: document.title,
-    	logo: "./loading-logo.svg", // your logo, a picture in client/public, over the name
-    	look: {
-    		surface: "linear-gradient(#1b2a5c, #0d1022)", // your game's own ground
+    **Make it look like your game**, through its props, so that when it leaves only what
+    is in front changes:
+
+    ```svelte
+    <LoadingScreen
+    	{loading}
+    	title="Harbour Lights"
+    	logo="./loading-logo.svg"
+    	look={{
+    		surface: "linear-gradient(#1b2a5c, #0d1022)",
     		ink: "#eef0ff",
     		fill: "#ffd166",
     		titleCase: "uppercase"
-    	}
-    });
+    	}}
+    />
     ```
 
-    `look` is its ground, the name's colour, typeface, size, weight, spacing and case
-    (`showTitle: false` leaves the name out, where the logo says it), the bar's colours,
-    size and corners, the logo's size, and the room between them (`LoadingLook` in
-    `/loading`). Where the screen is and what it covers are not yours to change. A value
-    may name a property of your style sheet (`surface: "var(--page)"`). **Write it out in
-    the call**, as plain words and numbers: most of what a game waits for is its own code,
-    which cannot draw a screen before it has all arrived, so the build reads this call
-    from your source, without running it, and writes the same screen into your page,
-    where it fills as your code arrives. A value worked out as the game runs fails the
-    build. `title` may be `document.title`: give your page a `<title>`. Harbour Lights'
-    `main.ts` does all of this.
+    `logo` is your logo, over the name: a picture in `client/public`, or one your page
+    imports. `look` is the screen's ground, the name's colour, typeface, size, weight,
+    spacing and case (`showTitle: false` leaves the name out, where the logo says it), the
+    bar's colours, size and corners, the logo's size, and the room between them
+    (`LoadingLook`). Where the screen is and what it covers are not yours to change.
+    Harbour Lights' page does all of this.
 
 9. **Show what each win paid, over the reels.** A slot writes the amount of each win where
    it is, not only the total. The `Board` does (`showWins`), choosing a cell of each win so
@@ -511,8 +532,11 @@ bun run stories             # your stories, and the SDK's own, in Storybook
   return and volatility. It fails if the books do not pass.
 - **`check`** runs every check of the site's: the manifest, each game's `game.json`, its
   books as they stand (they must be the ones `books.json` records, and pass), its guide,
-  its maths' purity, the client's source and the built client (`scanClient`). It builds the
-  client first, unless told `--no-build`.
+  its maths' purity, the client's source, and the built client: that it is the one
+  `client/client.json` records, and what is in it (`scanClient`). `--build` builds each
+  client again first.
+- **`client`** builds each game's client into `client/dist` and writes the record of what
+  it built, `client/client.json`, to commit.
 - **`dev`** builds the client whenever it changes and serves it at
   `http://localhost:4190/`, sandboxed under the site's own policy, in a page that stands in
   for the site. It plays the game from its books by the site's own rules, with a pretend
@@ -528,14 +552,16 @@ bun run stories             # your stories, and the SDK's own, in Storybook
 
 ## Sending a release
 
-1. Run `books`, `check` and your tests, or let CI.
+1. Run `books`, `client`, `check` and your tests.
 2. Set `sdk` in `studio.json` to the version of the SDK you built on.
-3. Commit, tag the release (`git tag v0.1.0`) and push the tag.
-4. Run `keros3ne-studio pack`, which checks each game's books and packs them into
-   `release/`: one compressed file for each file of each table
-   (`harbour-lights.spin.index.gz`). Send them with the tag as the files of its release:
-   `gh release create v0.1.0 release/*`. Books are not committed, so this is how they
-   travel; the `books/books.json` you did commit is what they are held to.
+3. Commit (`books/books.json` and `client/client.json` among it: the records of what you
+   are sending), tag the release (`git tag v0.1.0`) and push the tag.
+4. Run `keros3ne-studio pack`, which holds each game's books and built client to their
+   records and packs them into `release/`: one compressed file for each file of each
+   table (`harbour-lights.spin.index.gz`) and one for the client
+   (`harbour-lights.client.gz`). Send them with the tag as the files of its release:
+   `gh release create v0.1.0 release/*`. Neither books nor a built client are committed,
+   so this is how they travel; the records you did commit are what they are held to.
 5. Send KEROS3NE the repository and the tag. (The first time, KEROS3NE registers your
    studio and gives it its id; after that a release of any of your repositories is
    taken in under it.)
@@ -543,13 +569,14 @@ bun run stories             # your stories, and the SDK's own, in Storybook
 The site takes in your manifest, readme, licence, games and shared folders, and the
 packages the manifest names, each fetched at its tag; nothing else of your repository: no
 build configuration, installed packages or lockfile. What it took in is pinned: the site
-records the commit and a digest of every file, and builds only from exactly that. It checks each
+records the commit and a digest of every file. It checks each
 game's `game.json` and `guide.json`, which are data, and reads the source of its maths and
 client, with none of it run. A person reads your maths in full, and your clients for the
-rules. Then the site fetches each game's books from the release, holds them to the record
-you committed and runs the whole check on them, builds and checks the client, and lists
-the game. **The site never runs your maths**: the books are the game, and the maths is how
-you made them, there to be read. A game earns players rewards (xp, rakeback, card packs)
+rules. Then the site fetches each game's books and built client from the release, holds them
+to the records you committed, runs the whole check on the books and checks what the
+client is made of, and lists the game. **The site never runs your maths**: the books are
+the game, and the maths is how you made them, there to be read. **Nor does it build or
+run your client's code**: it serves the files you built, sandboxed. A game earns players rewards (xp, rakeback, card packs)
 once it is listed: its books are what hold it to its return.
 
 A release replaces your last one, and may not drop a game: past bets on it must stay
