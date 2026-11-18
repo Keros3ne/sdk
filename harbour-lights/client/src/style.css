@@ -5,15 +5,6 @@
 	--deep: #0f2530;
 	--foam: #f4efe6;
 	--lamp: #ffd56b;
-	/* The SDK's controls and bar, in the game's colours. */
-	--sdk-ink: var(--foam);
-	--sdk-surface: #1d4152;
-	--sdk-line: #3b6577;
-	--sdk-accent: var(--lamp);
-	--sdk-on-accent: var(--deep);
-	--bar-surface: var(--deep);
-	--bar-accent: var(--lamp);
-	--bar-on-accent: var(--deep);
 }
 
 * {

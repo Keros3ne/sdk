@@ -16,3 +16,4 @@ export { default as Menu } from "./Menu.svelte";
 export { default as Popup } from "./Popup.svelte";
 export { default as Slider } from "./Slider.svelte";
 export { default as Switch } from "./Switch.svelte";
+export type { BarLook, ControlLook, SegmentLook } from "../look.ts";

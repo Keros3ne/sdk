@@ -22,6 +22,7 @@ Author: dwclake
 Created: 2026-11-17
 -->
 <script lang="ts">
+	import { barProperties, dress, segmentProperties, type BarLook } from "../look.ts";
 	import { flushSync, untrack, type Snippet } from "svelte";
 	import "../ui.css";
 	import "../bar.css";
@@ -51,6 +52,11 @@ Created: 2026-11-17
 	import Mark from "./Mark.svelte";
 
 	interface Props {
+		/**
+		 * How the bar looks: its colours, typefaces, buttons and segments (../look.ts). Left out,
+		 * as the site draws it. It may change.
+		 */
+		look?: BarLook;
 		/** The bets on offer, in cents: a list, or the steps the bet buttons move by. */
 		bets: number[] | { steps: StakeSteps };
 		startBet: number;
@@ -110,6 +116,7 @@ Created: 2026-11-17
 	}
 
 	let {
+		look,
 		bets: offered,
 		startBet,
 		limits,
@@ -568,6 +575,7 @@ Created: 2026-11-17
 		<div
 			class="sdk-bar-segment"
 			data-segment="menu"
+			{@attach dress(() => segmentProperties(look?.segments?.menu))}
 			hidden={hidden("menu")}
 			style:--segment-scale={sizeOf("menu")}
 		>
@@ -591,6 +599,7 @@ Created: 2026-11-17
 		<div
 			class="sdk-bar-segment"
 			data-segment="balance"
+			{@attach dress(() => segmentProperties(look?.segments?.balance))}
 			hidden={hidden("balance")}
 			style:--segment-scale={sizeOf("balance")}
 		>
@@ -606,6 +615,7 @@ Created: 2026-11-17
 			role="group"
 			aria-label="Bet"
 			data-segment="bet"
+			{@attach dress(() => segmentProperties(look?.segments?.bet))}
 			data-arrange={layout.arrange?.bet ?? "split"}
 			hidden={hidden("bet")}
 			style:--segment-scale={sizeOf("bet")}
@@ -664,6 +674,7 @@ Created: 2026-11-17
 		<div
 			class="sdk-bar-segment"
 			data-segment="win"
+			{@attach dress(() => segmentProperties(look?.segments?.win))}
 			hidden={hidden("win")}
 			style:--segment-scale={sizeOf("win")}
 		>
@@ -680,6 +691,7 @@ Created: 2026-11-17
 	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 	<footer
 		class="sdk-bar"
+		{@attach dress(() => barProperties(look))}
 		role="group"
 		aria-label="Game controls"
 		bind:this={element}
@@ -697,6 +709,7 @@ Created: 2026-11-17
 		<div
 			class="sdk-bar-segment"
 			data-segment="play"
+			{@attach dress(() => segmentProperties(look?.segments?.play))}
 			data-arrange={layout.arrange?.play ?? "split"}
 			hidden={hidden("play")}
 			style:--segment-scale={sizeOf("play")}

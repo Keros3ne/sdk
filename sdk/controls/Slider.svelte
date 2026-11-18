@@ -12,7 +12,10 @@ Author: dwclake
 Created: 2026-11-17
 -->
 <script lang="ts">
+	import { controlProperties, dress, type ControlLook } from "../look.ts";
 	interface Props {
+		/** How it looks: its colours and corners (../look.ts). Left out, as the site draws it. */
+		look?: ControlLook;
 		label: string;
 		value: number;
 		min?: number;
@@ -27,6 +30,7 @@ Created: 2026-11-17
 	}
 
 	let {
+		look,
 		label,
 		value = $bindable(),
 		min: lowest,
@@ -108,7 +112,10 @@ Created: 2026-11-17
 	}
 </script>
 
-<div class={["sdk-slider", { "sdk-disabled": disabled }]}>
+<div
+	class={["sdk-slider", { "sdk-disabled": disabled }]}
+	{@attach dress(() => controlProperties(look))}
+>
 	<div class="sdk-slider-heading">
 		<span class="sdk-slider-label" id="{id}-label">{label}</span><span
 			class="sdk-slider-amount"

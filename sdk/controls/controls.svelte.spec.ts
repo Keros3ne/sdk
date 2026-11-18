@@ -327,3 +327,52 @@ describe("the controls as components", () => {
 		expect(game.textContent).toContain("Pays 2.50x");
 	});
 });
+
+describe("a look", () => {
+	it("dresses the bar and its segments through the bar's props, and follows them as they change", async () => {
+		const props = bar({
+			look: {
+				surface: "rgb(15, 37, 48)",
+				lineStrong: "#fff",
+				segment: { radius: "12px" },
+				segments: { play: { surface: "rgb(1, 2, 3)" } }
+			}
+		});
+		await settle();
+
+		const drawn = game.querySelector<HTMLElement>(".sdk-bar")!;
+		expect(drawn.style.getPropertyValue("--bar-surface")).toBe("rgb(15, 37, 48)");
+		expect(drawn.style.getPropertyValue("--bar-line-strong")).toBe("#fff");
+		expect(drawn.style.getPropertyValue("--bar-segment-radius")).toBe("12px");
+		expect(getComputedStyle(drawn).backgroundColor).toBe("rgb(15, 37, 48)");
+		const play = game.querySelector<HTMLElement>('[data-segment="play"]')!;
+		expect(play.style.getPropertyValue("--bar-segment-surface")).toBe("rgb(1, 2, 3)");
+		// Where it is and how big are still the bar's own to set, on the same element.
+		expect(drawn.style.getPropertyValue("--bar-s")).not.toBe("");
+
+		props.look = { surface: "rgb(9, 9, 9)" };
+		flushSync();
+		expect(drawn.style.getPropertyValue("--bar-surface")).toBe("rgb(9, 9, 9)");
+		expect(drawn.style.getPropertyValue("--bar-line-strong")).toBe("");
+		expect(play.style.getPropertyValue("--bar-segment-surface")).toBe("");
+		expect(drawn.style.getPropertyValue("--bar-s")).not.toBe("");
+	});
+
+	it("dresses a control through its own props", () => {
+		mounted.push(
+			mount(Switch, {
+				target: room(),
+				props: {
+					label: "Sound",
+					on: false,
+					look: { accent: "#fc0", onAccent: "#210" }
+				}
+			})
+		);
+		flushSync();
+
+		const control = game.querySelector<HTMLElement>(".sdk-switch")!;
+		expect(control.style.getPropertyValue("--sdk-accent")).toBe("#fc0");
+		expect(control.style.getPropertyValue("--sdk-on-accent")).toBe("#210");
+	});
+});

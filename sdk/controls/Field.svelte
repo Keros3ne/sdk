@@ -8,7 +8,10 @@ Author: dwclake
 Created: 2026-11-17
 -->
 <script lang="ts">
+	import { controlProperties, dress, type ControlLook } from "../look.ts";
 	interface Props {
+		/** How it looks: its colours and corners (../look.ts). Left out, as the site draws it. */
+		look?: ControlLook;
 		label: string;
 		value: string;
 		inputMode?: "decimal" | "numeric" | "text";
@@ -19,6 +22,7 @@ Created: 2026-11-17
 	}
 
 	let {
+		look,
 		label,
 		value = $bindable(),
 		inputMode = "text",
@@ -40,7 +44,7 @@ Created: 2026-11-17
 	});
 </script>
 
-<label class="sdk-field">
+<label class="sdk-field" {@attach dress(() => controlProperties(look))}>
 	<span class="sdk-field-label">{label}</span><input
 		class="sdk-field-input"
 		bind:this={input}

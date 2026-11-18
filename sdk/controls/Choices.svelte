@@ -7,10 +7,13 @@ Author: dwclake
 Created: 2026-11-17
 -->
 <script lang="ts" generics="Value extends string | number">
+	import { controlProperties, dress, type ControlLook } from "../look.ts";
 	import { flushSync } from "svelte";
 	import type { MenuOption } from "../ui.ts";
 
 	interface Props {
+		/** How it looks: its colours and corners (../look.ts). Left out, as the site draws it. */
+		look?: ControlLook;
 		label: string;
 		options: MenuOption<Value>[];
 		value: Value;
@@ -20,6 +23,7 @@ Created: 2026-11-17
 	}
 
 	let {
+		look,
 		label,
 		options,
 		value = $bindable(),
@@ -65,7 +69,12 @@ Created: 2026-11-17
 	}
 </script>
 
-<div class="sdk-choices" role="radiogroup" aria-labelledby="{id}-label">
+<div
+	class="sdk-choices"
+	{@attach dress(() => controlProperties(look))}
+	role="radiogroup"
+	aria-labelledby="{id}-label"
+>
 	<span class="sdk-choices-label" id="{id}-label">
 		{label}
 	</span><!-- svelte-ignore a11y_no_static_element_interactions -->

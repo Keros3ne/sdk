@@ -177,6 +177,7 @@ Created: 2026-11-18
 		onstop: () => (autoLeft = 0)
 	}}
 	speeds="fast"
+	look={{ surface: "#0f2530", accent: "#ffd56b", onAccent: "#0f2530" }}
 	{balance}
 	{win}
 	{busy}

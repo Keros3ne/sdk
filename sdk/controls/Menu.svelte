@@ -12,6 +12,7 @@ Author: dwclake
 Created: 2026-11-17
 -->
 <script lang="ts" module>
+	import { controlProperties, dress, type ControlLook } from "../look.ts";
 	/** The most options a menu's list shows at once; more scroll. */
 	const MENU_ROWS = 8;
 </script>
@@ -21,6 +22,8 @@ Created: 2026-11-17
 	import type { MenuOption } from "../ui.ts";
 
 	interface Props {
+		/** How it looks: its colours and corners (../look.ts). Left out, as the site draws it. */
+		look?: ControlLook;
 		label: string;
 		options: MenuOption<Value>[];
 		value: Value;
@@ -31,6 +34,7 @@ Created: 2026-11-17
 	}
 
 	let {
+		look,
 		label,
 		options,
 		value = $bindable(),
@@ -177,7 +181,12 @@ Created: 2026-11-17
 	});
 </script>
 
-<div class="sdk-menu" data-opens={way ?? opens} bind:this={element}>
+<div
+	class="sdk-menu"
+	{@attach dress(() => controlProperties(look))}
+	data-opens={way ?? opens}
+	bind:this={element}
+>
 	<span class="sdk-menu-label" id="{id}-label">{label}</span><button
 		type="button"
 		class="sdk-menu-button"

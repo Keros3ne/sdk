@@ -15,11 +15,14 @@ Author: dwclake
 Created: 2026-11-17
 -->
 <script lang="ts">
+	import type { ControlLook } from "../look.ts";
 	import type { Snippet } from "svelte";
 	import Choices from "./Choices.svelte";
 	import Popup from "./Popup.svelte";
 
 	interface Props {
+		/** How it looks: its colours and corners (../look.ts). Left out, as the site draws it. */
+		look?: ControlLook;
 		/** How many plays can be chosen. The first is chosen to begin with. */
 		counts: number[];
 		/** What is played, singular and plural: `["spin", "spins"]`. */
@@ -47,6 +50,7 @@ Created: 2026-11-17
 	}
 
 	let {
+		look,
 		counts,
 		noun,
 		startFrom = "popup",
@@ -96,6 +100,7 @@ Created: 2026-11-17
 
 <Popup
 	bind:this={popup}
+	{look}
 	label="Auto"
 	title="Autoplay"
 	{opens}

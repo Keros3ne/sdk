@@ -10,7 +10,8 @@
  * ink, and the accent only for focus and for what is chosen or on. The values here
  * repeat the site's, which a game's frame cannot read; change both together.
  *
- * A game themes them by setting:
+ * A game makes them its own through each control's `look` prop (./look.ts,
+ * `ControlLook`), which sets these on the control:
  *   --sdk-ink        text and symbols
  *   --sdk-dim        small labels
  *   --sdk-surface    what popups, lists and buttons are drawn on

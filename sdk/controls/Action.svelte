@@ -6,7 +6,10 @@ Author: dwclake
 Created: 2026-11-17
 -->
 <script lang="ts">
+	import { controlProperties, dress, type ControlLook } from "../look.ts";
 	interface Props {
+		/** How it looks: its colours and corners (../look.ts). Left out, as the site draws it. */
+		look?: ControlLook;
 		label: string;
 		/** A line under the label saying more. */
 		detail?: string;
@@ -14,9 +17,15 @@ Created: 2026-11-17
 		onpress: () => void;
 	}
 
-	let { label, detail, disabled = false, onpress }: Props = $props();
+	let { look, label, detail, disabled = false, onpress }: Props = $props();
 </script>
 
-<button type="button" class="sdk-action" {disabled} onclick={() => onpress()}>
+<button
+	type="button"
+	class="sdk-action"
+	{@attach dress(() => controlProperties(look))}
+	{disabled}
+	onclick={() => onpress()}
+>
 	<span>{label}</span>{#if detail}<span class="sdk-detail">{detail}</span>{/if}
 </button>

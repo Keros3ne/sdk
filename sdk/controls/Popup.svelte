@@ -15,9 +15,12 @@ Author: dwclake
 Created: 2026-11-17
 -->
 <script lang="ts">
+	import { controlProperties, dress, type ControlLook } from "../look.ts";
 	import { flushSync, type Snippet } from "svelte";
 
 	interface Props {
+		/** How it looks: its colours and corners (../look.ts). Left out, as the site draws it. */
+		look?: ControlLook;
 		/** What the button says. */
 		label: string;
 		/** What the panel is called, for a screen reader. The label, left out. */
@@ -42,6 +45,7 @@ Created: 2026-11-17
 	}
 
 	let {
+		look,
 		label,
 		title,
 		opens = "up",
@@ -137,6 +141,7 @@ Created: 2026-11-17
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
 	class={["sdk-popup", popupClass]}
+	{@attach dress(() => controlProperties(look))}
 	data-opens={opens}
 	bind:this={element}
 	onkeydown={(event) => {

@@ -7,7 +7,10 @@ Author: dwclake
 Created: 2026-11-17
 -->
 <script lang="ts">
+	import { controlProperties, dress, type ControlLook } from "../look.ts";
 	interface Props {
+		/** How it looks: its colours and corners (../look.ts). Left out, as the site draws it. */
+		look?: ControlLook;
 		label: string;
 		/** A line under the label saying what it does or costs. */
 		detail?: string;
@@ -17,6 +20,7 @@ Created: 2026-11-17
 	}
 
 	let {
+		look,
 		label,
 		detail,
 		checked = $bindable(false),
@@ -34,6 +38,7 @@ Created: 2026-11-17
 <button
 	type="button"
 	class="sdk-switch"
+	{@attach dress(() => controlProperties(look))}
 	role="switch"
 	aria-checked={String(checked) as "true" | "false"}
 	{disabled}

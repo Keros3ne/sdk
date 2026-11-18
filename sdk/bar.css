@@ -10,7 +10,8 @@
  * multiplied by the size (`--s`, from `--bar-s` and `--segment-scale`, which bar.ts
  * sets, not a style sheet).
  *
- * How it looks, by setting these on `body` or on `.sdk-bar`. Left alone it looks like
+ * How it looks is the studio's, told through the bar's `look` prop (./look.ts,
+ * `BarLook`), which sets these on the bar. Left alone it looks like
  * the site's own controls (Colophon's style, in src/app.css): the site's surface, 1px
  * hairlines, buttons with 4px corners and a symbol in each, the play button solid ink,
  * small labels in Geist Mono, and the accent only for what is on and for focus. The
@@ -37,8 +38,8 @@
  *   --bar-gap            the room between segments
  *
  * Each segment is a box of its own, drawn with nothing round it unless a studio asks.
- * These may be set on the bar, for every segment, or on one segment
- * (`.sdk-bar-segment[data-segment="play"]`, the names as in `layout.order`):
+ * `look.segment` sets these for every segment, and `look.segments` for one
+ * (`{ play: { ... } }`, the names as in `layout.order`):
  *
  *   --bar-segment-surface  what a segment is drawn on
  *   --bar-segment-border   its edge, as a `border`: `1px solid #fff4`
