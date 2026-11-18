@@ -135,7 +135,7 @@ export function scanClient(dist: string): string[] {
  * studio's shared folders), the packages its repository names (`packages`), which are
  * source of the studio's own held to these same rules, and nothing else but Svelte and
  * Pixi, which the SDK brings: no other package, and nothing from the network. Its tests and its stories are not looked at;
- * `dist` and `public` are not source.
+ * `dist`, `public` and what SvelteKit works out as it builds (`.svelte-kit`) are not source.
  */
 export function scanClientSource(
 	client: string,
@@ -154,8 +154,9 @@ export function scanClientSource(
 	const walk = (folder: string): string[] =>
 		readdirSync(folder, { withFileTypes: true }).flatMap((entry) => {
 			if (entry.isDirectory())
-				return ["dist", "public", "node_modules"].includes(entry.name) &&
-					folder === client
+				return ["dist", "public", "node_modules", ".svelte-kit"].includes(
+					entry.name
+				) && folder === client
 					? []
 					: walk(join(folder, entry.name));
 			return /\.(ts|js|mjs|css|html|svelte)$/.test(entry.name) &&

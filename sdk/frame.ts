@@ -46,10 +46,11 @@ export function studioPolicy(origin: string, slug: string): string {
 }
 
 /**
- * A file the client's build named by what is in it (`assets/index-C2QBgKch.js`): the same
- * name is always the same file, so a browser may keep it for good.
+ * A file the client's build named by what is in it
+ * (`_app/immutable/chunks/BeiYQHnb.js`): the same name is always the same file, so a
+ * browser may keep it for good.
  */
-const NAMED_BY_CONTENT = /^assets\/[^/]+-[A-Za-z0-9_-]{8}\.[a-z0-9]+$/;
+const NAMED_BY_CONTENT = /^_app\/immutable\/.+\.[a-z0-9]+$/;
 
 /**
  * Every header a file of a client is served with. `file` is its path in the client's

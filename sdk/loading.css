@@ -3,10 +3,11 @@
  * fills as what it waits for arrives.
  *
  * How it looks is the studio's, so that it can look like the game it gives way to, and is
- * told to `createLoadingScreen()` (`look` and `logo`: ./loading.ts, ./loading-look.ts),
- * which sets the properties below on the screen. What is written here without one of them
- * is not a studio's to change: that the screen covers the whole game, over everything,
- * that its parts are in the middle, one over the next, and that the bar fills from the left.
+ * told to the screen through its props (`look` and `logo`: ./LoadingScreen.svelte,
+ * ./loading-look.ts), which set the properties below on it. What is written here without
+ * one of them is not a studio's to change: that the screen covers the whole game, over
+ * everything, that its parts are in the middle, one over the next, and that the bar fills
+ * from the left.
  *
  *   --loading-surface        what it is drawn on (`surface`)
  *   --loading-ink            the game's name over the bar (`ink`)
@@ -21,16 +22,12 @@
  *   --loading-logo-width     the logo's width and --loading-logo-height the most it is tall
  *   --loading-gap            the room between the logo, the name and the bar
  *
- * A value may name a property of the game's own style sheet (`surface: "var(--page)"`),
- * which the page waits for before it draws anything.
- *
  * The values left alone repeat the site's own (src/app.css), which a game's frame
  * cannot read.
  *
- * A built client's page comes with the screen already in it (./client-build.ts), since the
- * game's code, which would make it, is most of what there is to wait for: the same markup
- * with `sdk-loading-first`, filled by a script of the page's own (./loading-first.js) until
- * the game takes it over.
+ * A client's page is rendered when it is built (./client-build.ts), so the screen is in
+ * the page itself, since the game's code is most of what there is to wait for: filled by
+ * a script of the page's own (./loading-first.js) until the game's code takes it over.
  *
  * It is in view from the first moment and covers the whole game, however short the wait:
  * under it the game is put together a piece at a time, and that is not to be seen.
@@ -61,6 +58,10 @@
 }
 .sdk-loading.leaving {
 	opacity: 0;
+}
+/* Gone, once it has left: `display` above would keep it. */
+.sdk-loading[hidden] {
+	display: none;
 }
 .sdk-loading-logo {
 	display: block;

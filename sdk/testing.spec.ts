@@ -43,7 +43,7 @@ describe("the site's checks, as a studio runs them", () => {
 
 	it("pass a client built as the site serves one, and find what the site would refuse", () => {
 		const good = folder({
-			"index.html": `<!doctype html><script type="module" crossorigin src="./assets/index.js"></script>`,
+			"index.html": `<!doctype html><script crossorigin src="./_app/immutable/start.js"></script>`,
 			"assets/index.js": `document.body.append(document.createElement("canvas"));`,
 			"card.svg": "<svg/>"
 		});

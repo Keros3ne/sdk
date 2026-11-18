@@ -148,8 +148,10 @@ async function checkClient(
 ): Promise<string[]> {
 	const problems: string[] = [];
 
-	if (!existsSync(join(folder.client, "index.html"))) {
-		problems.push("there is no client/index.html");
+	if (!existsSync(join(folder.client, "src", "routes"))) {
+		problems.push(
+			"there is no client/src/routes: a client is a SvelteKit app, its page in src/routes/+page.svelte"
+		);
 	} else {
 		problems.push(
 			...scanClientSource(
@@ -159,7 +161,15 @@ async function checkClient(
 				Object.keys(sharedPackages(manifest))
 			)
 		);
-		for (const name of ["vite.config.ts", "vite.config.js", "vite.config.mjs"])
+		for (const name of [
+			"vite.config.ts",
+			"vite.config.js",
+			"vite.config.mjs",
+			"svelte.config.js",
+			"svelte.config.ts",
+			"index.html",
+			"src/app.html"
+		])
 			if (existsSync(join(folder.client, name)))
 				problems.push(
 					`client/${name} is never used: every client is built the same way, by the SDK. Take it out.`

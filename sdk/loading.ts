@@ -1,41 +1,38 @@
 /**
- * A loading screen, for a game that takes a while to be ready: over the whole game, with
- * a bar that fills as what it waits for arrives, and gone once it is ready.
+ * A game's loading screen: over the whole game from the first moment, with a bar that
+ * fills as what the game waits for arrives, and gone only once the game under it has
+ * been drawn. A game is put together a piece at a time, and none of that is to be seen.
  *
- *     const loading = createLoadingScreen({ title: "Seraph's Grace" });
- *     const host = await loading.track(connect());
- *     await Promise.all([loading.track(loadImages(), 3), loading.track(loadSounds())]);
- *     await loading.done();
+ * The screen is a component (./LoadingScreen.svelte), in the game's page, and what the
+ * game waits for is told to a `Loading` it is given:
  *
- * Make it first, before anything slow starts. It covers the game from the first moment,
- * however short the wait, and `done()` takes it away only once the game under it has been
- * drawn: a game is put together a piece at a time, and none of that is to be seen. How it
- * looks is the studio's, to match the game it gives way to: its ground, colours, typeface
- * and bar (`look`), and a logo of the studio's over the name (`logo`), told to
- * `createLoadingScreen()`:
+ *     <script lang="ts">
+ *         const loading = createLoading();
  *
- *     createLoadingScreen({
- *         title: document.title,
- *         logo: "./loading-logo.svg",
- *         look: { surface: "linear-gradient(#1b2a5c, #0d1022)", fill: "#ffd166" }
- *     });
+ *         onMount(async () => {
+ *             const host = await loading.track(connect(), 2);
+ *             ...
+ *             await loading.done();
+ *         });
+ *     </script>
  *
- * Most of a game's loading is its own code arriving, which is over before any of that code
- * can run. So a built client's page already has this screen written into it
- * (./client-build.ts), filled by a script of its own as the code arrives
- * (./loading-first.js). `createLoadingScreen()` takes that screen over where it finds one,
- * and what the game tracks fills the rest of the bar from where the code left it. Where
- * there is none (a story), it makes the screen itself, and the bar is all the game's.
+ *     <LoadingScreen {loading} title="Harbour Lights" logo="./loading-logo.svg" look={{ ... }} />
+ *
+ * A client's page is rendered when it is built (./client-build.ts), so the screen is in
+ * the page itself, as its props dress it, and is seen before any of the game's code has
+ * arrived. Until that code runs, the bar is filled by a script of the page's own as the
+ * code arrives (./loading-first.js); then the component takes the screen over, and what
+ * the game tracks fills the rest of the bar from where the code left it.
  *
  * Author: dwclake
  * Created: 2026-11-17
  */
-import "./loading.css";
-import { lookProperties, type LoadingLook } from "./loading-look.ts";
+import type { LoadingLook } from "./loading-look.ts";
 
+export { default as LoadingScreen } from "./LoadingScreen.svelte";
 export type { LoadingLook };
 
-export interface LoadingScreen {
+export interface Loading {
 	/**
 	 * Waits for `work` as part of loading, and returns it. The bar fills by `weight` when
 	 * it settles, whether it succeeded or failed: handle a failure where `work` is awaited.
@@ -48,6 +45,11 @@ export interface LoadingScreen {
 	 * when the game is ready to be seen and played.
 	 */
 	done(): Promise<void>;
+	/**
+	 * The screen this fills: the loading screen's own, given by the component as an
+	 * attachment. A game never calls it.
+	 */
+	screen(element: HTMLElement): void;
 }
 
 /**
@@ -68,101 +70,33 @@ function drawn(): Promise<void> {
 	});
 }
 
-/**
- * What a loading screen is told. Write it out in the call itself, as plain words and
- * numbers (`title` may also be `document.title`): the build reads it from the game's
- * source, without running any of it, to write the same screen into the page, where it
- * is seen while the game's code is still arriving. Anything worked out as the code runs
- * could only be known once the wait was over, so the build refuses it.
- */
-export interface LoadingConfig {
-	/** The game's name, over the bar. */
-	title?: string;
-	/**
-	 * The studio's logo, drawn over the name: the address of a picture in the client's
-	 * `public` folder, from the page (`"./loading-logo.svg"`).
-	 */
-	logo?: string;
-	/** How the screen looks, to match the game it gives way to. */
-	look?: LoadingLook;
-}
-
-export function createLoadingScreen(config: LoadingConfig = {}): LoadingScreen {
-	const { title, logo, look = {} } = config;
-
-	// The screen the page came with, part filled already by the code's arrival, or a new one.
-	const written = document.querySelector<HTMLElement>(".sdk-loading[data-waiting]");
-	const screen = written ?? document.createElement("div");
-	let bar: HTMLElement;
-	let fill: HTMLElement;
+/** What a game tells its loading screen: made where the game starts, and given to the screen. */
+export function createLoading(): Loading {
+	let screen: HTMLElement | undefined;
 	/** How full the bar was when the game took it over: what it tracks fills the rest. */
 	let from = 0;
-
-	if (written) {
-		// The page's own script stops filling it at this.
-		written.removeAttribute("data-waiting");
-		from = Math.min(1, Math.max(0, Number(written.dataset.shown) || 0));
-		bar = written.querySelector<HTMLElement>(".sdk-loading-bar")!;
-		fill = written.querySelector<HTMLElement>(".sdk-loading-fill")!;
-
-		// The build wrote the logo in, from this same call. Where it could not (a page not
-		// built by the SDK), it is added here.
-		if (logo && !written.querySelector(".sdk-loading-logo")) {
-			const picture = document.createElement("img");
-			picture.className = "sdk-loading-logo";
-			picture.src = logo;
-			picture.alt = "";
-			written.prepend(picture);
-		}
-	} else {
-		screen.className = "sdk-loading";
-		if (logo) {
-			const picture = document.createElement("img");
-			picture.className = "sdk-loading-logo";
-			picture.src = logo;
-			picture.alt = "";
-			screen.append(picture);
-		}
-		if (title) {
-			const name = document.createElement("p");
-			name.className = "sdk-loading-title";
-			name.textContent = title;
-			screen.append(name);
-		}
-		bar = document.createElement("div");
-		bar.className = "sdk-loading-bar";
-		bar.setAttribute("role", "progressbar");
-		bar.setAttribute("aria-label", title ? `Loading ${title}` : "Loading");
-		bar.setAttribute("aria-valuemin", "0");
-		bar.setAttribute("aria-valuemax", "100");
-		fill = document.createElement("div");
-		fill.className = "sdk-loading-fill";
-		bar.append(fill);
-		screen.append(bar);
-		document.body.append(screen);
-	}
-
-	// Dressed as the studio asked: the same as the build wrote, on a screen it wrote.
-	for (const [name, value] of lookProperties(look))
-		screen.style.setProperty(name, value);
 
 	// What is tracked, by weight, and what has settled of it; and a share set directly.
 	let total = 0;
 	let settled = 0;
 	let direct = 0;
-	let shown = from;
+	let shown = 0;
 	let waiting: number | undefined;
 
 	/** Draws the bar as full as what has settled makes it. */
 	function render() {
 		window.clearTimeout(waiting);
 		waiting = undefined;
+		if (!screen) return;
 
 		// Never back: tracking more work after some has settled must not empty the bar.
 		const tracked = Math.max(direct, total ? settled / total : 0);
 		shown = Math.max(shown, from + (1 - from) * tracked);
-		fill.style.transform = `scaleX(${shown})`;
-		bar.setAttribute("aria-valuenow", String(Math.round(shown * 100)));
+
+		const bar = screen.querySelector<HTMLElement>(".sdk-loading-bar");
+		const fill = screen.querySelector<HTMLElement>(".sdk-loading-fill");
+		fill?.style.setProperty("transform", `scaleX(${shown})`);
+		bar?.setAttribute("aria-valuenow", String(Math.round(shown * 100)));
 	}
 
 	/**
@@ -174,7 +108,6 @@ export function createLoadingScreen(config: LoadingConfig = {}): LoadingScreen {
 	function renderSoon() {
 		waiting ??= window.setTimeout(render, 0);
 	}
-	render();
 
 	return {
 		track(work, weight = 1) {
@@ -184,15 +117,19 @@ export function createLoadingScreen(config: LoadingConfig = {}): LoadingScreen {
 				renderSoon();
 			};
 			work.then(done, done);
+
 			return work;
 		},
+
 		set(share) {
 			direct = Math.min(1, Math.max(0, share));
 			renderSoon();
 		},
+
 		async done() {
 			direct = 1;
 			render();
+			if (!screen) return;
 
 			// What the game set up as it became ready (the stage's first picture, words in a
 			// typeface just arrived) is drawn over the next frames: the screen stays for them.
@@ -202,7 +139,16 @@ export function createLoadingScreen(config: LoadingConfig = {}): LoadingScreen {
 			const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
 			// As long as it takes to fade (./loading.css).
 			await new Promise((resolve) => setTimeout(resolve, still ? 0 : 200));
-			screen.remove();
+			screen.hidden = true;
+		},
+
+		screen(element) {
+			screen = element;
+			// The page's own script, which filled the bar as the code arrived, stops at this.
+			element.removeAttribute("data-waiting");
+			from = Math.min(1, Math.max(0, Number(element.dataset.shown) || 0));
+			shown = from;
+			render();
 		}
 	};
 }

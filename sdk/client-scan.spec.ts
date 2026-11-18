@@ -43,7 +43,7 @@ describe("a client's source", () => {
 	import { Texture } from "pixi.js";
 	import { LINES } from "../../maths/rules";
 </script>`,
-				"game/client/src/main.ts": `import { mount } from "svelte";\nimport Game from "./Game.svelte";`
+				"game/client/src/routes/+page.svelte": `<script lang="ts">\n\timport Game from "../Game.svelte";\n</script>\n\n<Game />`
 			})
 		).toEqual([]);
 	});

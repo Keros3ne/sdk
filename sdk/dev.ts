@@ -43,8 +43,8 @@ function settleThen(then: () => void, ms = 150) {
 /** Keeps the client built and the server running, and starts the server again when the maths changes. */
 export async function supervise(options: Options & { cli: string }): Promise<number> {
 	const { root, folder, port, balance, cli } = options;
-	if (!existsSync(join(folder.client, "index.html"))) {
-		console.error(`${folder.slug} has no client/index.html to build.`);
+	if (!existsSync(join(folder.client, "src", "routes"))) {
+		console.error(`${folder.slug} has no client/src/routes to build.`);
 		return 1;
 	}
 

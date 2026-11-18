@@ -53,7 +53,7 @@ test("a drawing written as components is drawn, follows its state, and is presse
 	});
 	await expect(page.getByRole("img", { name: "A test drawing" })).toBeVisible();
 	// The loading screen followed the stage, and went when it was ready.
-	await expect(page.getByRole("progressbar")).toHaveCount(0);
+	await expect(page.locator(".sdk-loading")).toBeHidden();
 
 	// As written: a shape at the left, a picture, words, and a group with a shape in it.
 	let drawn = await read(page);

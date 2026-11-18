@@ -357,73 +357,71 @@ async function start() {
 			})
 		: "";
 
-	document
-		.getElementById("host")!
-		.append(
+	document.getElementById("host")!.append(
+		h(
+			"header",
+			{ class: "bar" },
+			h("h1", { textContent: state.game.name }),
+			h("span", {
+				class: "eyebrow",
+				textContent: `${state.game.category} · keros3ne-studio dev`
+			}),
+			shapes,
+			h("label", { class: "switch" }, motion, " Reduced motion"),
+			reload,
+			size
+		),
+		h(
+			"main",
+			{ class: "layout" },
+			stage,
 			h(
-				"header",
-				{ class: "bar" },
-				h("h1", { textContent: state.game.name }),
-				h("span", {
-					class: "eyebrow",
-					textContent: `${state.game.category} · keros3ne-studio dev`
-				}),
-				shapes,
-				h("label", { class: "switch" }, motion, " Reduced motion"),
-				reload,
-				size
-			),
-			h(
-				"main",
-				{ class: "layout" },
-				stage,
+				"aside",
+				{ class: "panel" },
+				guide,
 				h(
-					"aside",
-					{ class: "panel" },
-					guide,
+					"section",
+					{},
+					h("h2", { class: "eyebrow", textContent: "Balance" }),
+					balance,
+					heldNote,
+					balanceForm
+				),
+				problem,
+				h(
+					"section",
+					{},
+					h("h2", {
+						class: "eyebrow",
+						textContent: "Said to a screen reader"
+					}),
+					said
+				),
+				h(
+					"section",
+					{},
 					h(
-						"section",
-						{},
-						h("h2", { class: "eyebrow", textContent: "Balance" }),
-						balance,
-						heldNote,
-						balanceForm
+						"div",
+						{ class: "row spread" },
+						h("h2", { class: "eyebrow", textContent: "Seeds" }),
+						rotate
 					),
-					problem,
+					seeds
+				),
+				h(
+					"section",
+					{ class: "grow" },
 					h(
-						"section",
-						{},
-						h("h2", {
-							class: "eyebrow",
-							textContent: "Said to a screen reader"
-						}),
-						said
+						"div",
+						{ class: "row spread" },
+						h("h2", { class: "eyebrow", textContent: "Messages" }),
+						clear
 					),
-					h(
-						"section",
-						{},
-						h(
-							"div",
-							{ class: "row spread" },
-							h("h2", { class: "eyebrow", textContent: "Seeds" }),
-							rotate
-						),
-						seeds
-					),
-					h(
-						"section",
-						{ class: "grow" },
-						h(
-							"div",
-							{ class: "row spread" },
-							h("h2", { class: "eyebrow", textContent: "Messages" }),
-							clear
-						),
-						entries
-					)
+					entries
 				)
 			)
-		);
+		)
+	);
 	draw();
 	load();
 }

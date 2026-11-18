@@ -24,7 +24,8 @@ async function startDev() {
 	mkdirSync(root, { recursive: true });
 	cpSync("harbour-lights", join(root, "harbour-lights"), {
 		recursive: true,
-		filter: (path) => !path.includes(`${join("client", "dist")}`)
+		filter: (path) =>
+			!path.includes(join("client", "dist")) && !path.includes(".svelte-kit")
 	});
 	cpSync("studio.json", join(root, "studio.json"));
 	const dev: ChildProcess = spawn(
@@ -141,7 +142,11 @@ test("dev starts the stand-in again when the maths changes, and reloads the game
 			timeout: 20_000
 		});
 
-		utimesSync(join(dev.root, "harbour-lights", "client", "index.html"), now, now);
+		utimesSync(
+			join(dev.root, "harbour-lights", "client", "src", "routes", "+page.svelte"),
+			now,
+			now
+		);
 		await expect(log).toContainText("The client was built again", {
 			timeout: 20_000
 		});

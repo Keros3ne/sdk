@@ -1,10 +1,9 @@
 /**
- * How a studio makes the loading screen its game's own: what `createLoadingScreen()` is
- * told (./loading.ts), as the properties the screen's style sheet reads (./loading.css).
+ * How a studio makes the loading screen its game's own: the `look` its loading screen is
+ * given (./LoadingScreen.svelte), as the properties the screen's style sheet reads
+ * (./loading.css).
  *
- * Pure, and shared by the two that draw the screen: the game's code, once it runs, and the
- * build, which reads the same words out of the game's source and writes the screen into
- * the page before any of that code has arrived (./client-build.ts).
+ * Pure: the page is rendered with it when a client is built, and again in the browser.
  *
  * Author: dwclake
  * Created: 2026-11-18

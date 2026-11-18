@@ -9,8 +9,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { extname, join, resolve } from "node:path";
-import { build } from "vite";
-import { clientConfig } from "@keros3ne/studio-sdk/client-build";
+import { buildClient } from "@keros3ne/studio-sdk/client-build";
 import { CLIENT_FILE_TYPES, clientHeaders } from "@keros3ne/studio-sdk/frame";
 
 /**
@@ -19,7 +18,7 @@ import { CLIENT_FILE_TYPES, clientHeaders } from "@keros3ne/studio-sdk/frame";
  */
 export async function serveClient(folder: string, slug: string, port: number) {
 	const client = resolve(folder);
-	await build(clientConfig(client));
+	await buildClient(client);
 
 	const origin = `http://localhost:${port}`;
 	const prefix = `/studio-frame/${slug}/`;
@@ -40,7 +39,8 @@ export async function serveClient(folder: string, slug: string, port: number) {
 	});
 
 	return {
-		url: `${origin}${prefix}index.html`,
+		// The folder, not its index.html: a page put together in the browser finds itself by its address.
+		url: `${origin}${prefix}`,
 		stop: () => server.stop(true)
 	};
 }

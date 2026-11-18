@@ -19,3 +19,6 @@ playwright-report
 
 # The files of a release, packed: sent with its tag, not committed.
 /release
+
+# What SvelteKit works out as it builds a client
+**/client/.svelte-kit

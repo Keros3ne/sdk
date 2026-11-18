@@ -8,7 +8,7 @@ Author: dwclake
 Created: 2026-11-17
 -->
 <script lang="ts">
-	import { createLoadingScreen } from "@keros3ne/studio-sdk/loading";
+	import { LoadingScreen, createLoading } from "@keros3ne/studio-sdk/loading";
 	import { Rectangle, type Application } from "pixi.js";
 	import { Container, Graphics, Sprite, Stage, Text } from "@keros3ne/studio-sdk/pixi";
 	import Frames from "./Frames.svelte";
@@ -20,7 +20,7 @@ Created: 2026-11-17
 	let app: Application | null = null;
 
 	// Up from the first line, as in a game, and following the stage as it loads.
-	const loading = createLoadingScreen({ title: "Pixi from Svelte" });
+	const loading = createLoading();
 
 	/** One pixel of what is drawn, as "red,green,blue". */
 	function pixelAt(x: number, y: number): string {
@@ -46,6 +46,8 @@ Created: 2026-11-17
 		dataset.frames = String(frames);
 	}
 </script>
+
+<LoadingScreen {loading} title="Pixi from Svelte" />
 
 <div class="room">
 	<Stage

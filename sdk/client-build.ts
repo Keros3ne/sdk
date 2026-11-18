@@ -1,83 +1,60 @@
 /**
- * How every studio game's client is built: one way, owned by the SDK, so that the site, `check`
- * and `dev` all build a client the same way, and no studio's own build configuration ever runs.
- * (A Vite config is code, and the site builds clients it took in from outside.)
+ * How every studio game's client is built: one way, owned by the SDK, so that `check`,
+ * `dev` and a release all build a client the same way. A studio builds its own client,
+ * where its code is, and sends what was built with its release; the site serves those
+ * files and never builds or runs a studio's code.
  *
- * The client is built from `client/index.html`, with `client/public` copied as it is, into
- * `client/dist`: plain files with relative addresses, so the site can serve them from whatever
- * path it likes, and nothing inlined, since the policy a client is served under
- * (./frame.ts) allows no inline script.
+ * The client is a SvelteKit app, built with adapter-static: its page is rendered when it
+ * is built, so what the page shows first (its loading screen) is in `index.html` itself,
+ * on the screen before any of the game's code has arrived. It is built from
+ * `client/src/routes`, with `client/public` copied as it is, into `client/dist`: plain
+ * files with relative addresses, so the site can serve them from whatever path it likes.
+ * There is no configuration of a studio's own: the page's frame is the SDK's
+ * (./client-app.html), and so is every setting here.
  *
- * A game that shows the SDK's loading screen has it written into its page (`loadingFirst`
- * below), so that it is on screen, and filling, while the game's code is still arriving:
- * that code is most of what a game waits for, and none of it can draw a screen before it
- * has all come.
+ * SvelteKit's version is exact (package.json), because what it builds is finished here
+ * (`finishClient`), and that depends on the shape of what it builds:
  *
- * A package the game's repository names (`packages` in its studio.json) is read as source
- * from where it is: the folder the site fetched it into, or where the studio installed it.
+ * - SvelteKit starts a page with a script written into it, and the policy a client is
+ *   served under (./frame.ts) allows no inline script. That script is moved into a file.
+ * - The code a game needs is asked for from the start and all at once, and a page with a
+ *   loading screen is told each file's size, so that the screen's bar fills as the code
+ *   arrives (./loading-first.js).
+ *
+ * Raise SvelteKit's version on purpose, and run this file's tests when it is raised.
+ *
+ * Author: dwclake
+ * Created: 2026-11-17
  */
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import { svelte } from "@sveltejs/vite-plugin-svelte";
+import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
-	build,
-	type HtmlTagDescriptor,
-	type InlineConfig,
-	type Plugin,
-	type Rollup
-} from "vite";
-import { lookStyle, type LoadingLook } from "./loading-look.ts";
-import { sharedPackages } from "./manifest.ts";
-import { PACKAGES_FOLDER, readManifest } from "./studio-folder.ts";
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	watch,
+	writeFileSync,
+	type FSWatcher
+} from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import adapter from "@sveltejs/adapter-static";
+import { sveltekit } from "@sveltejs/kit/vite";
+import type { InlineConfig, Plugin } from "vite";
 
-/**
- * The packages a client's repository names that the site fetched as source, each by its
- * name: a client's imports of them are read from there. One the studio installed instead
- * is found as any installed package is, and is not named here.
- */
-function fetchedPackages(client: string): { find: RegExp; replacement: string }[] {
-	const root = dirname(dirname(client));
-	if (!existsSync(join(root, "studio.json"))) return [];
-
-	return Object.keys(sharedPackages(readManifest(root)))
-		.map((name) => ({ name, folder: join(root, PACKAGES_FOLDER, name) }))
-		.filter((each) => existsSync(each.folder))
-		.map(({ name, folder }) => ({
-			find: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}(?=/|$)`),
-			replacement: folder
-		}));
-}
-
-/** A file of the SDK's own, beside this one, as text. */
+/** A file of the SDK's own, beside this one. */
 function ownFile(name: string): string {
-	return readFileSync(fileURLToPath(new URL(name, import.meta.url)), "utf8");
+	return fileURLToPath(new URL(name, import.meta.url));
 }
 
-/** Text as a page's source has it, as the words it stands for: what an attribute is given. */
-function plain(text: string): string {
-	return text
-		.replaceAll("&lt;", "<")
-		.replaceAll("&gt;", ">")
-		.replaceAll("&quot;", '"')
-		.replaceAll("&#39;", "'")
-		.replaceAll("&amp;", "&");
-}
+/** Where SvelteKit keeps what it works out as it builds, inside a client's folder. */
+const WORK_FOLDER = ".svelte-kit";
 
-/**
- * The studio's logo for the loading screen, where the call does not name one (`logo`), by
- * the names it may have in a client's `public` folder: the first found is drawn over the
- * game's name.
- */
-const LOGO_FILES = [
-	"loading-logo.svg",
-	"loading-logo.png",
-	"loading-logo.webp",
-	"loading-logo.jpg"
-];
+/** Where the build leaves what `finishClient` needs to know of the code it made. */
+const CODE_FILE = join(WORK_FOLDER, "keros3ne-code.json");
 
-/** The module that makes the loading screen: a client that has it in its code shows one. */
-const LOADING_MODULE = fileURLToPath(new URL("./loading.ts", import.meta.url));
+/** The folder of files SvelteKit names by what is in them, in a built client. */
+const NAMED = "_app/immutable";
 
 /**
  * The code Pixi asks for only once a stage is being made (./pixi/Stage.svelte, which draws
@@ -88,416 +65,267 @@ const LOADING_MODULE = fileURLToPath(new URL("./loading.ts", import.meta.url));
 const STAGE_MODULES =
 	/\/pixi\.js\/lib\/(unsafe-eval\/init|environment-browser\/browserAll|rendering\/renderers\/gl\/WebGLRenderer)\.m?js$/;
 
-/**
- * The code a game needs before it can be played, in the order it is found: the page's own
- * script and everything that imports, and what its stage will ask for (`STAGE_MODULES`).
- */
-function codeToLoad(bundle: Rollup.OutputBundle): Rollup.OutputChunk[] {
-	const chunks = Object.values(bundle).filter((file) => file.type === "chunk");
-	const first = chunks.filter(
-		(chunk) =>
-			chunk.isEntry ||
-			// The file Pixi asks for by name may only pass on to the one that holds the code.
-			STAGE_MODULES.test(chunk.facadeModuleId ?? "") ||
-			chunk.moduleIds.some((id) => STAGE_MODULES.test(id))
-	);
-
-	const found = new Map<string, Rollup.OutputChunk>();
-	const follow = (chunk: Rollup.OutputChunk) => {
-		if (found.has(chunk.fileName)) return;
-
-		found.set(chunk.fileName, chunk);
-		for (const name of chunk.imports) {
-			const imported = bundle[name];
-			if (imported?.type === "chunk") follow(imported);
-		}
-	};
-	first.forEach(follow);
-
-	return [...found.values()];
+/** One file of a built client's code, as far as finishing the client needs to know it. */
+interface CodeFile {
+	/** Its place in the built client: `_app/immutable/chunks/BeiYQHnb.js`. */
+	file: string;
+	bytes: number;
+	/** The files it cannot run without. */
+	imports: string[];
+	/** The files it asks for as it runs. */
+	later: string[];
+	/** Whether any of it is the studio's own writing (or SvelteKit's, made for this game). */
+	own: boolean;
+	/** Whether it is code a stage asks for (`STAGE_MODULES`). */
+	stage: boolean;
 }
 
-/** What a game's source tells `createLoadingScreen()`, as the build read it. */
-interface LoadingRead {
-	/** The name written out, or nothing where the page's own title is used. */
-	title?: string;
-	logo?: string;
-	look: LoadingLook;
-}
-
-/** A piece of a script as its parser gives it: only what is read here. */
-interface Piece {
-	type: string;
-	[part: string]: unknown;
-}
-
-/** Whether something in a parsed script is a piece of it. */
-function isPiece(value: unknown): value is Piece {
-	return typeof value === "object" && value !== null && "type" in value;
-}
-
-/** Every call of `createLoadingScreen` in a parsed script. */
-function loadingCalls(piece: Piece, found: Piece[] = []): Piece[] {
-	const callee = piece.callee;
-	if (
-		piece.type === "CallExpression" &&
-		isPiece(callee) &&
-		callee.type === "Identifier" &&
-		callee.name === "createLoadingScreen"
-	) {
-		found.push(piece);
-	}
-
-	for (const part of Object.values(piece)) {
-		if (Array.isArray(part)) {
-			for (const each of part) if (isPiece(each)) loadingCalls(each, found);
-		} else if (isPiece(part)) {
-			loadingCalls(part, found);
-		}
-	}
-
-	return found;
-}
-
-/** Why the build cannot read something told to the loading screen. */
-function unreadable(what: string): Error {
-	return new Error(
-		`createLoadingScreen(): ${what} is worked out as the game runs. Write it out in the ` +
-			`call, as plain words and numbers: the loading screen is written into the page ` +
-			`from them, to be seen before any of the game's code has arrived.`
-	);
-}
-
-/** A value written out in a script, as itself: a word, a number, yes or no, or a list of such by name. */
-function writtenOut(piece: Piece, what: string): unknown {
-	if (piece.type === "Literal") return piece.value;
-
-	if (
-		piece.type === "TemplateLiteral" &&
-		(piece.expressions as unknown[]).length === 0
-	) {
-		return ((piece.quasis as Piece[])[0].value as { cooked: string }).cooked;
-	}
-
-	if (piece.type === "UnaryExpression" && piece.operator === "-") {
-		return -Number(writtenOut(piece.argument as Piece, what));
-	}
-
-	if (piece.type === "ObjectExpression") {
-		const read: Record<string, unknown> = {};
-		for (const property of piece.properties as Piece[]) {
-			const key = property.key as Piece | undefined;
-			if (property.type !== "Property" || property.computed || !key) {
-				throw unreadable(`part of ${what}`);
-			}
-
-			const name = String(key.type === "Identifier" ? key.name : key.value);
-			read[name] = writtenOut(property.value as Piece, `${what}'s "${name}"`);
-		}
-
-		return read;
-	}
-
-	throw unreadable(what);
-}
-
-/**
- * What a script tells `createLoadingScreen()`, read from its source and never by running
- * it. Nothing where it makes no loading screen. Throws where what it tells cannot be read:
- * a value worked out as the game runs, or a part the screen does not have.
- */
-export function readLoading(script: Piece): LoadingRead | undefined {
-	const [call] = loadingCalls(script);
-	if (!call) return undefined;
-
-	const [told] = call.arguments as Piece[];
-	if (!told) return { look: {} };
-	if (told.type !== "ObjectExpression") throw unreadable("what it is told");
-
-	const read: LoadingRead = { look: {} };
-	for (const property of told.properties as Piece[]) {
-		const key = property.key as Piece | undefined;
-		if (property.type !== "Property" || property.computed || !key) {
-			throw unreadable("part of what it is told");
-		}
-
-		const name = String(key.type === "Identifier" ? key.name : key.value);
-		const value = property.value as Piece;
-
-		if (name === "title") {
-			// The page's own title is the one thing it may name: the build has the page.
-			const object = value.object as Piece | undefined;
-			const named = value.property as Piece | undefined;
-			const pageTitle =
-				value.type === "MemberExpression" &&
-				object?.type === "Identifier" &&
-				object.name === "document" &&
-				named?.type === "Identifier" &&
-				named.name === "title";
-			if (!pageTitle) read.title = String(writtenOut(value, "its title"));
-		} else if (name === "logo") {
-			read.logo = String(writtenOut(value, "its logo"));
-		} else if (name === "look") {
-			read.look = writtenOut(value, "its look") as LoadingLook;
-			// Held to what a look may say, here, where the mistake is the studio's to see.
-			lookStyle(read.look);
-		} else {
-			throw new Error(
-				`createLoadingScreen(): the loading screen has no "${name}".`
-			);
-		}
-	}
-
-	return read;
-}
-
-/**
- * Writes the loading screen into the page of a client that shows one (./loading.ts), with
- * what fills it while the game's code arrives:
- *
- * - the screen itself, as `createLoadingScreen()` would make it from what the game's
- *   source tells it (`readLoading`): its name, the studio's logo over the name, and its
- *   look; and its style in the page;
- * - the code the game needs, each file asked for from the start and all at once, not as
- *   the file before it finds it needs it, and each file's size, on the screen;
- * - a small script of the page's own (./loading-first.js), which fills the bar as those
- *   files arrive. A file, since the policy allows no inline script.
- *
- * A client that makes no loading screen is left as it is: nothing would take this one away.
- */
-function loadingFirst(client: string): Plugin[] {
-	/** What the game's source tells its loading screen, once a script that makes one is read. */
-	let told: LoadingRead | undefined;
-
-	/** Reads it, from each script as it is built: after it has been made plain JavaScript. */
-	const reader: Plugin = {
-		name: "keros3ne-loading-read",
+/** Notes the code the browser's side of the build made, for `finishClient`. */
+function noteCode(client: string): Plugin {
+	return {
+		name: "keros3ne-note-code",
 		apply: "build",
-		enforce: "post",
 
-		buildStart() {
-			told = undefined;
-		},
-
-		transform(code, id) {
-			if (
-				!code.includes("createLoadingScreen(") ||
-				id.split("?")[0] === LOADING_MODULE
-			) {
-				return null;
-			}
-
-			const read = readLoading(this.parse(code) as unknown as Piece);
-			if (read) told = read;
-
-			return null;
-		}
-	};
-
-	const writer: Plugin = {
-		name: "keros3ne-loading-first",
-		apply: "build",
-		// Before the page is written, so that the script it names is among the client's files.
-		enforce: "pre",
-
-		/**
-		 * The script that fills the bar, as a file of the client's, named by what is in it:
-		 * only for a client that shows a loading screen.
-		 */
 		generateBundle(_options, bundle) {
-			const shown = Object.values(bundle).some(
-				(file) => file.type === "chunk" && file.moduleIds.includes(LOADING_MODULE)
-			);
-			if (!shown) return;
+			// SvelteKit builds twice: once for the page as it is rendered here, once for the browser.
+			if (this.environment.name !== "client") return;
 
-			this.emitFile({
-				type: "asset",
-				name: "loading-first.js",
-				source: ownFile("./loading-first.js")
-			});
-		},
+			const files: CodeFile[] = Object.values(bundle)
+				.filter((file) => file.type === "chunk")
+				.map((chunk) => ({
+					file: chunk.fileName,
+					bytes: Buffer.byteLength(chunk.code),
+					imports: chunk.imports,
+					later: chunk.dynamicImports,
+					own: chunk.moduleIds.some((id) => !id.includes("/node_modules/")),
+					stage:
+						STAGE_MODULES.test(chunk.facadeModuleId ?? "") ||
+						chunk.moduleIds.some((id) => STAGE_MODULES.test(id))
+				}));
 
-		transformIndexHtml: {
-			order: "post",
-
-			/** Adds the screen, its style, its script and the code to ask for to the page. */
-			handler(html, { bundle }) {
-				if (!bundle) return html;
-
-				const chunks = Object.values(bundle).filter(
-					(file) => file.type === "chunk"
-				);
-				const script = Object.keys(bundle).find((name) =>
-					/(^|\/)loading-first-[\w-]+\.js$/.test(name)
-				);
-				// No script, no screen: the client shows none (`generateBundle` above).
-				if (!script) return html;
-
-				// The name the call wrote out, or the page's own; as a page's source has it.
-				const title =
-					told?.title !== undefined
-						? told.title.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
-						: (/<title>([^<]*)<\/title>/.exec(html)?.[1].trim() ?? "");
-				// The logo the call named, or one left in the client's folder under its usual name.
-				const found = LOGO_FILES.find((name) =>
-					existsSync(join(client, "public", name))
-				);
-				const logo = told?.logo ?? (found ? `./${found}` : undefined);
-				const style = lookStyle(told?.look ?? {});
-				const code = codeToLoad(bundle);
-				const entries = new Set(
-					chunks.filter((chunk) => chunk.isEntry).map((chunk) => chunk.fileName)
-				);
-
-				const tags: HtmlTagDescriptor[] = [
-					// After what the page's head began with: its encoding must stay among its first words.
-					{
-						tag: "style",
-						children: ownFile("./loading.css"),
-						injectTo: "head"
-					},
-					// The page asks for its own script itself; the rest are asked for here.
-					...code
-						.filter((chunk) => !entries.has(chunk.fileName))
-						.map((chunk): HtmlTagDescriptor => ({
-							tag: "link",
-							attrs: {
-								rel: "modulepreload",
-								crossorigin: true,
-								href: `./${chunk.fileName}`
-							},
-							injectTo: "head"
-						})),
-					{
-						tag: "div",
-						attrs: {
-							class: "sdk-loading sdk-loading-first",
-							"data-waiting": true,
-							// Dressed as the call asked (`look`).
-							...(style ? { style } : {}),
-							"data-code": code
-								.map(
-									(chunk) =>
-										`${chunk.fileName}:${Buffer.byteLength(chunk.code)}`
-								)
-								.join(",")
-						},
-						children: [
-							...(logo
-								? [
-										{
-											tag: "img",
-											attrs: {
-												class: "sdk-loading-logo",
-												src: logo,
-												alt: ""
-											}
-										}
-									]
-								: []),
-							...(title
-								? [
-										{
-											tag: "p",
-											attrs: { class: "sdk-loading-title" },
-											children: title
-										}
-									]
-								: []),
-							{
-								tag: "div",
-								attrs: {
-									class: "sdk-loading-bar",
-									role: "progressbar",
-									"aria-label": title
-										? `Loading ${plain(title)}`
-										: "Loading",
-									"aria-valuemin": "0",
-									"aria-valuemax": "100",
-									"aria-valuenow": "0"
-								},
-								children: [
-									{ tag: "div", attrs: { class: "sdk-loading-fill" } }
-								]
-							}
-						],
-						injectTo: "body-prepend"
-					},
-					// First in the page, so it is asked for before the code it watches arrive, and
-					// run once the screen is there to fill.
-					{
-						tag: "script",
-						attrs: { defer: true, src: `./${script}` },
-						injectTo: "head-prepend"
-					}
-				];
-
-				return { html, tags };
-			}
+			mkdirSync(join(client, WORK_FOLDER), { recursive: true });
+			writeFileSync(join(client, CODE_FILE), JSON.stringify(files));
 		}
 	};
-
-	return [reader, writer];
 }
 
-export function clientConfig(folder: string, watch = false): InlineConfig {
-	// From wherever it was named: what is built goes beside the client, not beside whoever asked.
+/** Every setting of a client's build. `folder` is the client's own. */
+export function clientConfig(folder: string): InlineConfig {
 	const client = resolve(folder);
 
 	return {
 		// Built as it will be served, whatever this was run from (a test, a development server).
 		mode: "production",
-		resolve: { alias: fetchedPackages(client) },
 		configFile: false,
 		envDir: false,
 		root: client,
-		base: "./",
-		publicDir: join(client, "public"),
 		logLevel: "warn",
 		clearScreen: false,
-		// A client may be written in Svelte, in runes: compiled here, with no config of its own.
 		plugins: [
-			svelte({ configFile: false, compilerOptions: { runes: true } }),
-			...loadingFirst(client)
-		],
-		build: {
-			outDir: join(client, "dist"),
-			emptyOutDir: true,
-			modulePreload: false,
-			assetsInlineLimit: 0,
-			watch: watch ? {} : null
-		}
+			sveltekit({
+				compilerOptions: { runes: true },
+				adapter: adapter({ pages: "dist", assets: "dist", strict: true }),
+				outDir: WORK_FOLDER,
+				// A game's own files where they have always been, and the page's frame the SDK's.
+				files: { assets: "public", appTemplate: ownFile("./client-app.html") },
+				// Served from whatever folder the site likes.
+				paths: { relative: true }
+			}),
+			noteCode(client)
+		]
 	};
 }
 
-/** Builds a game's client into `client/dist`. */
-export async function buildClient(client: string): Promise<void> {
-	await build(clientConfig(client));
+/** The code a game needs before it can be played, each file once, the page's own first. */
+function codeToLoad(files: CodeFile[], first: string[]): CodeFile[] {
+	const byName = new Map(files.map((file) => [file.file, file]));
+	const found = new Map<string, CodeFile>();
+
+	const follow = (name: string) => {
+		const file = byName.get(name);
+		if (!file || found.has(name)) return;
+
+		found.set(name, file);
+		file.imports.forEach(follow);
+		// What the studio's own code asks for as it runs is the game itself, kept out of the
+		// page that is rendered when it is built. What a library asks for later may never be
+		// wanted (a renderer for another kind of screen), and is left to it.
+		if (file.own) file.later.forEach(follow);
+	};
+
+	first.forEach(follow);
+	for (const file of files) if (file.stage) follow(file.file);
+
+	return [...found.values()];
+}
+
+/** The first eight letters of a digest of some text: a name by what is in it. */
+function named(text: string): string {
+	return createHash("sha256").update(text).digest("base64url").slice(0, 8);
 }
 
 /**
- * Builds a game's client into `client/dist` and again whenever it changes, until `close()`.
- * `onBuilt` is called after each build, and `onError` with what went wrong in one.
+ * Finishes a client SvelteKit has built into `client/dist`, for the frame it is played
+ * in. Throws if the page is not as this version of SvelteKit builds one: that is a
+ * change in SvelteKit to be met here, never guessed at.
+ */
+export function finishClient(folder: string): void {
+	const client = resolve(folder);
+	const dist = join(client, "dist");
+	const page = join(dist, "index.html");
+	if (!existsSync(page)) {
+		throw new Error(
+			`${folder} built no index.html: its page must be rendered when it is built (src/routes/+layout.ts: export const prerender = true).`
+		);
+	}
+
+	let html = readFileSync(page, "utf8");
+	const files: CodeFile[] = JSON.parse(readFileSync(join(client, CODE_FILE), "utf8"));
+
+	// The script the page starts itself with, moved into a file: the policy allows none inline.
+	const inline = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+	const [start] = inline;
+	if (inline.length !== 1 || !start[1].includes("kit.start(")) {
+		throw new Error(
+			`${folder}'s page is not as SvelteKit builds one: it should start itself with one script written into it. Was SvelteKit's version changed?`
+		);
+	}
+
+	// Beside the code it asks for, which it finds from its own address.
+	const script = start[1].replaceAll(`"./${NAMED}/`, `"./`);
+	if (/["']\.\/_app\//.test(script)) {
+		throw new Error(
+			`${folder}'s page starts itself with an address this does not know how to move.`
+		);
+	}
+
+	const startFile = `${NAMED}/start.${named(script)}.js`;
+	writeFileSync(join(dist, startFile), script);
+	// Asked for as another origin's: a sandboxed page's own files are that to it, and a
+	// script not asked for so may not ask for more code by address.
+	html = html.replace(start[0], `<script crossorigin src="./${startFile}"></script>`);
+
+	// The code the page already asks for, and the rest of what the game needs.
+	const asked = [
+		...html.matchAll(/<link href="\.\/([^"]+\.js)" rel="modulepreload">/g)
+	].map((match) => match[1]);
+	const code = codeToLoad(files, asked);
+	const more = code
+		.filter((file) => !asked.includes(file.file))
+		.map((file) => `<link href="./${file.file}" rel="modulepreload">`);
+
+	const head: string[] = [...more];
+
+	// A page with a loading screen (./LoadingScreen.svelte): told the code to wait for, and
+	// given the script that fills its bar as that code arrives. First in the page, so it is
+	// asked for before the code it watches.
+	const waiting = /<div class="sdk-loading[^"]*"[^>]*\bdata-waiting\b/.exec(html);
+	if (waiting) {
+		const filler = readFileSync(ownFile("./loading-first.js"), "utf8");
+		const fillerFile = `${NAMED}/loading-first.${named(filler)}.js`;
+		writeFileSync(join(dist, fillerFile), filler);
+
+		const sizes = code.map((file) => `${file.file}:${file.bytes}`).join(",");
+		html = html.replace(waiting[0], `${waiting[0]} data-code="${sizes}"`);
+		html = html.replace(
+			"<head>",
+			`<head>\n\t\t<script defer crossorigin src="./${fillerFile}"></script>`
+		);
+	}
+
+	html = html.replace(
+		"</head>",
+		`${head.map((tag) => `\t${tag}\n\t`).join("")}</head>`
+	);
+	writeFileSync(page, html);
+}
+
+/**
+ * Builds a game's client into `client/dist`, and finishes it. SvelteKit builds the folder
+ * it is run in, so it is run there, by itself (./client-build-run.ts).
+ */
+export async function buildClient(folder: string): Promise<void> {
+	const client = resolve(folder);
+	if (!existsSync(join(client, "src", "routes"))) {
+		throw new Error(
+			`${folder} has no src/routes: a client is a SvelteKit app, its page in src/routes/+page.svelte.`
+		);
+	}
+
+	const said: Buffer[] = [];
+	const status = await new Promise<number | null>((done, failed) => {
+		const run = spawn(process.execPath, [ownFile("./client-build-run.ts")], {
+			cwd: client,
+			env: { ...process.env, NODE_ENV: "production" },
+			stdio: ["ignore", "pipe", "pipe"]
+		});
+
+		run.stdout.on("data", (chunk: Buffer) => said.push(chunk));
+		run.stderr.on("data", (chunk: Buffer) => said.push(chunk));
+		run.once("error", failed);
+		run.once("close", done);
+	});
+
+	if (status !== 0) {
+		throw new Error(
+			`${folder} did not build:\n${Buffer.concat(said).toString("utf8").trim()}`
+		);
+	}
+}
+
+/**
+ * Builds a game's client into `client/dist` and again whenever its source changes, until
+ * `close()`. `built` is called after each build, and `error` with what went wrong in one.
  */
 export async function watchClient(
-	client: string,
+	folder: string,
 	on: { built?: () => void; error?: (error: unknown) => void } = {}
 ): Promise<{ close: () => Promise<void> }> {
-	const watcher = (await build(clientConfig(client, true))) as {
-		on(
-			event: "event",
-			listener: (event: {
-				code: string;
-				error?: unknown;
-				result?: { close(): Promise<void> };
-			}) => void
-		): void;
-		close(): Promise<void>;
+	const client = resolve(folder);
+	let building: Promise<void> | null = null;
+	let again = false;
+	let timer: ReturnType<typeof setTimeout> | undefined;
+
+	/** One build at a time; a change during one is built after it. */
+	const run = async (): Promise<void> => {
+		if (building) {
+			again = true;
+
+			return building;
+		}
+
+		building = buildClient(client)
+			.then(() => on.built?.())
+			.catch((error: unknown) => on.error?.(error))
+			.finally(() => {
+				building = null;
+				if (again) {
+					again = false;
+					void run();
+				}
+			});
+
+		return building;
 	};
-	watcher.on("event", (event) => {
-		if (event.code === "BUNDLE_END") void event.result?.close();
-		if (event.code === "END") on.built?.();
-		if (event.code === "ERROR") on.error?.(event.error);
-	});
-	return { close: () => watcher.close() };
+
+	await run();
+
+	const watchers: FSWatcher[] = ["src", "public"]
+		.map((name) => join(client, name))
+		.filter((watched) => existsSync(watched))
+		.map((watched) =>
+			watch(watched, { recursive: true }, () => {
+				// Once a burst of changes has stopped.
+				clearTimeout(timer);
+				timer = setTimeout(() => void run(), 150);
+			})
+		);
+
+	return {
+		close: async () => {
+			clearTimeout(timer);
+			for (const watcher of watchers) watcher.close();
+			await building;
+		}
+	};
 }

@@ -6,9 +6,6 @@
  * Created: 2026-11-17
  */
 
-import { mount } from "svelte";
-import App from "./App.svelte";
-
 // Everything the policy stops is kept, for the test to read.
 const stopped: string[] = [];
 document.addEventListener("securitypolicyviolation", (event) => {
@@ -17,4 +14,4 @@ document.addEventListener("securitypolicyviolation", (event) => {
 });
 document.body.dataset.stopped = "[]";
 
-mount(App, { target: document.body });
+export {};

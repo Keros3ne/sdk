@@ -1,10 +1,11 @@
 /*
- * The first of a game's loading: fills the loading screen written into a client's page
- * (./client-build.ts) while the game's code is still arriving, by how many bytes of it
- * have. The page names each file of that code and its size (`data-code`); the browser says
- * when each has arrived. Once the game's own code runs it takes the screen over
- * (./loading.ts, which removes `data-waiting`) and fills what is left of the bar from what
- * the game tracks, and this has nothing left to fill.
+ * The first of a game's loading: fills the loading screen in a client's page
+ * (./LoadingScreen.svelte, rendered when the client is built) while the game's code is
+ * still arriving, by how many bytes of it have. The page names each file of that code and
+ * its size (`data-code`, written by ./client-build.ts); the browser says when each has
+ * arrived. Once the game's own code runs it takes the screen over (./loading.ts, which
+ * removes `data-waiting`) and fills what is left of the bar from what the game tracks, and
+ * this has nothing left to fill.
  *
  * A file of its own, plain and unbundled: the policy a client is served under allows no
  * inline script, and this must run before any of the game's code has arrived.

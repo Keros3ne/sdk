@@ -7,7 +7,7 @@
  *   <slug>/maths/index.ts        how its books are made (exports `defineBooks(...)`)
  *   <slug>/maths/maths.spec.ts   the studio's own tests of its rules
  *   <slug>/books/                its books, and `books.json`, the record of them
- *   <slug>/client/               the client: index.html, src/, public/card.svg
+ *   <slug>/client/               the client: src/routes/, public/card.svg
  *
  * Runs under Bun, which can import a game's TypeScript as it is.
  */
