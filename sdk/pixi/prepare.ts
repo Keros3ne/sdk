@@ -1,9 +1,13 @@
+/// <reference path="../pixi.d.ts" />
 /**
  * Pixi made ready for the frame a game is played in. The policy a client is served under
  * (../frame.ts) allows no eval, no requests and no workers, and Pixi as it comes wants
  * all three. Two settings make it need none of them, and everything the SDK draws with
  * Pixi goes through here so that they are always made (`e2e/pixi-frame.e2e.ts` holds
  * that they are enough, and that neither can be left out).
+ *
+ * The line above this brings in what Pixi leaves undeclared (../pixi.d.ts), wherever this
+ * file is read from: a site that takes the SDK as a dependency reads only what it imports.
  *
  * Author: dwclake
  * Created: 2026-11-17
