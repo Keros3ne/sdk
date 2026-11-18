@@ -94,7 +94,7 @@ describe("a client that shows a loading screen", () => {
 		expect(page).toContain(`aria-label="Loading Tide &amp; Time"`);
 		// Its style is in the page, after the page's encoding.
 		expect(page.indexOf("<style>")).toBeGreaterThan(page.indexOf("charset"));
-		expect(page).toContain(".sdk-loading-first");
+		expect(page).toContain(".sdk-loading-fill {");
 
 		// What fills it is a file of the client's, never inline, and asked for first.
 		const filler = files.find((file) => /loading-first-[\w-]+\.js$/.test(file));

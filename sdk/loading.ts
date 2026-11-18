@@ -7,9 +7,10 @@
  *     await Promise.all([loading.track(loadImages(), 3), loading.track(loadSounds())]);
  *     await loading.done();
  *
- * Make it first, before anything slow starts. It is only seen once loading has taken a
- * moment (`delay`), so a game that is ready at once never shows it. How it looks is the
- * studio's, through the properties in ./loading.css.
+ * Make it first, before anything slow starts. It covers the game from the first moment,
+ * however short the wait, and `done()` takes it away only once the game under it has been
+ * drawn: a game is put together a piece at a time, and none of that is to be seen. How it
+ * looks is the studio's, through the properties in ./loading.css.
  *
  * Most of a game's loading is its own code arriving, which is over before any of that code
  * can run. So a built client's page already has this screen written into it
@@ -31,21 +32,39 @@ export interface LoadingScreen {
 	track<T>(work: Promise<T>, weight?: number): Promise<T>;
 	/** How much is loaded, from 0 to 1, for work the screen cannot see. The bar never goes back. */
 	set(share: number): void;
-	/** Fills the bar and takes the screen away. */
+	/**
+	 * Fills the bar and takes the screen away, once what is under it has been drawn. Call it
+	 * when the game is ready to be seen and played.
+	 */
 	done(): Promise<void>;
 }
 
-export function createLoadingScreen(
-	config: { title?: string; delay?: number } = {}
-): LoadingScreen {
-	const { title, delay = 250 } = config;
+/**
+ * Waits until the page has been drawn twice more: once for what was just set up, and once
+ * for what that drawing itself set off. A page that is not being drawn at all (a tab in the
+ * background) is not waited for.
+ */
+function drawn(): Promise<void> {
+	return new Promise((resolve) => {
+		const giveUp = window.setTimeout(resolve, 500);
+
+		requestAnimationFrame(() =>
+			requestAnimationFrame(() => {
+				window.clearTimeout(giveUp);
+				resolve();
+			})
+		);
+	});
+}
+
+export function createLoadingScreen(config: { title?: string } = {}): LoadingScreen {
+	const { title } = config;
 
 	// The screen the page came with, part filled already by the code's arrival, or a new one.
 	const written = document.querySelector<HTMLElement>(".sdk-loading[data-waiting]");
 	const screen = written ?? document.createElement("div");
 	let bar: HTMLElement;
 	let fill: HTMLElement;
-	let showing: number | undefined;
 	/** How full the bar was when the game took it over: what it tracks fills the rest. */
 	let from = 0;
 
@@ -74,7 +93,6 @@ export function createLoadingScreen(
 		bar.append(fill);
 		screen.append(bar);
 		document.body.append(screen);
-		showing = window.setTimeout(() => screen.classList.add("shown"), delay);
 	}
 
 	// What is tracked, by weight, and what has settled of it; and a share set directly.
@@ -122,21 +140,17 @@ export function createLoadingScreen(
 			renderSoon();
 		},
 		async done() {
-			window.clearTimeout(showing);
 			direct = 1;
 			render();
 
-			// Seen, or coming into view: faded out. A screen never seen is only taken away.
-			if (Number(getComputedStyle(screen).opacity) > 0) {
-				// The page's own screen came into view by an animation, which would hold it there.
-				screen.classList.remove("sdk-loading-first");
-				screen.classList.add("shown");
-				void screen.offsetWidth;
-				screen.classList.add("leaving");
-				const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-				// Long enough for the bar to be seen full, and to fade.
-				await new Promise((resolve) => setTimeout(resolve, still ? 0 : 400));
-			}
+			// What the game set up as it became ready (the stage's first picture, words in a
+			// typeface just arrived) is drawn over the next frames: the screen stays for them.
+			await drawn();
+
+			screen.classList.add("leaving");
+			const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+			// Long enough for the bar to be seen full, and to fade.
+			await new Promise((resolve) => setTimeout(resolve, still ? 0 : 400));
 			screen.remove();
 		}
 	};

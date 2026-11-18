@@ -420,8 +420,10 @@ and refuses a client built for another version of the protocol.
 8. **Show a loading screen while the game gets ready.** Make one with
    `createLoadingScreen()` from `/loading` before anything slow starts, and pass it what
    the game waits for: `loading.track(connect())`, its pictures (the stage's `track`), the
-   bar's typeface (`document.fonts.load`). `loading.done()` takes it away. It is only seen
-   once loading has taken a moment. Its colours are yours, through the `--loading-*`
+   bar's typeface (`document.fonts.load`). `loading.done()` takes it away, once the game under it has
+   been drawn. It covers the game from the first moment, however short the wait, so a
+   player never sees the game being put together: call `done()` only when everything is
+   ready to be seen. Its colours are yours, through the `--loading-*`
    properties. Most of what a game waits for is its own code, which cannot draw a screen
    before it has all arrived: so the build writes the screen into your page, where it
    fills as your code arrives, and `createLoadingScreen()` takes that screen over and
