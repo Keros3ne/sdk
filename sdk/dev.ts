@@ -248,7 +248,12 @@ export async function serve(options: Options): Promise<number> {
 				)
 					return new Response("Not found", { status: 404 });
 				return new Response(Bun.file(file), {
-					headers: clientHeaders(url.origin, folder.slug, type)
+					headers: clientHeaders(
+						url.origin,
+						folder.slug,
+						type,
+						decodeURIComponent(path.slice(prefix.length))
+					)
 				});
 			}
 

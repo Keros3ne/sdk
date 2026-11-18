@@ -13,6 +13,11 @@
  * The values left alone repeat the site's own (src/app.css), which a game's frame
  * cannot read.
  *
+ * A built client's page comes with the screen already in it (./client-build.ts), since the
+ * game's code, which would make it, is most of what there is to wait for: the same markup
+ * with `sdk-loading-first`, coming into view by itself after the same moment, and filled by
+ * a script of the page's own (./loading-first.js) until the game takes it over.
+ *
  * Its simplest form, a bar alone and centred, is also drawn by a page with no script
  * running yet (the site's own games, GameStage.svelte): the same markup with
  * `sdk-loading-contained`, filling its container rather than the frame and fading in by
@@ -77,13 +82,18 @@
 	background: var(--loading-surface, transparent);
 	animation: sdk-loading-in 200ms 250ms forwards;
 }
+/* Written into a client's page, and in view before any of the game's code has arrived. */
+.sdk-loading-first {
+	animation: sdk-loading-in 200ms 250ms forwards;
+}
 @keyframes sdk-loading-in {
 	to {
 		opacity: 1;
 	}
 }
 @media (prefers-reduced-motion: reduce) {
-	.sdk-loading-contained {
+	.sdk-loading-contained,
+	.sdk-loading-first {
 		animation: none;
 		opacity: 1;
 	}

@@ -247,7 +247,11 @@ game window. It is written in Svelte and drawn with Pixi.
 **How it is built.** Every client is built the same way, by the SDK (`buildClient` in
 `/client-build`), from `client/index.html`, with `client/public` copied as it is: by the
 site, by `check` and by `dev`. There is no build configuration of your own: a Vite config is
-code, and the site would be running it. The site builds your client with the SDK and
+code, and the site would be running it. A client that shows a loading screen has it written
+into its page by the build, with the code to wait for (`loadingFirst` in `/client-build`).
+Files the build names by what is in them (everything under `assets/`) are kept by a
+player's browser for good; the page itself and what `public` brought are asked for each
+time. The site builds your client with the SDK and
 nothing of yours installed, so a client imports the SDK, Svelte and Pixi (which the SDK
 brings), its own game's files, its repository's shared folders and the packages its
 `studio.json` names, and nothing else: no other package, and nothing from the network.
@@ -418,7 +422,11 @@ and refuses a client built for another version of the protocol.
    the game waits for: `loading.track(connect())`, its pictures (the stage's `track`), the
    bar's typeface (`document.fonts.load`). `loading.done()` takes it away. It is only seen
    once loading has taken a moment. Its colours are yours, through the `--loading-*`
-   properties.
+   properties. Most of what a game waits for is its own code, which cannot draw a screen
+   before it has all arrived: so the build writes the screen into your page, where it
+   fills as your code arrives, and `createLoadingScreen()` takes that screen over and
+   fills the rest of the bar from what you track. Give your page a `<title>`: it is the
+   name on that screen.
 9. **Show what each win paid, over the reels.** A slot writes the amount of each win where
    it is, not only the total. The `Board` does (`showWins`), choosing a cell of each win so
    that several amounts keep apart; `placeLabels()` in `/ui` is the same choice, for a

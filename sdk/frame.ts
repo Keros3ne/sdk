@@ -45,11 +45,22 @@ export function studioPolicy(origin: string, slug: string): string {
 	].join("; ");
 }
 
-/** Every header a file of a client is served with. */
+/**
+ * A file the client's build named by what is in it (`assets/index-C2QBgKch.js`): the same
+ * name is always the same file, so a browser may keep it for good.
+ */
+const NAMED_BY_CONTENT = /^assets\/[^/]+-[A-Za-z0-9_-]{8}\.[a-z0-9]+$/;
+
+/**
+ * Every header a file of a client is served with. `file` is its path in the client's
+ * folder: one named by what is in it is kept by the browser and not asked for again, and
+ * everything else (the page, what `public` brought, a file not named) is asked for each time.
+ */
 export function clientHeaders(
 	origin: string,
 	slug: string,
-	type: string
+	type: string,
+	file = ""
 ): Record<string, string> {
 	return {
 		"Content-Type": type,
@@ -58,6 +69,8 @@ export function clientHeaders(
 		// fonts are cross-origin requests to it and need this to load.
 		"Access-Control-Allow-Origin": "*",
 		"Cross-Origin-Resource-Policy": "cross-origin",
-		"Cache-Control": "no-cache"
+		"Cache-Control": NAMED_BY_CONTENT.test(file.replace(/^\/+/, ""))
+			? "public, max-age=31536000, immutable"
+			: "no-cache"
 	};
 }

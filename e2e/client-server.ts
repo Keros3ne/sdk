@@ -34,7 +34,7 @@ export async function serveClient(folder: string, slug: string, port: number) {
 				return new Response("Not found", { status: 404 });
 
 			return new Response(readFileSync(file), {
-				headers: clientHeaders(origin, slug, type)
+				headers: clientHeaders(origin, slug, type, path.slice(prefix.length))
 			});
 		}
 	});

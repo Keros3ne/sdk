@@ -1,6 +1,8 @@
 /**
  * Building a client that shares a package: that a package its repository names is read
- * from the folder the site fetched it into, as source, Svelte among it.
+ * from the folder the site fetched it into, as source, Svelte among it. And building one
+ * that shows a loading screen: that its page comes with the screen in it, and names the
+ * code to wait for.
  *
  * Author: dwclake
  * Created: 2026-11-19
@@ -58,5 +60,66 @@ describe("a client that shares a package", () => {
 
 		expect(built).toContain("from the shared kit");
 		expect(built).toContain("badge");
+	});
+});
+
+describe("a client that shows a loading screen", () => {
+	/** Builds a client of one script, and returns its page and the names of its files. */
+	async function built(game: string, script: string) {
+		write({
+			[`${game}/client/index.html`]: `<!doctype html><html><head><meta charset="utf-8" /><title>Tide &amp; Time</title><script type="module" src="./src/main.ts"></script></head><body></body></html>`,
+			[`${game}/client/src/more.ts`]: `export const MORE: string = "asked for only later";`,
+			[`${game}/client/src/main.ts`]: script
+		});
+		await buildClient(join(studio, game, "client"));
+
+		const dist = join(studio, game, "client", "dist");
+
+		return {
+			page: readFileSync(join(dist, "index.html"), "utf8"),
+			files: readdirSync(join(dist, "assets")).map((name) => `assets/${name}`),
+			size: (file: string) => readFileSync(join(dist, file)).byteLength
+		};
+	}
+
+	it("has the screen in its page, with the code to wait for and what fills it", async () => {
+		const { page, files, size } = await built(
+			"waits",
+			`import { createLoadingScreen } from "${fileURLToPath(new URL("./loading.ts", import.meta.url))}";\n\nconst loading = createLoadingScreen({ title: document.title });\nvoid import("./more.ts").then(() => loading.done());`
+		);
+
+		// The screen, named by the page's title, waiting to be filled.
+		expect(page).toMatch(/<div class="sdk-loading sdk-loading-first" data-waiting /);
+		expect(page).toContain(`<p class="sdk-loading-title">Tide &amp; Time</p>`);
+		expect(page).toContain(`aria-label="Loading Tide &amp; Time"`);
+		// Its style is in the page, after the page's encoding.
+		expect(page.indexOf("<style>")).toBeGreaterThan(page.indexOf("charset"));
+		expect(page).toContain(".sdk-loading-first");
+
+		// What fills it is a file of the client's, never inline, and asked for first.
+		const filler = files.find((file) => /loading-first-[\w-]+\.js$/.test(file));
+		expect(filler).toBeDefined();
+		expect(page).toContain(`<script defer src="./${filler}"></script>`);
+		expect(page.indexOf(filler!)).toBeLessThan(page.indexOf(`type="module"`));
+		expect(page).not.toMatch(/<script(?![^>]*\bsrc=)[^>]*>/);
+
+		// The code named is the page's own script, by about its size (a weight: the file may
+		// be finished after the page is written); not what it asks for only later.
+		const code = /data-code="([^"]*)"/.exec(page)![1].split(",");
+		const main = files.find((file) => /index-[\w-]+\.js$/.test(file))!;
+		expect(code).toHaveLength(1);
+		expect(code[0].split(":")[0]).toBe(main);
+		expect(Number(code[0].split(":")[1]) / size(main)).toBeCloseTo(1, 1);
+	});
+
+	it("is left as it was written when it shows none: nothing would take the screen away", async () => {
+		const { page, files } = await built(
+			"plain",
+			`document.body.textContent = "ready at once";`
+		);
+
+		expect(page).not.toContain("sdk-loading");
+		expect(page).not.toContain("loading-first");
+		expect(files.filter((file) => file.includes("loading-first"))).toEqual([]);
 	});
 });
