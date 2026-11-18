@@ -27,6 +27,7 @@ import {
 	type Plugin,
 	type Rollup
 } from "vite";
+import { lookStyle, type LoadingLook } from "./loading-look.ts";
 import { sharedPackages } from "./manifest.ts";
 import { PACKAGES_FOLDER, readManifest } from "./studio-folder.ts";
 
@@ -64,8 +65,9 @@ function plain(text: string): string {
 }
 
 /**
- * The studio's logo for the loading screen, by the names it may have in a client's `public`
- * folder: the first found is drawn over the game's name.
+ * The studio's logo for the loading screen, where the call does not name one (`logo`), by
+ * the names it may have in a client's `public` folder: the first found is drawn over the
+ * game's name.
  */
 const LOGO_FILES = [
 	"loading-logo.svg",
@@ -115,13 +117,147 @@ function codeToLoad(bundle: Rollup.OutputBundle): Rollup.OutputChunk[] {
 	return [...found.values()];
 }
 
+/** What a game's source tells `createLoadingScreen()`, as the build read it. */
+interface LoadingRead {
+	/** The name written out, or nothing where the page's own title is used. */
+	title?: string;
+	logo?: string;
+	look: LoadingLook;
+}
+
+/** A piece of a script as its parser gives it: only what is read here. */
+interface Piece {
+	type: string;
+	[part: string]: unknown;
+}
+
+/** Whether something in a parsed script is a piece of it. */
+function isPiece(value: unknown): value is Piece {
+	return typeof value === "object" && value !== null && "type" in value;
+}
+
+/** Every call of `createLoadingScreen` in a parsed script. */
+function loadingCalls(piece: Piece, found: Piece[] = []): Piece[] {
+	const callee = piece.callee;
+	if (
+		piece.type === "CallExpression" &&
+		isPiece(callee) &&
+		callee.type === "Identifier" &&
+		callee.name === "createLoadingScreen"
+	) {
+		found.push(piece);
+	}
+
+	for (const part of Object.values(piece)) {
+		if (Array.isArray(part)) {
+			for (const each of part) if (isPiece(each)) loadingCalls(each, found);
+		} else if (isPiece(part)) {
+			loadingCalls(part, found);
+		}
+	}
+
+	return found;
+}
+
+/** Why the build cannot read something told to the loading screen. */
+function unreadable(what: string): Error {
+	return new Error(
+		`createLoadingScreen(): ${what} is worked out as the game runs. Write it out in the ` +
+			`call, as plain words and numbers: the loading screen is written into the page ` +
+			`from them, to be seen before any of the game's code has arrived.`
+	);
+}
+
+/** A value written out in a script, as itself: a word, a number, yes or no, or a list of such by name. */
+function writtenOut(piece: Piece, what: string): unknown {
+	if (piece.type === "Literal") return piece.value;
+
+	if (
+		piece.type === "TemplateLiteral" &&
+		(piece.expressions as unknown[]).length === 0
+	) {
+		return ((piece.quasis as Piece[])[0].value as { cooked: string }).cooked;
+	}
+
+	if (piece.type === "UnaryExpression" && piece.operator === "-") {
+		return -Number(writtenOut(piece.argument as Piece, what));
+	}
+
+	if (piece.type === "ObjectExpression") {
+		const read: Record<string, unknown> = {};
+		for (const property of piece.properties as Piece[]) {
+			const key = property.key as Piece | undefined;
+			if (property.type !== "Property" || property.computed || !key) {
+				throw unreadable(`part of ${what}`);
+			}
+
+			const name = String(key.type === "Identifier" ? key.name : key.value);
+			read[name] = writtenOut(property.value as Piece, `${what}'s "${name}"`);
+		}
+
+		return read;
+	}
+
+	throw unreadable(what);
+}
+
+/**
+ * What a script tells `createLoadingScreen()`, read from its source and never by running
+ * it. Nothing where it makes no loading screen. Throws where what it tells cannot be read:
+ * a value worked out as the game runs, or a part the screen does not have.
+ */
+export function readLoading(script: Piece): LoadingRead | undefined {
+	const [call] = loadingCalls(script);
+	if (!call) return undefined;
+
+	const [told] = call.arguments as Piece[];
+	if (!told) return { look: {} };
+	if (told.type !== "ObjectExpression") throw unreadable("what it is told");
+
+	const read: LoadingRead = { look: {} };
+	for (const property of told.properties as Piece[]) {
+		const key = property.key as Piece | undefined;
+		if (property.type !== "Property" || property.computed || !key) {
+			throw unreadable("part of what it is told");
+		}
+
+		const name = String(key.type === "Identifier" ? key.name : key.value);
+		const value = property.value as Piece;
+
+		if (name === "title") {
+			// The page's own title is the one thing it may name: the build has the page.
+			const object = value.object as Piece | undefined;
+			const named = value.property as Piece | undefined;
+			const pageTitle =
+				value.type === "MemberExpression" &&
+				object?.type === "Identifier" &&
+				object.name === "document" &&
+				named?.type === "Identifier" &&
+				named.name === "title";
+			if (!pageTitle) read.title = String(writtenOut(value, "its title"));
+		} else if (name === "logo") {
+			read.logo = String(writtenOut(value, "its logo"));
+		} else if (name === "look") {
+			read.look = writtenOut(value, "its look") as LoadingLook;
+			// Held to what a look may say, here, where the mistake is the studio's to see.
+			lookStyle(read.look);
+		} else {
+			throw new Error(
+				`createLoadingScreen(): the loading screen has no "${name}".`
+			);
+		}
+	}
+
+	return read;
+}
+
 /**
  * Writes the loading screen into the page of a client that shows one (./loading.ts), with
  * what fills it while the game's code arrives:
  *
- * - the screen itself, as `createLoadingScreen()` would make it, named by the page's title,
- *   with the studio's logo over the name where the client has one (`LOGO_FILES`), and its
- *   style in the page;
+ * - the screen itself, as `createLoadingScreen()` would make it from what the game's
+ *   source tells it (`readLoading`): its name, the studio's logo over the name, and its
+ *   look; and its style in the page;
  * - the code the game needs, each file asked for from the start and all at once, not as
  *   the file before it finds it needs it, and each file's size, on the screen;
  * - a small script of the page's own (./loading-first.js), which fills the bar as those
@@ -129,8 +265,36 @@ function codeToLoad(bundle: Rollup.OutputBundle): Rollup.OutputChunk[] {
  *
  * A client that makes no loading screen is left as it is: nothing would take this one away.
  */
-function loadingFirst(client: string): Plugin {
-	return {
+function loadingFirst(client: string): Plugin[] {
+	/** What the game's source tells its loading screen, once a script that makes one is read. */
+	let told: LoadingRead | undefined;
+
+	/** Reads it, from each script as it is built: after it has been made plain JavaScript. */
+	const reader: Plugin = {
+		name: "keros3ne-loading-read",
+		apply: "build",
+		enforce: "post",
+
+		buildStart() {
+			told = undefined;
+		},
+
+		transform(code, id) {
+			if (
+				!code.includes("createLoadingScreen(") ||
+				id.split("?")[0] === LOADING_MODULE
+			) {
+				return null;
+			}
+
+			const read = readLoading(this.parse(code) as unknown as Piece);
+			if (read) told = read;
+
+			return null;
+		}
+	};
+
+	const writer: Plugin = {
 		name: "keros3ne-loading-first",
 		apply: "build",
 		// Before the page is written, so that the script it names is among the client's files.
@@ -169,10 +333,17 @@ function loadingFirst(client: string): Plugin {
 				// No script, no screen: the client shows none (`generateBundle` above).
 				if (!script) return html;
 
-				const title = /<title>([^<]*)<\/title>/.exec(html)?.[1].trim() ?? "";
-				const logo = LOGO_FILES.find((name) =>
+				// The name the call wrote out, or the page's own; as a page's source has it.
+				const title =
+					told?.title !== undefined
+						? told.title.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
+						: (/<title>([^<]*)<\/title>/.exec(html)?.[1].trim() ?? "");
+				// The logo the call named, or one left in the client's folder under its usual name.
+				const found = LOGO_FILES.find((name) =>
 					existsSync(join(client, "public", name))
 				);
+				const logo = told?.logo ?? (found ? `./${found}` : undefined);
+				const style = lookStyle(told?.look ?? {});
 				const code = codeToLoad(bundle);
 				const entries = new Set(
 					chunks.filter((chunk) => chunk.isEntry).map((chunk) => chunk.fileName)
@@ -202,6 +373,8 @@ function loadingFirst(client: string): Plugin {
 						attrs: {
 							class: "sdk-loading sdk-loading-first",
 							"data-waiting": true,
+							// Dressed as the call asked (`look`).
+							...(style ? { style } : {}),
 							"data-code": code
 								.map(
 									(chunk) =>
@@ -216,7 +389,7 @@ function loadingFirst(client: string): Plugin {
 											tag: "img",
 											attrs: {
 												class: "sdk-loading-logo",
-												src: `./${logo}`,
+												src: logo,
 												alt: ""
 											}
 										}
@@ -263,6 +436,8 @@ function loadingFirst(client: string): Plugin {
 			}
 		}
 	};
+
+	return [reader, writer];
 }
 
 export function clientConfig(folder: string, watch = false): InlineConfig {
@@ -283,7 +458,7 @@ export function clientConfig(folder: string, watch = false): InlineConfig {
 		// A client may be written in Svelte, in runes: compiled here, with no config of its own.
 		plugins: [
 			svelte({ configFile: false, compilerOptions: { runes: true } }),
-			loadingFirst(client)
+			...loadingFirst(client)
 		],
 		build: {
 			outDir: join(client, "dist"),

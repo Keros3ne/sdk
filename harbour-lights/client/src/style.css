@@ -14,20 +14,6 @@
 	--bar-surface: var(--deep);
 	--bar-accent: var(--lamp);
 	--bar-on-accent: var(--deep);
-	/* The loading screen, on the game's own evening: when it leaves, only what is in front
-	   changes. Its logo is public/loading-logo.svg. */
-	--loading-surface: radial-gradient(
-		circle at 50% 20%,
-		#24546a,
-		var(--sea) 55%,
-		var(--deep)
-	);
-	--loading-ink: var(--foam);
-	--loading-track: #1d4152;
-	--loading-fill: var(--lamp);
-	--loading-title-case: uppercase;
-	--loading-title-spacing: 0.14em;
-	--loading-logo-width: 96px;
 }
 
 * {

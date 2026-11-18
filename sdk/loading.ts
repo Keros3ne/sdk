@@ -11,7 +11,14 @@
  * however short the wait, and `done()` takes it away only once the game under it has been
  * drawn: a game is put together a piece at a time, and none of that is to be seen. How it
  * looks is the studio's, to match the game it gives way to: its ground, colours, typeface
- * and bar through the properties in ./loading.css, and a logo of the studio's over the name.
+ * and bar (`look`), and a logo of the studio's over the name (`logo`), told to
+ * `createLoadingScreen()`:
+ *
+ *     createLoadingScreen({
+ *         title: document.title,
+ *         logo: "./loading-logo.svg",
+ *         look: { surface: "linear-gradient(#1b2a5c, #0d1022)", fill: "#ffd166" }
+ *     });
  *
  * Most of a game's loading is its own code arriving, which is over before any of that code
  * can run. So a built client's page already has this screen written into it
@@ -24,6 +31,9 @@
  * Created: 2026-11-17
  */
 import "./loading.css";
+import { lookProperties, type LoadingLook } from "./loading-look.ts";
+
+export type { LoadingLook };
 
 export interface LoadingScreen {
 	/**
@@ -58,19 +68,27 @@ function drawn(): Promise<void> {
 	});
 }
 
-export function createLoadingScreen(
-	config: {
-		/** The game's name, over the bar. */
-		title?: string;
-		/**
-		 * The address of the studio's logo, drawn over the name, where the game makes the
-		 * screen itself (a story). A built client's page has the screen in it already, with
-		 * the logo the build found in the client's folder (`public/loading-logo.svg`).
-		 */
-		logo?: string;
-	} = {}
-): LoadingScreen {
-	const { title, logo } = config;
+/**
+ * What a loading screen is told. Write it out in the call itself, as plain words and
+ * numbers (`title` may also be `document.title`): the build reads it from the game's
+ * source, without running any of it, to write the same screen into the page, where it
+ * is seen while the game's code is still arriving. Anything worked out as the code runs
+ * could only be known once the wait was over, so the build refuses it.
+ */
+export interface LoadingConfig {
+	/** The game's name, over the bar. */
+	title?: string;
+	/**
+	 * The studio's logo, drawn over the name: the address of a picture in the client's
+	 * `public` folder, from the page (`"./loading-logo.svg"`).
+	 */
+	logo?: string;
+	/** How the screen looks, to match the game it gives way to. */
+	look?: LoadingLook;
+}
+
+export function createLoadingScreen(config: LoadingConfig = {}): LoadingScreen {
+	const { title, logo, look = {} } = config;
 
 	// The screen the page came with, part filled already by the code's arrival, or a new one.
 	const written = document.querySelector<HTMLElement>(".sdk-loading[data-waiting]");
@@ -86,6 +104,16 @@ export function createLoadingScreen(
 		from = Math.min(1, Math.max(0, Number(written.dataset.shown) || 0));
 		bar = written.querySelector<HTMLElement>(".sdk-loading-bar")!;
 		fill = written.querySelector<HTMLElement>(".sdk-loading-fill")!;
+
+		// The build wrote the logo in, from this same call. Where it could not (a page not
+		// built by the SDK), it is added here.
+		if (logo && !written.querySelector(".sdk-loading-logo")) {
+			const picture = document.createElement("img");
+			picture.className = "sdk-loading-logo";
+			picture.src = logo;
+			picture.alt = "";
+			written.prepend(picture);
+		}
 	} else {
 		screen.className = "sdk-loading";
 		if (logo) {
@@ -113,6 +141,10 @@ export function createLoadingScreen(
 		screen.append(bar);
 		document.body.append(screen);
 	}
+
+	// Dressed as the studio asked: the same as the build wrote, on a screen it wrote.
+	for (const [name, value] of lookProperties(look))
+		screen.style.setProperty(name, value);
 
 	// What is tracked, by weight, and what has settled of it; and a share set directly.
 	let total = 0;

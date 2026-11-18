@@ -248,7 +248,8 @@ game window. It is written in Svelte and drawn with Pixi.
 `/client-build`), from `client/index.html`, with `client/public` copied as it is: by the
 site, by `check` and by `dev`. There is no build configuration of your own: a Vite config is
 code, and the site would be running it. A client that shows a loading screen has it written
-into its page by the build, with the code to wait for (`loadingFirst` in `/client-build`).
+into its page by the build, as its call of `createLoadingScreen()` says, with the code to
+wait for (`loadingFirst` in `/client-build`).
 Files the build names by what is in them (everything under `assets/`) are kept by a
 player's browser for good; the page itself and what `public` brought are asked for each
 time. The site builds your client with the SDK and
@@ -424,16 +425,33 @@ and refuses a client built for another version of the protocol.
    been drawn. It covers the game from the first moment, however short the wait, so a
    player never sees the game being put together: call `done()` only when everything is
    ready to be seen. **Make it look like your game**, so that when it leaves only what is
-   in front changes: its ground (`--loading-surface`: a colour, a gradient, a picture of
-   yours), its colours, typeface and bar are yours through the `--loading-*` properties
-   (all of them are listed in `loading.css`), set in your client's style sheet. Your logo
-   goes on it too: put `loading-logo.svg` (or `.png`, `.webp`, `.jpg`) in `client/public`,
-   and it is drawn over the game's name (`--loading-title: none` leaves the name out,
-   where the logo says it). Harbour Lights' `style.css` does all of this. Most of what a
-   game waits for is its own code, which cannot draw a screen before it has all arrived:
-   so the build writes the screen into your page, where it fills as your code arrives,
-   and `createLoadingScreen()` takes that screen over and fills the rest of the bar from
-   what you track. Give your page a `<title>`: it is the name on that screen.
+   in front changes. Tell `createLoadingScreen()` how:
+
+    ```ts
+    const loading = createLoadingScreen({
+    	title: document.title,
+    	logo: "./loading-logo.svg", // your logo, a picture in client/public, over the name
+    	look: {
+    		surface: "linear-gradient(#1b2a5c, #0d1022)", // your game's own ground
+    		ink: "#eef0ff",
+    		fill: "#ffd166",
+    		titleCase: "uppercase"
+    	}
+    });
+    ```
+
+    `look` is its ground, the name's colour, typeface, size, weight, spacing and case
+    (`showTitle: false` leaves the name out, where the logo says it), the bar's colours,
+    size and corners, the logo's size, and the room between them (`LoadingLook` in
+    `/loading`). Where the screen is and what it covers are not yours to change. A value
+    may name a property of your style sheet (`surface: "var(--page)"`). **Write it out in
+    the call**, as plain words and numbers: most of what a game waits for is its own code,
+    which cannot draw a screen before it has all arrived, so the build reads this call
+    from your source, without running it, and writes the same screen into your page,
+    where it fills as your code arrives. A value worked out as the game runs fails the
+    build. `title` may be `document.title`: give your page a `<title>`. Harbour Lights'
+    `main.ts` does all of this.
+
 9. **Show what each win paid, over the reels.** A slot writes the amount of each win where
    it is, not only the total. The `Board` does (`showWins`), choosing a cell of each win so
    that several amounts keep apart; `placeLabels()` in `/ui` is the same choice, for a

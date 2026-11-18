@@ -16,7 +16,23 @@ import "./style.css";
 
 // Up first: the loading screen, while the site answers and the pictures and the bar's
 // typeface arrive.
-const loading = createLoadingScreen({ title: document.title });
+// It is the game's own: on the evening the game opens on (style.css's ground), so that when
+// it leaves only what is in front changes, with the studio's logo over the name. Written
+// out here, plainly: the build reads this call to draw the same screen before any of this
+// code has arrived.
+const loading = createLoadingScreen({
+	title: document.title,
+	logo: "./loading-logo.svg",
+	look: {
+		surface: "radial-gradient(circle at 50% 20%, #24546a, #173341 55%, #0f2530)",
+		ink: "#f4efe6",
+		track: "#1d4152",
+		fill: "#ffd56b",
+		titleCase: "uppercase",
+		titleSpacing: "0.14em",
+		logoWidth: 96
+	}
+});
 const typeface = loading.track(
 	document.fonts.load('500 15px "Geist Variable"').catch(() => null)
 );

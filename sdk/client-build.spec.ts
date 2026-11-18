@@ -125,10 +125,48 @@ describe("a client that shows a loading screen", () => {
 
 		const logo = `<img class="sdk-loading-logo" src="./loading-logo.svg" alt="">`;
 		expect(page).toContain(logo);
-		expect(page.indexOf(logo)).toBeLessThan(page.indexOf(`<p class="sdk-loading-title"`));
+		expect(page.indexOf(logo)).toBeLessThan(
+			page.indexOf(`<p class="sdk-loading-title"`)
+		);
 		expect(
 			existsSync(join(studio, "branded", "client", "dist", "loading-logo.svg"))
 		).toBe(true);
+	});
+
+	it("is dressed as the call says, read from the game's source: its name, logo and look", async () => {
+		write({
+			"dressed/client/public/mark.svg": `<svg xmlns="http://www.w3.org/2000/svg" />`
+		});
+		const { page } = await built(
+			"dressed",
+			`import { createLoadingScreen } from "${fileURLToPath(new URL("./loading.ts", import.meta.url))}";\n\nconst loading = createLoadingScreen({\n\ttitle: "Tide <Time>",\n\tlogo: "./mark.svg",\n\tlook: { surface: "linear-gradient(#123, #456)", fill: \`#fc0\`, barWidth: 180, showTitle: true }\n});\nvoid loading.done();`
+		);
+
+		expect(page).toContain(
+			`style="--loading-surface: linear-gradient(#123, #456); --loading-fill: #fc0; --loading-bar-width: 180px"`
+		);
+		expect(page).toContain(`<img class="sdk-loading-logo" src="./mark.svg" alt="">`);
+		// The name it wrote out, not the page's title.
+		expect(page).toContain(`<p class="sdk-loading-title">Tide &lt;Time></p>`);
+		expect(page).toContain(`aria-label="Loading Tide &lt;Time&gt;"`);
+	});
+
+	it("is refused where what the call says is worked out as the game runs, or is not the screen's", async () => {
+		const loading = fileURLToPath(new URL("./loading.ts", import.meta.url));
+
+		await expect(
+			built(
+				"worked-out",
+				`import { createLoadingScreen } from "${loading}";\n\nconst colour = Math.random() > 0.5 ? "#123" : "#456";\nvoid createLoadingScreen({ look: { surface: colour } }).done();`
+			)
+		).rejects.toThrow(/its look's "surface" is worked out as the game runs/);
+
+		await expect(
+			built(
+				"not-its-own",
+				`import { createLoadingScreen } from "${loading}";\n\nvoid createLoadingScreen({ look: { surface: "#123; position: static" } }).done();`
+			)
+		).rejects.toThrow(/"surface" cannot be/);
 	});
 
 	it("is left as it was written when it shows none: nothing would take the screen away", async () => {

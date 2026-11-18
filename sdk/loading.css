@@ -2,33 +2,27 @@
  * The loading screen (./loading.ts): over the whole game until it is ready, with a bar that
  * fills as what it waits for arrives.
  *
- * How it looks is the studio's, so that it can look like the game it gives way to. Set
- * these on `body` or on `.sdk-loading`, in the client's own style sheet (which the page waits
- * for before it draws anything, so the screen is never seen without them):
+ * How it looks is the studio's, so that it can look like the game it gives way to, and is
+ * told to `createLoadingScreen()` (`look` and `logo`: ./loading.ts, ./loading-look.ts),
+ * which sets the properties below on the screen. What is written here without one of them
+ * is not a studio's to change: that the screen covers the whole game, over everything,
+ * that its parts are in the middle, one over the next, and that the bar fills from the left.
  *
- *   --loading-surface        what it is drawn on: a colour, a gradient, a picture of the
- *                            client's own, anything `background` takes. Left alone, the
- *                            site's own ground.
- *   --loading-ink            the game's name over the bar
- *   --loading-font           the name's typeface. Left alone, the bar's.
- *   --loading-title-size     the name's size (15px), --loading-title-weight its weight (500),
- *   --loading-title-spacing  the room between its letters, and --loading-title-case its
- *                            case (`uppercase`)
- *   --loading-title          `none` to leave the name out, where the logo says it
- *   --loading-track          the empty part of the bar
- *   --loading-fill           the filled part: a colour or a gradient. Left alone, the bar's
- *                            accent, or ink.
- *   --loading-bar-width      the bar's width (240px, and never over 60% of the game's),
- *   --loading-bar-height     its height (4px) and --loading-bar-radius its corners (2px)
- *   --loading-logo-width     the logo's width (160px, and never over half the game's) and
- *   --loading-logo-height    the most it may be tall (a third of the game's)
- *   --loading-gap            the room between the logo, the name and the bar (18px)
+ *   --loading-surface        what it is drawn on (`surface`)
+ *   --loading-ink            the game's name over the bar (`ink`)
+ *   --loading-font           the name's typeface (`font`). Left alone, the bar's.
+ *   --loading-title-size     the name's size, --loading-title-weight its weight,
+ *   --loading-title-spacing  the room between its letters, --loading-title-case its case
+ *   --loading-title          `none` where the name is left out (`showTitle: false`)
+ *   --loading-track          the empty part of the bar (`track`)
+ *   --loading-fill           the filled part (`fill`). Left alone, the bar's accent, or ink.
+ *   --loading-bar-width      the bar's width, --loading-bar-height its height and
+ *   --loading-bar-radius     its corners
+ *   --loading-logo-width     the logo's width and --loading-logo-height the most it is tall
+ *   --loading-gap            the room between the logo, the name and the bar
  *
- * The logo is the studio's picture, drawn over the name: `public/loading-logo.svg` (or
- * `.png`, `.webp`, `.jpg`) in the client's folder, which the build finds and writes into
- * the page with the screen. The parts may be styled by their classes too
- * (`.sdk-loading-logo`, `.sdk-loading-title`, `.sdk-loading-bar`, `.sdk-loading-fill`), so
- * long as the screen still covers the game and the bar still fills from the left.
+ * A value may name a property of the game's own style sheet (`surface: "var(--page)"`),
+ * which the page waits for before it draws anything.
  *
  * The values left alone repeat the site's own (src/app.css), which a game's frame
  * cannot read.
