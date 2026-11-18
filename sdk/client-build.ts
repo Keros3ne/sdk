@@ -12,7 +12,7 @@
  * from where it is: the folder the site fetched it into, or where the studio installed it.
  */
 import { existsSync, writeFileSync } from "node:fs";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { build, type InlineConfig, type Rollup } from "vite";
@@ -37,8 +37,13 @@ function fetchedPackages(client: string): { find: RegExp; replacement: string }[
 		}));
 }
 
-export function clientConfig(client: string, watch = false): InlineConfig {
+export function clientConfig(folder: string, watch = false): InlineConfig {
+	// From wherever it was named: what is built goes beside the client, not beside whoever asked.
+	const client = resolve(folder);
+
 	return {
+		// Built as it will be served, whatever this was run from (a test, a development server).
+		mode: "production",
 		resolve: { alias: fetchedPackages(client) },
 		configFile: false,
 		envDir: false,

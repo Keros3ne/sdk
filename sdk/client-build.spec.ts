@@ -14,7 +14,7 @@ import {
 	rmSync,
 	writeFileSync
 } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { buildClient } from "./client-build.ts";
@@ -47,7 +47,8 @@ describe("a client that shares a package", () => {
 			"game/client/src/main.ts": `import { mount } from "svelte";\nimport Badge from "@tidewater/kit/Badge.svelte";\nimport { GREETING } from "@tidewater/kit/greeting.ts";\n\nmount(Badge, { target: document.getElementById("game")!, props: { text: GREETING } });`
 		});
 
-		await buildClient(join(studio, "game", "client"));
+		// Named from the folder this is run in, as the site names it.
+		await buildClient(relative(process.cwd(), join(studio, "game", "client")));
 
 		const assets = join(studio, "game", "client", "dist", "assets");
 		const built = readdirSync(assets)
