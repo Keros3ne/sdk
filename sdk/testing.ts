@@ -132,15 +132,20 @@ export function scanClient(dist: string): string[] {
  * The problems with a client's source, in words. The site builds every client itself, with
  * the SDK and nothing else installed, and takes in only a studio's games and shared folders,
  * so a client may import the SDK and files inside `within` (its own game's folder and the
- * studio's shared folders), and nothing else but Svelte and Pixi, which the SDK brings: no
- * other package, and nothing from the network. Its tests and its stories are not looked at;
+ * studio's shared folders), the packages its repository names (`packages`), which are
+ * source of the studio's own held to these same rules, and nothing else but Svelte and
+ * Pixi, which the SDK brings: no other package, and nothing from the network. Its tests and its stories are not looked at;
  * `dist` and `public` are not source.
  */
 export function scanClientSource(
 	client: string,
 	studioRoot: string,
-	within: string[]
+	within: string[],
+	packages: readonly string[] = []
 ): string[] {
+	/** Whether an import is of a package the repository names, or of a file of one. */
+	const named = (from: string) =>
+		packages.some((name) => from === name || from.startsWith(`${name}/`));
 	const problems: string[] = [];
 	const root = resolve(studioRoot);
 	const allowed = within.map((folder) => resolve(folder));
@@ -189,9 +194,9 @@ export function scanClientSource(
 				problems.push(
 					`${name} loads "${from}" from the site's root: use a relative address`
 				);
-			else if (!CLIENT_PACKAGES.test(from))
+			else if (!CLIENT_PACKAGES.test(from) && !named(from))
 				problems.push(
-					`${name} imports "${from}": a client may import the SDK and its studio's own files, and nothing else`
+					`${name} imports "${from}": a client may import the SDK, its studio's own files and the packages its studio.json names, and nothing else`
 				);
 		}
 	}

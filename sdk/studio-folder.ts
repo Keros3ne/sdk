@@ -11,7 +11,7 @@
  *
  * Runs under Bun, which can import a game's TypeScript as it is.
  */
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, realpathSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { loadBookGame } from "./book-files.ts";
 import { checkManifest, type StudioManifest } from "./manifest.ts";
@@ -42,6 +42,24 @@ export function readManifest(root: string): StudioManifest {
 		);
 	}
 	return checkManifest(file, parsed);
+}
+
+/** Where the site keeps a release's packages, in its folder: fetched as source, not installed. */
+export const PACKAGES_FOLDER = "packages";
+
+/**
+ * Where a package the manifest names is, as source: in the folder's own `packages`, where
+ * the site put it, or else where the studio's package manager installed it. `null` if it
+ * is in neither.
+ */
+export function packageFolder(root: string, name: string): string | null {
+	for (const folder of [
+		join(resolve(root), PACKAGES_FOLDER, name),
+		join(resolve(root), "node_modules", name)
+	])
+		if (existsSync(folder)) return realpathSync(folder);
+
+	return null;
 }
 
 const folderOf = (root: string, slug: string): GameFolder => {
@@ -107,7 +125,7 @@ export async function loadGame(folder: GameFolder): Promise<AnyStudioGame> {
 
 	return loadBookGame(
 		folder.dir,
-		readManifest(dirname(folder.dir)).id
+		readManifest(dirname(folder.dir)).id ?? "studio"
 	) as unknown as AnyStudioGame;
 }
 

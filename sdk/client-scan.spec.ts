@@ -17,7 +17,7 @@ const root = mkdtempSync(join(tmpdir(), "keros3ne-client-scan-"));
 afterAll(() => rmSync(root, { recursive: true, force: true }));
 
 /** Writes a studio's files, and scans the client of its game. */
-function scan(files: Record<string, string>): string[] {
+function scan(files: Record<string, string>, packages: string[] = []): string[] {
 	const studio = mkdtempSync(join(root, "studio-"));
 
 	for (const [name, text] of Object.entries(files)) {
@@ -25,9 +25,12 @@ function scan(files: Record<string, string>): string[] {
 		writeFileSync(join(studio, name), text);
 	}
 
-	return scanClientSource(join(studio, "game", "client"), studio, [
-		join(studio, "game")
-	]);
+	return scanClientSource(
+		join(studio, "game", "client"),
+		studio,
+		[join(studio, "game")],
+		packages
+	);
 }
 
 describe("a client's source", () => {
@@ -69,5 +72,21 @@ describe("a client's source", () => {
 				"game/client/src/ReelsStory.svelte": `<script lang="ts">\n\timport { Board } from "@keros3ne/studio-sdk/slot";\n</script>`
 			})
 		).toEqual([]);
+	});
+
+	it("may import a package its repository names, by the package's name, and no other", () => {
+		const files = {
+			"game/client/src/Game.svelte": `<script lang="ts">
+	import Sheet from "@tidewater/kit/Sheet.svelte";
+	import "@tidewater/kit/kit.css";
+	import { play } from "@tidewater/kit-extras/sound";
+</script>`
+		};
+
+		expect(scan(files, ["@tidewater/kit", "@tidewater/kit-extras"])).toEqual([]);
+
+		const problems = scan(files, ["@tidewater/kit"]);
+		expect(problems).toHaveLength(1);
+		expect(problems[0]).toMatch(/imports "@tidewater\/kit-extras\/sound"/);
 	});
 });

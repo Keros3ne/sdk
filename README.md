@@ -11,31 +11,26 @@ things at once:
   three-reel slot kept deliberately simple, so that what it shows is everything a studio
   sends and how, not a game's cleverness.
 
-## Starting a studio
+## Starting a game
 
-Clone this repository and make it yours. You need [Bun](https://bun.sh).
+A studio keeps its games in as many repositories as it likes, one game to each or a few
+together, and each depends on the SDK at a tag. You need [Bun](https://bun.sh).
 
-```sh
-git clone https://github.com/Keros3ne/sdk my-studio && cd my-studio
-git remote rename origin sdk        # where the SDK's updates come from
-bun install
-```
-
-1. Make `studio.json` your studio's: its `id`, `name` and `blurb`, and its `games`.
-2. Put each game in a folder of its own beside it, named by its slug, laid out as
-   `harbour-lights/` is. Keep Harbour Lights to read, or take it out.
-3. Leave `sdk/` as it is. The site builds your games with its own copy of the SDK, never
-   yours, so a change you make there changes nothing on the site.
-
-To take the SDK's updates, merge this repository into yours: `git pull sdk main`, or a
-tag of it. Then set `sdk` in `studio.json` to the version you now build on.
+- **To read, or to try things:** clone this repository. It is a studio's repository as
+  well as the SDK's, and everything below runs in it.
+- **For a game of your own:** a repository with a `package.json` that depends on the SDK
+  (`"@keros3ne/studio-sdk": "github:Keros3ne/sdk#v0.14.0"`), a `studio.json`
+  (`{ "sdk": "^0.14.0", "games": ["your-game"] }`), and the game in a folder named by its
+  slug, laid out as `harbour-lights/` is. `bun x keros3ne-studio` is the command line the
+  scripts below run. What your games share goes in a package of its own (the contract's
+  "Sharing between repositories").
 
 ## What is here
 
 ```
 package.json                      the SDK as a package, and the scripts below
-sdk/                              the SDK: leave it as it is
-studio.json                       the studio, and its games in order
+sdk/                              the SDK itself (in your own repository, a dependency)
+studio.json                       what this repository holds: its games, and the SDK's version
 harbour-lights/
   game.json                       the game: its name, blurb, section and modes
   guide.json                      its rules and paytable, as words and tables
@@ -92,8 +87,8 @@ them, builds the client and lists the game. It never runs your maths. A game ear
 rewards once it is listed. A release may not drop a game: past bets on it must stay
 verifiable.
 
-The example studio is marked `hidden` in its manifest: the site plays it in its tests, and
-does not show it to players. Take that out of yours.
+The site takes this repository's game in under a studio it keeps hidden: its tests play
+Harbour Lights, and players are not shown it.
 
 ## Working on the SDK itself
 

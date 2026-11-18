@@ -7,15 +7,39 @@
  * `client/dist`: plain files with relative addresses, so the site can serve them from whatever
  * path it likes, and nothing inlined, since the policy a client is served under
  * (./frame.ts) allows no inline script.
+ *
+ * A package the game's repository names (`packages` in its studio.json) is read as source
+ * from where it is: the folder the site fetched it into, or where the studio installed it.
  */
 import { existsSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { build, type InlineConfig, type Rollup } from "vite";
+import { sharedPackages } from "./manifest.ts";
+import { PACKAGES_FOLDER, readManifest } from "./studio-folder.ts";
+
+/**
+ * The packages a client's repository names that the site fetched as source, each by its
+ * name: a client's imports of them are read from there. One the studio installed instead
+ * is found as any installed package is, and is not named here.
+ */
+function fetchedPackages(client: string): { find: RegExp; replacement: string }[] {
+	const root = dirname(dirname(client));
+	if (!existsSync(join(root, "studio.json"))) return [];
+
+	return Object.keys(sharedPackages(readManifest(root)))
+		.map((name) => ({ name, folder: join(root, PACKAGES_FOLDER, name) }))
+		.filter((each) => existsSync(each.folder))
+		.map(({ name, folder }) => ({
+			find: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}(?=/|$)`),
+			replacement: folder
+		}));
+}
 
 export function clientConfig(client: string, watch = false): InlineConfig {
 	return {
+		resolve: { alias: fetchedPackages(client) },
 		configFile: false,
 		envDir: false,
 		root: client,

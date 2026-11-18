@@ -31,10 +31,17 @@ site draws a row from a bet's seeds. It has none of your code, and runs none.
 Your game never touches a balance. The client cannot place a bet: it asks the page around
 it, which checks the request and plays the round through the same pipeline as every game.
 
-## A studio's folder
+## A studio's repositories
+
+A studio is known to the site by the name it was registered under and an id the site gave
+it then. Its games are in as many repositories as it likes: one game to a repository, or
+a few together. A release of a repository is what the site takes in, so a studio with a
+hundred games updates one of them by releasing one repository, and nothing else is
+fetched, built or checked again.
 
 ```
-studio.json                 the studio, and its games in order
+package.json                the SDK as a dependency, at a tag; your shared packages too
+studio.json                 what this repository holds
 <slug>/game.json            the game: its name, blurb, section, modes and counters
 <slug>/guide.json           its rules and paytable, as data
 <slug>/maths/index.ts       how each table's rounds play out (exports defineBooks(...))
@@ -42,34 +49,56 @@ studio.json                 the studio, and its games in order
 <slug>/books/books.json     what each table comes to: commit it
 <slug>/books/*.index, *.rows   the books themselves: not committed
 <slug>/client/              the client: index.html, src/, public/card.svg
-<shared>/                   anything the clients share, named in studio.json's "shared"
+<shared>/                   anything this repository's clients share, named in "shared"
 ```
+
+The SDK is a dependency (`"@keros3ne/studio-sdk": "github:Keros3ne/sdk#v0.14.0"`), and
+`keros3ne-studio` is its command line (`bun x keros3ne-studio check`). The SDK's own
+repository is also a studio's repository, with one game, to read or to start from.
 
 `studio.json`:
 
 ```json
 {
-	"id": "tidewater",
-	"name": "Tidewater Games",
-	"blurb": "Slots from the coast.",
-	"url": "https://tidewater.example",
-	"sdk": "^0.11.0",
-	"games": ["harbour-lights", "undertow"]
+	"sdk": "^0.14.0",
+	"games": ["harbour-lights"],
+	"packages": { "@tidewater/kit": "https://github.com/tidewater/kit.git#v1.2.0" }
 }
 ```
 
-- `id` is how the site knows your studio: lowercase words joined by hyphens.
-- `name` and `blurb` are shown where your games are listed; `url`, if given, is linked
-  (https only).
 - `sdk` is the version of this SDK you built on, as a range. `check` fails a manifest for
   another version.
-- `games` lists your games by slug, in the order they are listed. Each is a folder beside
-  the manifest, laid out as above, and its section on the site (Games or Slots) is its
+- `games` lists the games in this repository by slug. Each is a folder beside the
+  manifest, laid out as above, and its section on the site (Games or Slots) is its
   `game.json`'s `category`. A folder of maths the manifest does not list fails the checks.
+  The order says nothing: the site orders what it lists.
 - `shared`, if given, names folders beside the games that their clients share: code, art,
-  sound. A client imports from its own game's folder and these; maths imports none of them.
-- `hidden: true` keeps the studio from players: the site plays it in its tests, and does not
-  show it.
+  sound.
+- `packages`, if given, names what the clients share with your other repositories: see
+  below.
+- `id`, `name` and `blurb`, if given, are what your own tools call the studio. The site
+  does not read them.
+
+### Sharing between repositories: packages
+
+What several games share (a look, sound, a sheet, a way of drawing) is a package: a git
+repository of its own, of source (TypeScript, Svelte, styles, art), which each game's
+repository depends on at a tag.
+
+- In the game's `package.json` it is an ordinary dependency, which your package manager
+  installs: `"@tidewater/kit": "git+https://github.com/tidewater/kit.git#v1.2.0"`.
+- In the game's `studio.json` it is named in `packages`, at the same tag. That is what the
+  site reads: it fetches the package at that tag as source, with nothing installed and
+  nothing run, reads it as it reads a client, and builds the client with it.
+- A client imports its files by their paths: `import Sheet from "@tidewater/kit/Sheet.svelte"`.
+- The package is held to a client's rules: it imports the SDK, Svelte, Pixi and its own
+  files, and no other package. Its `package.json` has no `exports` and no build: say what
+  it needs as `peerDependencies` (`@keros3ne/studio-sdk`, `svelte`), so that your package
+  manager lets it find them.
+- A game is pinned to the tag it names. Releasing the package changes no game until that
+  game's repository names the new tag and is released itself.
+
+Maths shares nothing: a game's books are made from its own folder alone.
 
 ## The game: `game.json`
 
@@ -218,10 +247,10 @@ game window. It is written in Svelte and drawn with Pixi.
 **How it is built.** Every client is built the same way, by the SDK (`buildClient` in
 `/client-build`), from `client/index.html`, with `client/public` copied as it is: by the
 site, by `check` and by `dev`. There is no build configuration of your own: a Vite config is
-code, and the site would be running it. The site builds your client with the SDK and nothing
-else installed, so a client imports the SDK, Svelte and Pixi (which the SDK brings), its own
-game's files and your shared folders, and nothing else: no other package, and nothing from
-the network.
+code, and the site would be running it. The site builds your client with the SDK and
+nothing of yours installed, so a client imports the SDK, Svelte and Pixi (which the SDK
+brings), its own game's files, its repository's shared folders and the packages its
+`studio.json` names, and nothing else: no other package, and nothing from the network.
 
 **What the sandbox means.** The frame has `sandbox="allow-scripts"`, and the files are served
 under a policy that enforces the same even if one is opened directly:
@@ -474,10 +503,14 @@ bun run stories             # your stories, and the SDK's own, in Storybook
    (`harbour-lights.spin.index.gz`). Send them with the tag as the files of its release:
    `gh release create v0.1.0 release/*`. Books are not committed, so this is how they
    travel; the `books/books.json` you did commit is what they are held to.
-5. Send KEROS3NE the repository and the tag.
+5. Send KEROS3NE the repository and the tag. (The first time, KEROS3NE registers your
+   studio and gives it its id; after that a release of any of your repositories is
+   taken in under it.)
 
-The site takes in your manifest, readme, licence, games and shared folders, and nothing
-else of your repository: no build configuration, packages or lockfile. It checks each
+The site takes in your manifest, readme, licence, games and shared folders, and the
+packages the manifest names, each fetched at its tag; nothing else of your repository: no
+build configuration, installed packages or lockfile. What it took in is pinned: the site
+records the commit and a digest of every file, and builds only from exactly that. It checks each
 game's `game.json` and `guide.json`, which are data, and reads the source of its maths and
 client, with none of it run. A person reads your maths in full, and your clients for the
 rules. Then the site fetches each game's books from the release, holds them to the record

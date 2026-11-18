@@ -14,6 +14,7 @@ import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { StorybookConfig } from "@storybook/svelte-vite";
+import { readManifest } from "../studio-folder.ts";
 import { storyBooksPlugin } from "./books-plugin.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -49,7 +50,9 @@ const config: StorybookConfig = {
 			// otherwise bundle it ahead as it does a finished package, and cannot.
 			exclude: [
 				...(viteConfig.optimizeDeps?.exclude ?? []),
-				"@keros3ne/studio-sdk"
+				"@keros3ne/studio-sdk",
+				// And so are the packages the studio's games share.
+				...Object.keys(readManifest(root).packages ?? {})
 			],
 			// What the SDK itself draws with is a finished package, and is still bundled ahead.
 			include: [

@@ -36,7 +36,7 @@ export function createStoryBooks(root: string) {
 		let game = opened.get(slug);
 
 		if (!game) {
-			game = loadBookGame(join(root, slug), studio.id);
+			game = loadBookGame(join(root, slug), studio.id ?? "studio");
 			opened.set(slug, game);
 		}
 

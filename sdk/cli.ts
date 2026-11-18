@@ -15,11 +15,12 @@ import { buildClient } from "./client-build.ts";
 import { existsSync, readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { checkGuide } from "./guide.ts";
-import { sharedFolders, type StudioManifest } from "./manifest.ts";
+import { sharedFolders, sharedPackages, type StudioManifest } from "./manifest.ts";
 import {
 	gameFolders,
 	isBookGame,
 	loadGuide,
+	packageFolder,
 	pickGames,
 	readManifest,
 	type GameFolder
@@ -151,10 +152,12 @@ async function checkClient(
 		problems.push("there is no client/index.html");
 	} else {
 		problems.push(
-			...scanClientSource(folder.client, root, [
-				folder.dir,
-				...sharedFolders(manifest).map((name) => join(root, name))
-			])
+			...scanClientSource(
+				folder.client,
+				root,
+				[folder.dir, ...sharedFolders(manifest).map((name) => join(root, name))],
+				Object.keys(sharedPackages(manifest))
+			)
 		);
 		for (const name of ["vite.config.ts", "vite.config.js", "vite.config.mjs"])
 			if (existsSync(join(folder.client, name)))
@@ -191,7 +194,40 @@ function checkStudio(root: string, manifest: StudioManifest): string[] {
 	for (const folder of shared)
 		if (!existsSync(folder))
 			problems.push(`it shares ${relative(root, folder)}/, which is not there`);
-		else problems.push(...scanClientSource(folder, root, shared));
+		else
+			problems.push(
+				...scanClientSource(
+					folder,
+					root,
+					shared,
+					Object.keys(sharedPackages(manifest))
+				)
+			);
+
+	// A package is source of the studio's own, held to a client's rules: it imports the
+	// SDK and its own files, and no other package.
+	for (const name of Object.keys(sharedPackages(manifest))) {
+		const folder = packageFolder(root, name);
+
+		if (!folder)
+			problems.push(
+				`it names the package ${name}, which is not here: install it (it is a dependency in package.json too)`
+			);
+		else if (
+			existsSync(join(folder, "package.json")) &&
+			"exports" in JSON.parse(readFileSync(join(folder, "package.json"), "utf8"))
+		)
+			problems.push(
+				`the package ${name} has "exports" in its package.json: a shared package is plain source, imported by its files' paths`
+			);
+		else
+			problems.push(
+				...scanClientSource(folder, folder, [folder]).map(
+					(problem) => `${name}: ${problem}`
+				)
+			);
+	}
+
 	return problems;
 }
 
