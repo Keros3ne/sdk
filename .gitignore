@@ -16,3 +16,6 @@ storybook-static
 # Tests
 test-results
 playwright-report
+
+# The files of a release, packed: sent with its tag, not committed.
+/release
