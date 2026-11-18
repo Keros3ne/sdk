@@ -10,6 +10,7 @@
  * Created: 2026-11-17
  */
 
+import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { StorybookConfig } from "@storybook/svelte-vite";
@@ -18,6 +19,11 @@ import { storyBooksPlugin } from "./books-plugin.ts";
 const here = dirname(fileURLToPath(import.meta.url));
 const sdk = resolve(here, "..");
 const root = resolve(process.env.STUDIO_ROOT ?? ".");
+
+/** Where the typefaces the SDK's style sheets load are installed. */
+const TYPEFACES = ["@fontsource-variable/geist", "@fontsource-variable/geist-mono"].map(
+	(name) => dirname(createRequire(import.meta.url).resolve(`${name}/package.json`))
+);
 
 const config: StorybookConfig = {
 	framework: {
@@ -36,8 +42,30 @@ const config: StorybookConfig = {
 	viteFinal: (viteConfig) => ({
 		...viteConfig,
 		plugins: [...(viteConfig.plugins ?? []), storyBooksPlugin(root)],
+		optimizeDeps: {
+			...viteConfig.optimizeDeps,
+			// The SDK is source, Svelte and runes among it, wherever it is read from: where it
+			// is a dependency of what runs this (the site, with a studio taken in), Vite would
+			// otherwise bundle it ahead as it does a finished package, and cannot.
+			exclude: [
+				...(viteConfig.optimizeDeps?.exclude ?? []),
+				"@keros3ne/studio-sdk"
+			],
+			// What the SDK itself draws with is a finished package, and is still bundled ahead.
+			include: [
+				...(viteConfig.optimizeDeps?.include ?? []),
+				"@keros3ne/studio-sdk > pixi.js",
+				"@keros3ne/studio-sdk > pixi.js/unsafe-eval"
+			]
+		},
 		server: {
 			...viteConfig.server,
+			fs: {
+				...viteConfig.server?.fs,
+				// The bar's typefaces are packages of the SDK's, which a package manager may
+				// keep outside the folder this is run from: their files are served all the same.
+				allow: [...(viteConfig.server?.fs?.allow ?? []), root, sdk, ...TYPEFACES]
+			},
 			watch: {
 				...viteConfig.server?.watch,
 				// What is made, not written. A client built again (`keros3ne-studio dev`
