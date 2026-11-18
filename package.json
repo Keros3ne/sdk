@@ -1,6 +1,6 @@
 {
 	"name": "@keros3ne/studio-sdk",
-	"version": "0.12.2",
+	"version": "0.13.0",
 	"description": "Build games for KEROS3NE: how a game's outcomes are made into books, the client's bridge to the site, the stage, the control bar and controls, Storybook, the site's own checks, and keros3ne-studio, the command line to make a game's books, check it and play it. Clone it to start a studio.",
 	"license": "MIT",
 	"type": "module",
@@ -23,6 +23,7 @@
 		"./book-files": "./sdk/book-files.ts",
 		"./book-game": "./sdk/book-game.ts",
 		"./book-maker": "./sdk/book-maker.ts",
+		"./book-pack": "./sdk/book-pack.ts",
 		"./book-play": "./sdk/book-play.ts",
 		"./book-report": "./sdk/book-report.ts",
 		"./book-round": "./sdk/book-round.ts",
@@ -62,7 +63,8 @@
 		"typecheck": "svelte-check --tsconfig ./tsconfig.json",
 		"format": "prettier --write .",
 		"lint": "prettier --check .",
-		"test:browser": "bun --bun playwright install chromium && bun --bun playwright test"
+		"test:browser": "bun --bun playwright install chromium && bun --bun playwright test",
+		"pack": "bun sdk/cli.ts pack"
 	},
 	"dependencies": {
 		"@fontsource-variable/geist": "^5.3.0",

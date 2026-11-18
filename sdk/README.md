@@ -468,16 +468,23 @@ bun run stories             # your stories, and the SDK's own, in Storybook
 
 1. Run `books`, `check` and your tests, or let CI.
 2. Set `sdk` in `studio.json` to the version of the SDK you built on.
-3. Tag the release (`git tag v0.1.0`), push the tag, and send KEROS3NE the repository and
-   the tag.
+3. Commit, tag the release (`git tag v0.1.0`) and push the tag.
+4. Run `keros3ne-studio pack`, which checks each game's books and packs them into
+   `release/`: one compressed file for each file of each table
+   (`harbour-lights.spin.index.gz`). Send them with the tag as the files of its release:
+   `gh release create v0.1.0 release/*`. Books are not committed, so this is how they
+   travel; the `books/books.json` you did commit is what they are held to.
+5. Send KEROS3NE the repository and the tag.
 
 The site takes in your manifest, readme, licence, games and shared folders, and nothing
 else of your repository: no build configuration, packages or lockfile. It checks each
 game's `game.json` and `guide.json`, which are data, and reads the source of its maths and
 client, with none of it run. A person reads your maths in full, and your clients for the
-rules. Then the site makes each game's books from its maths, builds and checks it, and
-lists it. A game earns players rewards (xp, rakeback, card packs) once it is listed: its
-books are what hold it to its return.
+rules. Then the site fetches each game's books from the release, holds them to the record
+you committed and runs the whole check on them, builds and checks the client, and lists
+the game. **The site never runs your maths**: the books are the game, and the maths is how
+you made them, there to be read. A game earns players rewards (xp, rakeback, card packs)
+once it is listed: its books are what hold it to its return.
 
 A release replaces your last one, and may not drop a game: past bets on it must stay
 verifiable. A change to a game's maths, its manifest or its books changes what past bets on

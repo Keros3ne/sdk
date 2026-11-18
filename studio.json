@@ -2,7 +2,7 @@
 	"id": "tidewater",
 	"name": "Tidewater Games",
 	"blurb": "Slots from the coast. The example studio.",
-	"sdk": "^0.12.0",
+	"sdk": "^0.13.0",
 	"hidden": true,
 	"games": ["harbour-lights"]
 }

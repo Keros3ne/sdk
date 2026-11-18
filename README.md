@@ -56,6 +56,7 @@ bun run books        # make each game's books from its maths, and say what they 
 bun run dev          # play Harbour Lights at http://localhost:4190/ against a stand-in for the site
 bun run stories      # the studio's stories, and the SDK's own, in Storybook
 bun run check        # the site's checks on each game's books, guide, maths and client
+bun run pack         # pack each game's books into release/, to send with a tag
 bun run test         # the tests: your games' own, and the SDK's
 bun run typecheck
 ```
@@ -79,13 +80,17 @@ bun run typecheck
 
 1. Run `bun run books`, `bun run check` and `bun run test`, or let CI.
 2. Set `sdk` in `studio.json` to the version of the SDK you built on.
-3. Tag the release (`git tag v0.1.0`) and push the tag.
-4. Send KEROS3NE the repository and the tag.
+3. Commit, tag the release (`git tag v0.1.0`) and push the tag.
+4. Pack the books and send them as the release's files: `bun run pack`, then
+   `gh release create v0.1.0 release/*`.
+5. Send KEROS3NE the repository and the tag.
 
 The site takes in your manifest, readme, licence, games and any folders you list as
-`shared`, and nothing else (not `sdk/`); reads your maths before any of it runs; then
-builds, checks and lists each game. A game earns players rewards once it is listed. A
-release may not drop a game: past bets on it must stay verifiable.
+`shared`, and nothing else (not `sdk/`); a person reads your maths; then it fetches each
+game's books from the release, holds them to the `books/books.json` you committed, checks
+them, builds the client and lists the game. It never runs your maths. A game earns players
+rewards once it is listed. A release may not drop a game: past bets on it must stay
+verifiable.
 
 The example studio is marked `hidden` in its manifest: the site plays it in its tests, and
 does not show it to players. Take that out of yours.

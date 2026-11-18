@@ -37,6 +37,8 @@ Usage:
                                     they hold
   keros3ne-studio check [slug...]   the site's checks on each game: its books, its
                                     guide, its maths and its built client
+  keros3ne-studio pack [slug...]    pack each game's books, checked, into the files a
+                                    release sends with its tag
   keros3ne-studio dev <slug>        build the client as it changes, and play the game in a
                                     browser against a stand-in for the site
 
@@ -48,6 +50,7 @@ Options:
   --root <folder>    the studio's folder, with its studio.json (default: here)
   --workers <number> books: how many workers to play on (default: one for each core)
   --no-build         check: check the client as last built, without building it
+  --out <folder>     pack: where the files go (default: release)
   --port <number>    dev: where to serve it (default: 4190); stories: (default: 6006)
   --build <folder>   stories: build them as a site into this folder, and stop
   --balance <amount> dev: the pretend balance to start with (default: 25.00)
@@ -70,7 +73,7 @@ function parse(argv: string[]) {
 		}
 		const [name, inline] = arg.slice(2).split("=", 2);
 		if (inline !== undefined) options[name] = inline;
-		else if (["root", "port", "balance", "workers", "build"].includes(name))
+		else if (["root", "port", "balance", "workers", "build", "out"].includes(name))
 			options[name] = argv[++i] ?? "";
 		else options[name] = true;
 	}
@@ -269,6 +272,35 @@ async function makeAllBooks(
 	return failed ? 1 : 0;
 }
 
+/**
+ * Packs the books of each game asked for, or of every game the studio has, into the
+ * files a release sends with its tag. Fails if any game's books are missing or do not
+ * pass the check.
+ */
+async function packAllBooks(root: string, slugs: string[], out: string): Promise<number> {
+	const { packBooks } = await import("./book-pack.ts");
+	let failed = false;
+
+	for (const folder of pickGames(root, slugs).filter(isBookGame))
+		try {
+			const files = await packBooks(folder.dir, out);
+
+			console.log(`${folder.slug}: ${files.length} files.`);
+		} catch (error) {
+			failed = true;
+			console.error(
+				`${folder.slug}: ${errorText(error)} Make its books with: keros3ne-studio books ${folder.slug}`
+			);
+		}
+
+	if (!failed)
+		console.log(
+			`\nPacked into ${out}. Send them with the tag, as the files of its release: gh release create <tag> ${out}/*`
+		);
+
+	return failed ? 1 : 0;
+}
+
 async function main(argv: string[]): Promise<number> {
 	const { command, slugs, options } = parse(argv);
 	const root = resolve(typeof options.root === "string" ? options.root : ".");
@@ -320,6 +352,14 @@ async function main(argv: string[]): Promise<number> {
 				running.on("exit", (code) => done(code ?? 0))
 			);
 		}
+		case "pack":
+			return packAllBooks(
+				root,
+				slugs,
+				resolve(
+					typeof options.out === "string" ? options.out : join(root, "release")
+				)
+			);
 		case "books": {
 			const workers =
 				options.workers === undefined ? undefined : Number(options.workers);
