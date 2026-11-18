@@ -10,7 +10,8 @@
  * Make it first, before anything slow starts. It covers the game from the first moment,
  * however short the wait, and `done()` takes it away only once the game under it has been
  * drawn: a game is put together a piece at a time, and none of that is to be seen. How it
- * looks is the studio's, through the properties in ./loading.css.
+ * looks is the studio's, to match the game it gives way to: its ground, colours, typeface
+ * and bar through the properties in ./loading.css, and a logo of the studio's over the name.
  *
  * Most of a game's loading is its own code arriving, which is over before any of that code
  * can run. So a built client's page already has this screen written into it
@@ -57,8 +58,19 @@ function drawn(): Promise<void> {
 	});
 }
 
-export function createLoadingScreen(config: { title?: string } = {}): LoadingScreen {
-	const { title } = config;
+export function createLoadingScreen(
+	config: {
+		/** The game's name, over the bar. */
+		title?: string;
+		/**
+		 * The address of the studio's logo, drawn over the name, where the game makes the
+		 * screen itself (a story). A built client's page has the screen in it already, with
+		 * the logo the build found in the client's folder (`public/loading-logo.svg`).
+		 */
+		logo?: string;
+	} = {}
+): LoadingScreen {
+	const { title, logo } = config;
 
 	// The screen the page came with, part filled already by the code's arrival, or a new one.
 	const written = document.querySelector<HTMLElement>(".sdk-loading[data-waiting]");
@@ -76,6 +88,13 @@ export function createLoadingScreen(config: { title?: string } = {}): LoadingScr
 		fill = written.querySelector<HTMLElement>(".sdk-loading-fill")!;
 	} else {
 		screen.className = "sdk-loading";
+		if (logo) {
+			const picture = document.createElement("img");
+			picture.className = "sdk-loading-logo";
+			picture.src = logo;
+			picture.alt = "";
+			screen.append(picture);
+		}
 		if (title) {
 			const name = document.createElement("p");
 			name.className = "sdk-loading-title";
@@ -149,8 +168,8 @@ export function createLoadingScreen(config: { title?: string } = {}): LoadingScr
 
 			screen.classList.add("leaving");
 			const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-			// Long enough for the bar to be seen full, and to fade.
-			await new Promise((resolve) => setTimeout(resolve, still ? 0 : 400));
+			// As long as it takes to fade (./loading.css).
+			await new Promise((resolve) => setTimeout(resolve, still ? 0 : 200));
 			screen.remove();
 		}
 	};

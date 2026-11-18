@@ -63,6 +63,17 @@ function plain(text: string): string {
 		.replaceAll("&amp;", "&");
 }
 
+/**
+ * The studio's logo for the loading screen, by the names it may have in a client's `public`
+ * folder: the first found is drawn over the game's name.
+ */
+const LOGO_FILES = [
+	"loading-logo.svg",
+	"loading-logo.png",
+	"loading-logo.webp",
+	"loading-logo.jpg"
+];
+
 /** The module that makes the loading screen: a client that has it in its code shows one. */
 const LOADING_MODULE = fileURLToPath(new URL("./loading.ts", import.meta.url));
 
@@ -109,7 +120,8 @@ function codeToLoad(bundle: Rollup.OutputBundle): Rollup.OutputChunk[] {
  * what fills it while the game's code arrives:
  *
  * - the screen itself, as `createLoadingScreen()` would make it, named by the page's title,
- *   and its style in the page, so it is drawn before the game's style sheet has come;
+ *   with the studio's logo over the name where the client has one (`LOGO_FILES`), and its
+ *   style in the page;
  * - the code the game needs, each file asked for from the start and all at once, not as
  *   the file before it finds it needs it, and each file's size, on the screen;
  * - a small script of the page's own (./loading-first.js), which fills the bar as those
@@ -117,7 +129,7 @@ function codeToLoad(bundle: Rollup.OutputBundle): Rollup.OutputChunk[] {
  *
  * A client that makes no loading screen is left as it is: nothing would take this one away.
  */
-function loadingFirst(): Plugin {
+function loadingFirst(client: string): Plugin {
 	return {
 		name: "keros3ne-loading-first",
 		apply: "build",
@@ -158,6 +170,9 @@ function loadingFirst(): Plugin {
 				if (!script) return html;
 
 				const title = /<title>([^<]*)<\/title>/.exec(html)?.[1].trim() ?? "";
+				const logo = LOGO_FILES.find((name) =>
+					existsSync(join(client, "public", name))
+				);
 				const code = codeToLoad(bundle);
 				const entries = new Set(
 					chunks.filter((chunk) => chunk.isEntry).map((chunk) => chunk.fileName)
@@ -195,6 +210,18 @@ function loadingFirst(): Plugin {
 								.join(",")
 						},
 						children: [
+							...(logo
+								? [
+										{
+											tag: "img",
+											attrs: {
+												class: "sdk-loading-logo",
+												src: `./${logo}`,
+												alt: ""
+											}
+										}
+									]
+								: []),
 							...(title
 								? [
 										{
@@ -256,7 +283,7 @@ export function clientConfig(folder: string, watch = false): InlineConfig {
 		// A client may be written in Svelte, in runes: compiled here, with no config of its own.
 		plugins: [
 			svelte({ configFile: false, compilerOptions: { runes: true } }),
-			loadingFirst()
+			loadingFirst(client)
 		],
 		build: {
 			outDir: join(client, "dist"),

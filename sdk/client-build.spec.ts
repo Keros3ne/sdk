@@ -9,6 +9,7 @@
  */
 
 import {
+	existsSync,
 	mkdirSync,
 	mkdtempSync,
 	readFileSync,
@@ -92,6 +93,7 @@ describe("a client that shows a loading screen", () => {
 		expect(page).toMatch(/<div class="sdk-loading sdk-loading-first" data-waiting /);
 		expect(page).toContain(`<p class="sdk-loading-title">Tide &amp; Time</p>`);
 		expect(page).toContain(`aria-label="Loading Tide &amp; Time"`);
+		expect(page).not.toContain('sdk-loading-logo"');
 		// Its style is in the page, after the page's encoding.
 		expect(page.indexOf("<style>")).toBeGreaterThan(page.indexOf("charset"));
 		expect(page).toContain(".sdk-loading-fill {");
@@ -110,6 +112,23 @@ describe("a client that shows a loading screen", () => {
 		expect(code).toHaveLength(1);
 		expect(code[0].split(":")[0]).toBe(main);
 		expect(Number(code[0].split(":")[1]) / size(main)).toBeCloseTo(1, 1);
+	});
+
+	it("has the studio's logo over the name, where the client's public folder has one", async () => {
+		write({
+			"branded/client/public/loading-logo.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 2"><rect width="4" height="2" /></svg>`
+		});
+		const { page } = await built(
+			"branded",
+			`import { createLoadingScreen } from "${fileURLToPath(new URL("./loading.ts", import.meta.url))}";\n\nvoid createLoadingScreen({ title: document.title }).done();`
+		);
+
+		const logo = `<img class="sdk-loading-logo" src="./loading-logo.svg" alt="">`;
+		expect(page).toContain(logo);
+		expect(page.indexOf(logo)).toBeLessThan(page.indexOf(`<p class="sdk-loading-title"`));
+		expect(
+			existsSync(join(studio, "branded", "client", "dist", "loading-logo.svg"))
+		).toBe(true);
 	});
 
 	it("is left as it was written when it shows none: nothing would take the screen away", async () => {

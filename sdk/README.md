@@ -423,12 +423,17 @@ and refuses a client built for another version of the protocol.
    bar's typeface (`document.fonts.load`). `loading.done()` takes it away, once the game under it has
    been drawn. It covers the game from the first moment, however short the wait, so a
    player never sees the game being put together: call `done()` only when everything is
-   ready to be seen. Its colours are yours, through the `--loading-*`
-   properties. Most of what a game waits for is its own code, which cannot draw a screen
-   before it has all arrived: so the build writes the screen into your page, where it
-   fills as your code arrives, and `createLoadingScreen()` takes that screen over and
-   fills the rest of the bar from what you track. Give your page a `<title>`: it is the
-   name on that screen.
+   ready to be seen. **Make it look like your game**, so that when it leaves only what is
+   in front changes: its ground (`--loading-surface`: a colour, a gradient, a picture of
+   yours), its colours, typeface and bar are yours through the `--loading-*` properties
+   (all of them are listed in `loading.css`), set in your client's style sheet. Your logo
+   goes on it too: put `loading-logo.svg` (or `.png`, `.webp`, `.jpg`) in `client/public`,
+   and it is drawn over the game's name (`--loading-title: none` leaves the name out,
+   where the logo says it). Harbour Lights' `style.css` does all of this. Most of what a
+   game waits for is its own code, which cannot draw a screen before it has all arrived:
+   so the build writes the screen into your page, where it fills as your code arrives,
+   and `createLoadingScreen()` takes that screen over and fills the rest of the bar from
+   what you track. Give your page a `<title>`: it is the name on that screen.
 9. **Show what each win paid, over the reels.** A slot writes the amount of each win where
    it is, not only the total. The `Board` does (`showWins`), choosing a cell of each win so
    that several amounts keep apart; `placeLabels()` in `/ui` is the same choice, for a

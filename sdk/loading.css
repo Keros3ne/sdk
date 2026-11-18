@@ -2,13 +2,33 @@
  * The loading screen (./loading.ts): over the whole game until it is ready, with a bar that
  * fills as what it waits for arrives.
  *
- * How it looks, by setting these on `body` or on `.sdk-loading`:
+ * How it looks is the studio's, so that it can look like the game it gives way to. Set
+ * these on `body` or on `.sdk-loading`, in the client's own style sheet (which the page waits
+ * for before it draws anything, so the screen is never seen without them):
  *
- *   --loading-surface  what it is drawn on. Left alone, the site's own ground.
- *   --loading-ink      the game's name over the bar
- *   --loading-track    the empty part of the bar
- *   --loading-fill     the filled part. Left alone, the bar's accent, or ink.
- *   --loading-font     the name's typeface. Left alone, the bar's.
+ *   --loading-surface        what it is drawn on: a colour, a gradient, a picture of the
+ *                            client's own, anything `background` takes. Left alone, the
+ *                            site's own ground.
+ *   --loading-ink            the game's name over the bar
+ *   --loading-font           the name's typeface. Left alone, the bar's.
+ *   --loading-title-size     the name's size (15px), --loading-title-weight its weight (500),
+ *   --loading-title-spacing  the room between its letters, and --loading-title-case its
+ *                            case (`uppercase`)
+ *   --loading-title          `none` to leave the name out, where the logo says it
+ *   --loading-track          the empty part of the bar
+ *   --loading-fill           the filled part: a colour or a gradient. Left alone, the bar's
+ *                            accent, or ink.
+ *   --loading-bar-width      the bar's width (240px, and never over 60% of the game's),
+ *   --loading-bar-height     its height (4px) and --loading-bar-radius its corners (2px)
+ *   --loading-logo-width     the logo's width (160px, and never over half the game's) and
+ *   --loading-logo-height    the most it may be tall (a third of the game's)
+ *   --loading-gap            the room between the logo, the name and the bar (18px)
+ *
+ * The logo is the studio's picture, drawn over the name: `public/loading-logo.svg` (or
+ * `.png`, `.webp`, `.jpg`) in the client's folder, which the build finds and writes into
+ * the page with the screen. The parts may be styled by their classes too
+ * (`.sdk-loading-logo`, `.sdk-loading-title`, `.sdk-loading-bar`, `.sdk-loading-fill`), so
+ * long as the screen still covers the game and the bar still fills from the left.
  *
  * The values left alone repeat the site's own (src/app.css), which a game's frame
  * cannot read.
@@ -23,8 +43,8 @@
  *
  * Its simplest form, a bar alone and centred, is also drawn by a page with no script
  * running yet (the site's own games, GameStage.svelte): the same markup with
- * `sdk-loading-contained`, filling its container rather than the frame, and `data-waiting`, filled by the page's own script (static/loading-progress.js) as
- * the page's code arrives.
+ * `sdk-loading-contained`, filling its container rather than the frame, and `data-waiting`,
+ * filled by the page's own script (static/loading-progress.js) as the page's code arrives.
  */
 .sdk-loading {
 	position: fixed;
@@ -33,11 +53,12 @@
 	display: grid;
 	place-content: center;
 	justify-items: center;
-	gap: 18px;
+	gap: var(--loading-gap, 18px);
 	background: var(--loading-surface, #281b1f);
 	color: var(--loading-ink, var(--bar-ink, #f4f1f2));
 	font:
-		500 15px/1.2 var(--loading-font, var(--bar-font, "Geist Variable")),
+		var(--loading-title-weight, 500) var(--loading-title-size, 15px) / 1.2
+			var(--loading-font, var(--bar-font, "Geist Variable")),
 		ui-sans-serif,
 		system-ui,
 		sans-serif;
@@ -47,15 +68,24 @@
 .sdk-loading.leaving {
 	opacity: 0;
 }
+.sdk-loading-logo {
+	display: block;
+	width: min(var(--loading-logo-width, 160px), 50vw);
+	height: auto;
+	max-height: var(--loading-logo-height, 33vh);
+	object-fit: contain;
+}
 .sdk-loading-title {
+	display: var(--loading-title, block);
 	margin: 0;
-	letter-spacing: 0.02em;
+	letter-spacing: var(--loading-title-spacing, 0.02em);
+	text-transform: var(--loading-title-case, none);
 }
 .sdk-loading-bar {
-	width: min(240px, 60vw);
-	height: 4px;
+	width: min(var(--loading-bar-width, 240px), 60vw);
+	height: var(--loading-bar-height, 4px);
 	overflow: hidden;
-	border-radius: 2px;
+	border-radius: var(--loading-bar-radius, 2px);
 	background: var(--loading-track, #42363b);
 }
 .sdk-loading-fill {
