@@ -1,0 +1,15 @@
+/**
+ * The ground stories are shown on: the site's own, which the SDK's style sheets carry as
+ * the values they fall back to.
+ *
+ * Author: dwclake
+ * Created: 2026-11-17
+ */
+
+html,
+body {
+	margin: 0;
+	background: #25191c;
+	color: #f4f1f2;
+	font-family: "Geist Variable", system-ui, sans-serif;
+}

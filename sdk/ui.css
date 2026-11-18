@@ -1,0 +1,468 @@
+/*
+ * The SDK's own controls. A game is drawn by its studio, top to bottom, so
+ * nothing in it should fall back on the look of the player's browser: a native
+ * <select> opens a menu the game cannot style, and one that may not open at all
+ * inside a frame in full screen. These are the replacements.
+ *
+ * Left alone they look like the site's own controls (its style is Colophon's, in
+ * src/app.css): close surfaces and 1px hairlines, small corners, a menu that is an
+ * underlined field, a chosen option raised in its row, the one main action solid
+ * ink, and the accent only for focus and for what is chosen or on. The values here
+ * repeat the site's, which a game's frame cannot read; change both together.
+ *
+ * A game themes them by setting:
+ *   --sdk-ink        text and symbols
+ *   --sdk-dim        small labels
+ *   --sdk-surface    what popups, lists and buttons are drawn on
+ *   --sdk-line       hairlines
+ *   --sdk-accent     focus, and what is chosen or switched on
+ *   --sdk-on-accent  what is drawn on the accent
+ *   --sdk-main       the one main action in a popup (start autoplay), and a slider's fill
+ *   --sdk-on-main    what is drawn on it
+ *   --sdk-radius     the corners of buttons and choices: 4px, or 999px for pills
+ *
+ * The controls: a menu (`createMenu`), a field to type in (`createField`), a popup
+ * (`createPopup`), a switch, a row of choices, an action, a slider, and autoplay.
+ */
+.sdk-menu {
+	position: relative;
+	display: inline-grid;
+	gap: 6px;
+}
+.sdk-menu-label {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--sdk-dim, #d6ccd2);
+}
+/* An underlined field, as the site's own menus are: the line turns to the accent on focus. */
+.sdk-menu-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	min-height: 44px;
+	padding: 0 2px;
+	border: 0;
+	border-bottom: 1px solid var(--sdk-line, #53474e);
+	border-radius: 0;
+	background: transparent;
+	color: var(--sdk-ink, #f4f1f2);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+.sdk-menu-button::after {
+	content: "";
+	flex: none;
+	width: 6px;
+	height: 6px;
+	margin: -3px 4px 0 0;
+	border-right: 1.4px solid currentColor;
+	border-bottom: 1.4px solid currentColor;
+	transform: rotate(45deg);
+}
+.sdk-menu-button[aria-expanded="true"]::after {
+	margin-top: 3px;
+	transform: rotate(225deg);
+}
+.sdk-menu-button:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+.sdk-menu-list {
+	position: absolute;
+	z-index: 20;
+	right: 0;
+	min-width: 100%;
+	margin: 0;
+	padding: 4px;
+	list-style: none;
+	border: 1px solid var(--sdk-line, #42363b);
+	border-radius: 6px;
+	background: var(--sdk-surface, #2f232b);
+	color: var(--sdk-ink, #f4f1f2);
+	box-shadow:
+		0 1px 2px rgb(0 0 0 / 0.3),
+		0 10px 28px rgb(0 0 0 / 0.45);
+	white-space: nowrap;
+	/* A long list scrolls, kept no taller than the room it has (ui.ts). */
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	/* Slid sideways to stay inside the game (ui.ts). */
+	transform: translateX(var(--sdk-shift, 0px));
+}
+/* Opens upward by default: a game's controls are usually along its bottom edge. */
+.sdk-menu-list {
+	bottom: calc(100% + 6px);
+}
+.sdk-menu[data-opens="down"] .sdk-menu-list {
+	top: calc(100% + 6px);
+	bottom: auto;
+}
+.sdk-menu-option {
+	position: relative;
+	padding: 8px 12px 8px 14px;
+	border-radius: 4px;
+	cursor: pointer;
+}
+/* The chosen option: a short rounded bar down its left, clear of its corners. */
+.sdk-menu-option[aria-selected="true"]::before {
+	content: "";
+	position: absolute;
+	left: 4px;
+	top: 25%;
+	bottom: 25%;
+	width: 3px;
+	border-radius: 2px;
+	background: var(--sdk-accent, #d49791);
+}
+.sdk-menu-option.sdk-active {
+	background: rgb(255 255 255 / 0.07);
+}
+.sdk-menu-button:focus-visible {
+	outline: none;
+	border-bottom-color: var(--sdk-accent, #d49791);
+	box-shadow: 0 1px 0 0 var(--sdk-accent, #d49791);
+}
+.sdk-menu-list:focus-visible {
+	outline: 2px solid var(--sdk-accent, #d49791);
+	outline-offset: 2px;
+}
+
+/* A field to type in: underlined, as the site's are, the line turning to the accent while typing. */
+.sdk-field {
+	display: inline-grid;
+	gap: 6px;
+}
+.sdk-field-label {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--sdk-dim, #d6ccd2);
+}
+.sdk-field-input {
+	min-height: 44px;
+	padding: 0 2px;
+	border: 0;
+	border-bottom: 1px solid var(--sdk-line, #53474e);
+	border-radius: 0;
+	background: transparent;
+	color: var(--sdk-ink, #f4f1f2);
+	font: inherit;
+	font-variant-numeric: tabular-nums;
+}
+.sdk-field-input:focus {
+	outline: none;
+	border-bottom-color: var(--sdk-accent, #d49791);
+	box-shadow: 0 1px 0 0 var(--sdk-accent, #d49791);
+}
+.sdk-field-input:disabled {
+	opacity: 0.45;
+}
+.sdk-field-note {
+	min-height: 1.2em;
+	font-size: 12px;
+	color: var(--sdk-dim, #d6ccd2);
+}
+
+/*
+ * A popup: a button, and a panel that opens over the game from it. The panel
+ * is centred on its button and then slid sideways by --sdk-shift, which the
+ * script sets so that it stays inside the frame.
+ */
+.sdk-popup {
+	position: relative;
+	display: inline-flex;
+}
+.sdk-popup-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 40px;
+	padding: 0 14px;
+	border: 1px solid var(--sdk-line, #42363b);
+	border-radius: var(--sdk-radius, 4px);
+	background: var(--sdk-surface, #2f232b);
+	color: var(--sdk-ink, #f4f1f2);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+}
+.sdk-popup-button:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+.sdk-popup-button[aria-expanded="true"] {
+	border-color: var(--sdk-accent, #d49791);
+	color: var(--sdk-accent, #d49791);
+}
+.sdk-popup-panel {
+	position: absolute;
+	z-index: 20;
+	left: 50%;
+	bottom: calc(100% + 8px);
+	transform: translateX(calc(-50% + var(--sdk-shift, 0px)));
+	display: grid;
+	gap: 6px;
+	width: max-content;
+	max-width: min(300px, calc(100vw - 12px));
+	padding: 8px;
+	border: 1px solid var(--sdk-line, #42363b);
+	border-radius: 6px;
+	background: var(--sdk-surface, #2f232b);
+	color: var(--sdk-ink, #f4f1f2);
+	box-shadow:
+		0 1px 2px rgb(0 0 0 / 0.3),
+		0 10px 28px rgb(0 0 0 / 0.45);
+	font-weight: 500;
+	text-align: left;
+}
+/* What is in a popup may be no wider than it, so a long row of choices wraps rather than running out of it. */
+.sdk-popup-panel > * {
+	min-width: 0;
+}
+.sdk-popup[data-opens="down"] .sdk-popup-panel {
+	top: calc(100% + 8px);
+	bottom: auto;
+}
+.sdk-popup-panel:focus {
+	outline: none;
+}
+.sdk-detail {
+	display: block;
+	font-size: 12px;
+	font-weight: 400;
+	color: var(--sdk-dim, #d6ccd2);
+}
+
+/* A line in a popup that does something. */
+.sdk-action {
+	display: block;
+	width: 100%;
+	min-height: 44px;
+	padding: 6px 12px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	background: rgb(255 255 255 / 0.05);
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+.sdk-action:hover:not(:disabled) {
+	border-color: var(--sdk-line, #42363b);
+}
+.sdk-action:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+/* A switch: its words, then a track with a knob that slides across when it is on. */
+.sdk-switch {
+	display: inline-flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	min-height: 40px;
+	padding: 0 4px;
+	border: 0;
+	border-radius: 4px;
+	background: none;
+	color: var(--sdk-ink, #f4f1f2);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+.sdk-popup-panel .sdk-switch {
+	width: 100%;
+	min-height: 44px;
+	padding: 6px 12px;
+	background: rgb(255 255 255 / 0.05);
+}
+.sdk-switch-track {
+	position: relative;
+	flex: none;
+	width: 40px;
+	height: 24px;
+	border: 1px solid var(--sdk-line, #53474e);
+	border-radius: 999px;
+	background: transparent;
+}
+.sdk-switch-track::after {
+	content: "";
+	position: absolute;
+	top: 3px;
+	left: 3px;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: var(--sdk-dim, #d6ccd2);
+	transition: transform 120ms;
+}
+.sdk-switch[aria-checked="true"] .sdk-switch-track {
+	border-color: var(--sdk-accent, #d49791);
+	background: var(--sdk-accent, #d49791);
+}
+.sdk-switch[aria-checked="true"] .sdk-switch-track::after {
+	transform: translateX(16px);
+	background: var(--sdk-on-accent, #25191c);
+}
+.sdk-switch:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+/* A few options side by side, one of them chosen: a row in a sunken frame, the chosen one raised. */
+.sdk-choices {
+	display: grid;
+	/* A column no wider than the choices' room, so a long row of them wraps (in a popup, say). */
+	grid-template-columns: minmax(0, 1fr);
+	gap: 6px;
+}
+.sdk-choices-label {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--sdk-dim, #d6ccd2);
+}
+.sdk-choices-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 2px;
+	width: max-content;
+	max-width: 100%;
+	padding: 2px;
+	border: 1px solid var(--sdk-line, #42363b);
+	border-radius: var(--sdk-radius, 4px);
+	background: rgb(0 0 0 / 0.12);
+}
+.sdk-choice {
+	min-width: 44px;
+	min-height: 36px;
+	padding: 0 12px;
+	border: 0;
+	border-radius: calc(var(--sdk-radius, 4px) - 1px);
+	background: transparent;
+	color: var(--sdk-dim, #d6ccd2);
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+}
+.sdk-choice:hover:not(:disabled) {
+	color: var(--sdk-ink, #f4f1f2);
+}
+.sdk-choice:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+.sdk-choice[aria-checked="true"] {
+	background: var(--sdk-surface, #2f232b);
+	color: var(--sdk-ink, #f4f1f2);
+	outline: 1px solid var(--sdk-line, #42363b);
+}
+
+/* A square, for a button that stops something. Drawn, so it needs no font to have it. */
+.sdk-stop {
+	display: inline-block;
+	width: 0.7em;
+	height: 0.7em;
+	margin-right: 0.45em;
+	border-radius: 2px;
+	background: currentColor;
+}
+
+/*
+ * A slider: a track with a knob on it. The filled part and the knob's place
+ * both come from --sdk-at-share, which the script sets to the value, from 0 to 1.
+ */
+.sdk-slider {
+	display: grid;
+	gap: 6px;
+	min-width: 220px;
+}
+.sdk-slider-heading {
+	display: flex;
+	justify-content: space-between;
+	font-size: 13px;
+}
+.sdk-slider-amount {
+	font-variant-numeric: tabular-nums;
+	color: var(--sdk-dim, #d6ccd2);
+}
+.sdk-slider-track {
+	--knob: 20px;
+	position: relative;
+	height: 32px;
+	border-radius: 999px;
+	cursor: pointer;
+	touch-action: none;
+}
+/* The groove, filled as far as the knob. */
+.sdk-slider-track::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 50%;
+	height: 4px;
+	margin-top: -2px;
+	border-radius: 999px;
+	background: linear-gradient(
+		to right,
+		var(--sdk-main, var(--sdk-ink, #f4f1f2))
+			calc(var(--knob) / 2 + (100% - var(--knob)) * var(--sdk-at-share, 0)),
+		var(--sdk-line, #53474e) 0
+	);
+}
+.sdk-slider-knob {
+	position: absolute;
+	top: 50%;
+	left: calc((100% - var(--knob)) * var(--sdk-at-share, 0));
+	width: var(--knob);
+	height: var(--knob);
+	margin-top: calc(var(--knob) / -2);
+	border: 1px solid var(--sdk-on-main, #25191c);
+	border-radius: 50%;
+	background: var(--sdk-main, var(--sdk-ink, #f4f1f2));
+}
+.sdk-slider.sdk-disabled {
+	opacity: 0.45;
+}
+.sdk-slider.sdk-disabled .sdk-slider-track {
+	cursor: default;
+}
+.sdk-slider-track:focus-visible {
+	outline: 2px solid var(--sdk-accent, #d49791);
+	outline-offset: 2px;
+}
+
+/* The autoplay button keeps its width whether it says "Auto" or counts down behind a stop sign. */
+.sdk-autoplay {
+	min-width: 5em;
+}
+/* The button in a popup that sets something going: the one main action, solid ink. */
+.sdk-start {
+	width: 100%;
+	min-height: 40px;
+	padding: 0 14px;
+	border: 1px solid var(--sdk-main, var(--sdk-ink, #f4f1f2));
+	border-radius: var(--sdk-radius, 4px);
+	background: var(--sdk-main, var(--sdk-ink, #f4f1f2));
+	color: var(--sdk-on-main, #25191c);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+}
+
+.sdk-start:focus-visible,
+.sdk-popup-button:focus-visible,
+.sdk-action:focus-visible,
+.sdk-switch:focus-visible,
+.sdk-choice:focus-visible {
+	outline: 2px solid var(--sdk-accent, #d49791);
+	outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+	.sdk-switch-track::after {
+		transition: none;
+	}
+}

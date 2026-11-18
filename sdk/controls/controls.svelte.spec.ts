@@ -1,0 +1,329 @@
+/**
+ * The control bar and the SDK's controls as Svelte components
+ * (`@keros3ne/studio-sdk/controls`), in a real browser: that the component is the SDK's
+ * bar, that it is made once and then kept to its props,
+ * that what the player sets comes back, and that what is written inside it for the menu
+ * lies in the bar's menu. The rules a bar is held to are in bar-rules.svelte.spec.ts:
+ * there is one bar, and this holds the component to being it.
+ *
+ * Author: dwclake
+ * Created: 2026-11-17
+ */
+
+import { createRawSnippet, flushSync, mount, unmount } from "svelte";
+import { afterEach, describe, expect, it } from "vitest";
+import type { ControlBar as Bar } from "../bar.ts";
+import { ControlBar, Field, Menu, Switch } from "./index.ts";
+
+let game: HTMLElement;
+let mounted: Record<string, unknown>[] = [];
+
+/** A positioned box the size of a game, for a bar to be placed in. */
+function room(): HTMLElement {
+	game = document.createElement("div");
+	game.style.cssText = "position: relative; width: 1000px; height: 600px;";
+	document.body.append(game);
+
+	return game;
+}
+
+const settle = () =>
+	new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+const button = (name: string) =>
+	game.querySelector<HTMLButtonElement>(`button[aria-label="${name}"]`)!;
+const readout = (segment: string) =>
+	game.querySelector(`[data-segment="${segment}"] output`)!.textContent;
+const segments = (within: HTMLElement) =>
+	[...within.querySelectorAll<HTMLElement>(".sdk-bar-segment")]
+		.filter((segment) => !segment.hidden)
+		.map((segment) => [
+			segment.dataset.segment,
+			Math.round(
+				segment.getBoundingClientRect().left - within.getBoundingClientRect().left
+			),
+			Math.round(segment.getBoundingClientRect().width)
+		]);
+
+const config = {
+	bets: [10, 20, 50, 100],
+	startBet: 20,
+	limits: { minStake: 10, maxStake: 100 },
+	play: { label: "Spin", symbol: "spin" } as const
+};
+
+/** Mounts the bar in a fresh room with these props, which may then be changed. */
+function bar(more: Record<string, unknown> = {}) {
+	const props = $state({
+		...config,
+		within: "parent" as const,
+		balance: 25_00,
+		onplay: () => {},
+		...more
+	});
+	mounted.push(mount(ControlBar, { target: room(), props }));
+	flushSync();
+
+	return props as typeof props & Record<string, unknown>;
+}
+
+afterEach(() => {
+	for (const component of mounted) void unmount(component);
+	mounted = [];
+	game?.remove();
+});
+
+describe("the control bar as a component", () => {
+	it("is the SDK's bar: its five segments in the site's order", async () => {
+		bar({
+			autoplay: {
+				counts: [10],
+				noun: ["spin", "spins"],
+				onstart: () => {},
+				onstop: () => {}
+			}
+		});
+
+		await document.fonts.ready;
+		await settle();
+
+		expect(segments(game).map((segment) => segment[0])).toEqual([
+			"menu",
+			"balance",
+			"bet",
+			"play",
+			"win"
+		]);
+	});
+
+	it("shows what its props say, as they change", async () => {
+		const props = bar({ win: 0, busy: false });
+		await settle();
+
+		expect(readout("balance")).toContain("25.00");
+
+		props.balance = 31_50;
+		props.win = 6_50;
+		flushSync();
+		expect(readout("balance")).toContain("31.50");
+		expect(readout("win")).toContain("6.50");
+
+		props.busy = true;
+		flushSync();
+		expect(button("Spin").disabled).toBe(true);
+		expect(button("Raise the bet").disabled).toBe(true);
+
+		props.busy = false;
+		flushSync();
+		expect(button("Spin").disabled).toBe(false);
+	});
+
+	it("is made once: a prop that changes does not undo what the player set", async () => {
+		let bet: number | undefined;
+		let made: Bar | undefined;
+		// What the bar hands back is bound, as a page binds it: props it may set.
+		const props = $state({ balance: 25_00 });
+		mounted.push(
+			mount(ControlBar, {
+				target: room(),
+				props: {
+					...config,
+					within: "parent",
+					onplay: () => {},
+					get balance() {
+						return props.balance;
+					},
+					get bet() {
+						return bet;
+					},
+					set bet(next: number | undefined) {
+						bet = next;
+					},
+					get bar() {
+						return made;
+					},
+					set bar(next: Bar | undefined) {
+						made = next;
+					}
+				}
+			})
+		);
+		flushSync();
+		await settle();
+		const element = game.querySelector(".sdk-bar");
+
+		expect(bet).toBe(20);
+		button("Raise the bet").click();
+		expect(bet).toBe(50);
+		expect(made?.bet).toBe(50);
+
+		// The balance changes, as it does after every play: the same bar, the same bet.
+		props.balance = 10_00;
+		flushSync();
+		expect(game.querySelector(".sdk-bar")).toBe(element);
+		expect(made?.bet).toBe(50);
+		expect(readout("balance")).toContain("10.00");
+	});
+
+	it("tells the game of a press on play, and of a bet changed", async () => {
+		const heard: string[] = [];
+		bar({
+			onplay: () => heard.push("play"),
+			onbet: (bet: number) => heard.push(`bet ${bet}`)
+		});
+		await settle();
+
+		button("Spin").click();
+		button("Lower the bet").click();
+
+		expect(heard).toEqual(["play", "bet 10"]);
+	});
+
+	it("puts what is written for its menu in the bar's menu, and keeps it up to date there", async () => {
+		const state = $state({ rounds: 3 });
+		bar({
+			menu: createRawSnippet(() => ({
+				render: () => `<p class="rounds"></p>`,
+				setup(node: Element) {
+					$effect(() => {
+						node.textContent = `${state.rounds} rounds played`;
+					});
+				}
+			}))
+		});
+		await settle();
+
+		const written = game.querySelector(".rounds")!;
+		expect(written.textContent).toBe("3 rounds played");
+		// In the bar, in the popup its Menu button opens, under the volume.
+		expect(written.closest(".sdk-bar")).not.toBeNull();
+		expect(written.closest(".sdk-popup-panel, [role=dialog]")).not.toBeNull();
+
+		state.rounds = 4;
+		flushSync();
+		expect(written.textContent).toBe("4 rounds played");
+	});
+
+	it("is laid out anew when its layout changes, and refuses one that breaks the rules", async () => {
+		const props = bar({ layout: undefined as object | undefined });
+		await settle();
+		const before = game.querySelector(".sdk-bar")!.getBoundingClientRect().height;
+
+		props.layout = { scale: 1.4 };
+		flushSync();
+		await settle();
+		expect(
+			game.querySelector(".sdk-bar")!.getBoundingClientRect().height
+		).toBeGreaterThan(before * 1.2);
+
+		// The bet is not a studio's to hide, written as a component or not.
+		expect(() => bar({ layout: { hide: ["bet"] } })).toThrow(/cannot be hidden/);
+	});
+
+	it("does not read the balance while it is being set up, only once it is in the page", async () => {
+		// The site hands the bar a balance its layout is still waiting for. Read before it
+		// had come, it stopped the whole page being drawn: every game with autoplay.
+		let arrived = false;
+		const made = mount(ControlBar, {
+			target: room(),
+			props: {
+				...config,
+				within: "parent",
+				onplay: () => {},
+				get balance() {
+					if (!arrived)
+						throw new Error("The balance was read before it had come.");
+
+					return 31_50;
+				}
+			}
+		});
+		mounted.push(made);
+
+		arrived = true;
+		flushSync();
+		await settle();
+		expect(readout("balance")).toContain("31.50");
+	});
+
+	it("takes itself out of the page with its component", async () => {
+		bar();
+		await settle();
+		expect(game.querySelector(".sdk-bar")).not.toBeNull();
+
+		void unmount(mounted.pop()!);
+		flushSync();
+		expect(game.querySelector(".sdk-bar")).toBeNull();
+	});
+});
+
+describe("the controls as components", () => {
+	it("a switch turns, says which way it is, and can be turned from outside", () => {
+		const props = $state({ label: "Boost", checked: false, disabled: false });
+		mounted.push(mount(Switch, { target: room(), props }));
+		flushSync();
+		const control = game.querySelector<HTMLButtonElement>('[role="switch"]')!;
+
+		expect(control.getAttribute("aria-checked")).toBe("false");
+
+		props.checked = true;
+		flushSync();
+		expect(control.getAttribute("aria-checked")).toBe("true");
+
+		props.disabled = true;
+		flushSync();
+		expect(control.disabled).toBe(true);
+	});
+
+	it("a switch pressed tells the game", () => {
+		const heard: boolean[] = [];
+		const props = $state({
+			label: "Boost",
+			onchange: (checked: boolean) => heard.push(checked)
+		});
+		mounted.push(mount(Switch, { target: room(), props }));
+		flushSync();
+
+		game.querySelector<HTMLButtonElement>('[role="switch"]')!.click();
+		expect(heard).toEqual([true]);
+	});
+
+	it("a menu shows the option its value names, and is not made again when that changes", () => {
+		const props = $state({
+			label: "Risk",
+			options: [
+				{ value: "low", label: "Low" },
+				{ value: "high", label: "High" }
+			],
+			value: "low"
+		});
+		mounted.push(mount(Menu, { target: room(), props }));
+		flushSync();
+		const element = game.querySelector(".sdk-menu")!;
+
+		expect(element.textContent).toContain("Low");
+
+		props.value = "high";
+		flushSync();
+		expect(game.querySelector(".sdk-menu")).toBe(element);
+		expect(element.querySelector("button")!.textContent).toContain("High");
+	});
+
+	it("a field keeps what is typed while a note under it changes", () => {
+		const props = $state({ label: "Target", value: "2.00", note: "" });
+		mounted.push(mount(Field, { target: room(), props }));
+		flushSync();
+		const input = game.querySelector<HTMLInputElement>("input")!;
+
+		input.focus();
+		input.value = "2.5";
+		input.dispatchEvent(new Event("input", { bubbles: true }));
+		props.note = "Pays 2.50x";
+		flushSync();
+
+		// The same field, still holding the keyboard and what was typed.
+		expect(game.querySelector("input")).toBe(input);
+		expect(document.activeElement).toBe(input);
+		expect(input.value).toBe("2.5");
+		expect(game.textContent).toContain("Pays 2.50x");
+	});
+});

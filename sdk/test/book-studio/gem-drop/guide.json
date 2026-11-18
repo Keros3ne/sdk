@@ -1,0 +1,18 @@
+{
+	"rules": [
+		{
+			"type": "text",
+			"text": "Spin. Most spins pay nothing, some pay a little, and some drop a gem."
+		},
+		{
+			"type": "text",
+			"lead": "The gems.",
+			"text": "Ten gems pour: one pour in four pays."
+		},
+		{
+			"type": "text",
+			"lead": "The bonus.",
+			"text": "Take it steady or take it wild. Both are worth the same over a long run."
+		}
+	]
+}

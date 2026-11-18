@@ -1,0 +1,99 @@
+# KEROS3NE studio SDK
+
+Build games for KEROS3NE, a social casino played with play money. This repository is two
+things at once:
+
+- **The SDK** (`sdk/`): how a game's outcomes are made into books, the client's bridge to
+  the site, the stage, the board, the control bar and controls, Storybook, the site's own
+  checks, and the command line. **Its README, [`sdk/README.md`](sdk/README.md), is the
+  contract every game is held to.**
+- **A studio to start from**: Tidewater Games, with one game, **Harbour Lights**, a
+  three-reel slot kept deliberately simple, so that what it shows is everything a studio
+  sends and how, not a game's cleverness.
+
+## Starting a studio
+
+Clone this repository and make it yours. You need [Bun](https://bun.sh).
+
+```sh
+git clone https://github.com/Keros3ne/sdk my-studio && cd my-studio
+git remote rename origin sdk        # where the SDK's updates come from
+bun install
+```
+
+1. Make `studio.json` your studio's: its `id`, `name` and `blurb`, and its `games`.
+2. Put each game in a folder of its own beside it, named by its slug, laid out as
+   `harbour-lights/` is. Keep Harbour Lights to read, or take it out.
+3. Leave `sdk/` as it is. The site builds your games with its own copy of the SDK, never
+   yours, so a change you make there changes nothing on the site.
+
+To take the SDK's updates, merge this repository into yours: `git pull sdk main`, or a
+tag of it. Then set `sdk` in `studio.json` to the version you now build on.
+
+## What is here
+
+```
+package.json                      the SDK as a package, and the scripts below
+sdk/                              the SDK: leave it as it is
+studio.json                       the studio, and its games in order
+harbour-lights/
+  game.json                       the game: its name, blurb, section and modes
+  guide.json                      its rules and paytable, as words and tables
+  maths/rules.ts                  its rules, as figures and as play
+  maths/index.ts                  how its book is made: every way its reels can stop
+  maths/maths.spec.ts             its own tests: the rules, the manifest and the guide
+  books/books.json                what its book comes to (the book itself is not committed)
+  client/index.html, src/         what the player sees, in Svelte and Pixi, run sandboxed
+  client/src/*.stories.ts         its stories
+  client/public/card.svg          its picture on the site's game card
+.github/workflows/check.yml       the site's checks, run on every push
+```
+
+## Building a game
+
+```sh
+bun run books        # make each game's books from its maths, and say what they hold
+bun run dev          # play Harbour Lights at http://localhost:4190/ against a stand-in for the site
+bun run stories      # the studio's stories, and the SDK's own, in Storybook
+bun run check        # the site's checks on each game's books, guide, maths and client
+bun run test         # the tests: your games' own, and the SDK's
+bun run typecheck
+```
+
+1. **The site plays a game from its books**, not from your code: for each way of opening a
+   round, a table of rows, each with a weight, what it pays and the events that play it
+   out. Your maths plays the rounds that make them, and is pure: it draws every random
+   choice from the rng it is handed. Every way of playing returns exactly 96.00%: the
+   weights are made so. Harbour Lights' book is every one of the 8,000 ways its reels can
+   stop, so nothing the game can do is left out.
+2. **The client decides nothing.** It asks the site to place a bet through the SDK, plays
+   out the events of the row it is given, and calls `settled()` once it has been shown. It
+   uses the SDK's stage, board, control bar and controls, draws for a wide frame (16 by 10)
+   and a phone's (9 by 16), says what happens for a screen reader, and honours reduced
+   motion. It imports the SDK (`@keros3ne/studio-sdk/...`, which is this repository
+   itself), Svelte, Pixi and your own files, and nothing else.
+3. **The guide** is the game's rules and paytable as words and tables, held to the rules'
+   own figures by a test.
+
+## Sending a release
+
+1. Run `bun run books`, `bun run check` and `bun run test`, or let CI.
+2. Set `sdk` in `studio.json` to the version of the SDK you built on.
+3. Tag the release (`git tag v0.1.0`) and push the tag.
+4. Send KEROS3NE the repository and the tag.
+
+The site takes in your manifest, readme, licence, games and any folders you list as
+`shared`, and nothing else (not `sdk/`); reads your maths before any of it runs; then
+builds, checks and lists each game. A game earns players rewards once it is listed. A
+release may not drop a game: past bets on it must stay verifiable.
+
+The example studio is marked `hidden` in its manifest: the site plays it in its tests, and
+does not show it to players. Take that out of yours.
+
+## Working on the SDK itself
+
+`bun run test` runs the SDK's unit tests and, in a browser, those of its bar and controls;
+`bun run test:browser` runs its stage, its board, Storybook and `dev` in a browser. Its
+version is in `package.json`, and a release of it is a tag.
+
+MIT licensed: see `LICENSE`.

@@ -1,0 +1,90 @@
+/*
+ * The loading screen (./loading.ts): over the whole game until it is ready, with a bar that
+ * fills as what it waits for arrives.
+ *
+ * How it looks, by setting these on `body` or on `.sdk-loading`:
+ *
+ *   --loading-surface  what it is drawn on. Left alone, the site's own ground.
+ *   --loading-ink      the game's name over the bar
+ *   --loading-track    the empty part of the bar
+ *   --loading-fill     the filled part. Left alone, the bar's accent, or ink.
+ *   --loading-font     the name's typeface. Left alone, the bar's.
+ *
+ * The values left alone repeat the site's own (src/app.css), which a game's frame
+ * cannot read.
+ *
+ * Its simplest form, a bar alone and centred, is also drawn by a page with no script
+ * running yet (the site's own games, GameStage.svelte): the same markup with
+ * `sdk-loading-contained`, filling its container rather than the frame and fading in by
+ * itself, and `data-waiting`, filled by the page's own script (static/loading-progress.js) as
+ * the page's code arrives.
+ */
+.sdk-loading {
+	position: fixed;
+	z-index: 50;
+	inset: 0;
+	display: grid;
+	place-content: center;
+	justify-items: center;
+	gap: 18px;
+	background: var(--loading-surface, #281b1f);
+	color: var(--loading-ink, var(--bar-ink, #f4f1f2));
+	font:
+		500 15px/1.2 var(--loading-font, var(--bar-font, "Geist Variable")),
+		ui-sans-serif,
+		system-ui,
+		sans-serif;
+	/* Not seen until loading has taken a moment, so a game that is ready at once never flashes it. */
+	opacity: 0;
+	transition: opacity 200ms;
+}
+.sdk-loading.shown {
+	opacity: 1;
+}
+.sdk-loading.leaving {
+	opacity: 0;
+}
+.sdk-loading-title {
+	margin: 0;
+	letter-spacing: 0.02em;
+}
+.sdk-loading-bar {
+	width: min(240px, 60vw);
+	height: 4px;
+	overflow: hidden;
+	border-radius: 2px;
+	background: var(--loading-track, #42363b);
+}
+.sdk-loading-fill {
+	height: 100%;
+	background: var(--loading-fill, var(--bar-accent, #f4f1f2));
+	transform: scaleX(0);
+	transform-origin: left;
+	transition: transform 200ms;
+}
+@media (prefers-reduced-motion: reduce) {
+	.sdk-loading,
+	.sdk-loading-fill {
+		transition: none;
+	}
+}
+
+/* Filling its container, not the whole frame, and coming into view by itself, after the same
+   moment: drawn before any script runs, so nothing adds `shown`. */
+.sdk-loading-contained {
+	position: absolute;
+	/* Over what is already there, the page's own ground, rather than a ground of its own. */
+	background: var(--loading-surface, transparent);
+	animation: sdk-loading-in 200ms 250ms forwards;
+}
+@keyframes sdk-loading-in {
+	to {
+		opacity: 1;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.sdk-loading-contained {
+		animation: none;
+		opacity: 1;
+	}
+}

@@ -1,0 +1,377 @@
+#!/usr/bin/env bun
+/// <reference types="bun" />
+/**
+ * keros3ne-studio: a studio's tools for building games for KEROS3NE.
+ *
+ *   keros3ne-studio books [slug...]   make a game's books from its maths, and say what they hold
+ *   keros3ne-studio check [slug...]   the site's checks: books, guide, maths, client
+ *   keros3ne-studio dev <slug>        play the game against a stand-in for the site
+ *   keros3ne-studio stories           the studio's stories, and the SDK's own, in Storybook
+ *
+ * Run it in the studio's folder, which holds a folder for each game (studio-folder.ts), or
+ * pass `--root <folder>`. It runs on Bun, which imports a game's TypeScript as it is.
+ */
+import { buildClient } from "./client-build.ts";
+import { existsSync, readFileSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
+import { checkGuide } from "./guide.ts";
+import { sharedFolders, type StudioManifest } from "./manifest.ts";
+import {
+	gameFolders,
+	isBookGame,
+	loadGuide,
+	pickGames,
+	readManifest,
+	type GameFolder
+} from "./studio-folder.ts";
+import { scanClient, scanClientSource, scanMaths } from "./testing.ts";
+
+const HELP = `keros3ne-studio: build games for KEROS3NE
+
+Run it in the studio's folder: the one with studio.json, which lists the studio's games,
+each in a folder of its own beside it.
+
+Usage:
+  keros3ne-studio books [slug...]   play each game's maths into books, weigh them to
+                                    96%, run the site's check on them and say what
+                                    they hold
+  keros3ne-studio check [slug...]   the site's checks on each game: its books, its
+                                    guide, its maths and its built client
+  keros3ne-studio dev <slug>        build the client as it changes, and play the game in a
+                                    browser against a stand-in for the site
+
+  keros3ne-studio stories           open Storybook on the studio's stories (*.stories.ts
+                                    beside a game's client) and the SDK's own, with
+                                    rounds from the studio's real books to play in them
+
+Options:
+  --root <folder>    the studio's folder, with its studio.json (default: here)
+  --workers <number> books: how many workers to play on (default: one for each core)
+  --no-build         check: check the client as last built, without building it
+  --port <number>    dev: where to serve it (default: 4190); stories: (default: 6006)
+  --build <folder>   stories: build them as a site into this folder, and stop
+  --balance <amount> dev: the pretend balance to start with (default: 25.00)
+`;
+
+const { version } = JSON.parse(
+	readFileSync(join(import.meta.dir, "..", "package.json"), "utf8")
+) as {
+	version: string;
+};
+
+function parse(argv: string[]) {
+	const options: Record<string, string | true> = {};
+	const words: string[] = [];
+	for (let i = 0; i < argv.length; i++) {
+		const arg = argv[i];
+		if (!arg.startsWith("--")) {
+			words.push(arg);
+			continue;
+		}
+		const [name, inline] = arg.slice(2).split("=", 2);
+		if (inline !== undefined) options[name] = inline;
+		else if (["root", "port", "balance", "workers", "build"].includes(name))
+			options[name] = argv[++i] ?? "";
+		else options[name] = true;
+	}
+	return { command: words[0], slugs: words.slice(1), options };
+}
+
+const errorText = (error: unknown) =>
+	error instanceof Error ? error.message : String(error);
+
+/** Every check on one game: its books, its guide, its maths and its client. */
+async function checkOne(
+	folder: GameFolder,
+	root: string,
+	build: boolean,
+	manifest: StudioManifest
+): Promise<string[]> {
+	if (!isBookGame(folder))
+		return [
+			"there is no game.json beside its maths: a game is played from books (see the README)"
+		];
+
+	return [
+		...(await checkBooksOf(folder)),
+		...scanMaths(folder.maths),
+		...(await checkClient(folder, root, build, manifest))
+	];
+}
+
+/**
+ * The site's checks on a game played from books, short of its client: its manifest, its
+ * guide, which is plain data, and its books, which must be the ones recorded and pass
+ * the check that sums each mode's return.
+ */
+async function checkBooksOf(folder: GameFolder): Promise<string[]> {
+	const problems: string[] = [];
+
+	try {
+		const { checkGameFolder } = await import("./book-files.ts");
+		const checked = checkGameFolder(folder.dir);
+
+		if (checked.game.slug !== folder.slug)
+			problems.push(
+				`its game.json names it "${checked.game.slug}", not "${folder.slug}"`
+			);
+
+		problems.push(...checked.check.problems);
+	} catch (error) {
+		problems.push(
+			`its books could not be checked: ${errorText(error)} Make them with: keros3ne-studio books ${folder.slug}`
+		);
+	}
+
+	if (!existsSync(folder.guide))
+		problems.push("there is no guide.json beside its game.json");
+	else
+		try {
+			checkGuide(folder.slug, await loadGuide(folder));
+		} catch (error) {
+			problems.push(errorText(error));
+		}
+
+	return problems;
+}
+
+/** The checks on a game's client: what it imports, how it is built, and what it built. */
+async function checkClient(
+	folder: GameFolder,
+	root: string,
+	build: boolean,
+	manifest: StudioManifest
+): Promise<string[]> {
+	const problems: string[] = [];
+
+	if (!existsSync(join(folder.client, "index.html"))) {
+		problems.push("there is no client/index.html");
+	} else {
+		problems.push(
+			...scanClientSource(folder.client, root, [
+				folder.dir,
+				...sharedFolders(manifest).map((name) => join(root, name))
+			])
+		);
+		for (const name of ["vite.config.ts", "vite.config.js", "vite.config.mjs"])
+			if (existsSync(join(folder.client, name)))
+				problems.push(
+					`client/${name} is never used: every client is built the same way, by the SDK. Take it out.`
+				);
+		if (build) {
+			try {
+				await buildClient(folder.client);
+			} catch (error) {
+				problems.push(`its client did not build: ${errorText(error)}`);
+			}
+		}
+		problems.push(...scanClient(join(folder.client, "dist")));
+	}
+	return problems;
+}
+
+/** The problems with the studio as a whole: its manifest beyond its shape, and its shared folders. */
+function checkStudio(root: string, manifest: StudioManifest): string[] {
+	const problems: string[] = [];
+	if (!Bun.semver.satisfies(version, manifest.sdk))
+		problems.push(
+			`it says the studio built on SDK ${manifest.sdk}, but this is ${version}: build on this one, and say so`
+		);
+	const games = gameFolders(root);
+	for (const name of games)
+		if (!manifest.games.includes(name))
+			problems.push(
+				`${name}/ holds a game's maths, but studio.json does not list it`
+			);
+	// What its clients share is held to their rules. Maths can import nothing from it.
+	const shared = sharedFolders(manifest).map((name) => join(root, name));
+	for (const folder of shared)
+		if (!existsSync(folder))
+			problems.push(`it shares ${relative(root, folder)}/, which is not there`);
+		else problems.push(...scanClientSource(folder, root, shared));
+	return problems;
+}
+
+async function check(root: string, slugs: string[], build: boolean) {
+	const manifest = readManifest(root);
+	let failed = false;
+	const studio = checkStudio(root, manifest);
+	if (studio.length) {
+		failed = true;
+		console.error("studio.json:");
+		for (const problem of studio) console.error(`  - ${problem}`);
+	}
+	for (const folder of pickGames(root, slugs)) {
+		const problems = await checkOne(folder, root, build, manifest);
+		if (problems.length === 0) {
+			console.log(`${folder.slug}: passes every check.`);
+		} else {
+			failed = true;
+			console.error(`${folder.slug}:`);
+			for (const problem of problems) console.error(`  - ${problem}`);
+		}
+	}
+	return failed ? 1 : 0;
+}
+
+/**
+ * Makes the books of each game asked for, or of every game the studio has that is played
+ * from books, and prints what they hold. Fails if any game's books do not pass the check.
+ */
+async function makeAllBooks(
+	root: string,
+	slugs: string[],
+	workers?: number
+): Promise<number> {
+	const { makeBooks } = await import("./book-maker.ts");
+	const { formatReport } = await import("./book-report.ts");
+	const folders = pickGames(root, slugs);
+	let failed = false;
+	let made = 0;
+
+	for (const folder of folders) {
+		if (!existsSync(join(folder.dir, "game.json"))) {
+			if (slugs.length > 0) {
+				console.error(
+					`${folder.slug}: it has no game.json, so it is not played from books.`
+				);
+				failed = true;
+			}
+			continue;
+		}
+
+		const started = Date.now();
+		console.log(`${folder.slug}: making its books`);
+
+		const books = await makeBooks(folder.dir, {
+			workers,
+			log: (line) => console.log(`  ${line}`)
+		});
+		made += 1;
+
+		console.log(`\n${formatReport(books.tables, books.check.modes)}\n`);
+
+		if (!books.check.passed) {
+			for (const problem of books.check.problems) console.error(`  - ${problem}`);
+			console.error(`${folder.slug}: its books do NOT pass the site's check.`);
+			failed = true;
+			continue;
+		}
+
+		console.log(
+			`${folder.slug}: books made and checked, ${Math.round((Date.now() - started) / 1000)}s. books/books.json is the record to commit; the books themselves go with a release.`
+		);
+	}
+
+	if (made === 0 && !failed)
+		console.log("No game here is played from books (none has a game.json).");
+
+	return failed ? 1 : 0;
+}
+
+async function main(argv: string[]): Promise<number> {
+	const { command, slugs, options } = parse(argv);
+	const root = resolve(typeof options.root === "string" ? options.root : ".");
+
+	if ("version" in options) {
+		console.log(version);
+		return 0;
+	}
+	switch (command) {
+		case "check":
+			return check(root, slugs, !("no-build" in options));
+		case "stories": {
+			// Storybook's own command, with the SDK's configuration and no other.
+			const { createRequire } = await import("node:module");
+			const storybook = join(
+				createRequire(import.meta.url).resolve("storybook/package.json"),
+				"..",
+				"dist",
+				"bin",
+				"dispatcher.js"
+			);
+			const config = join(import.meta.dir, "storybook");
+			const how =
+				typeof options.build === "string"
+					? ["build", "-c", config, "-o", resolve(options.build)]
+					: [
+							"dev",
+							"-c",
+							config,
+							"-p",
+							String(options.port ?? 6006),
+							"--no-open",
+							"--ci"
+						];
+
+			readManifest(root);
+
+			const { spawn } = await import("node:child_process");
+			const running = spawn("node", [storybook, ...how], {
+				stdio: "inherit",
+				env: { ...process.env, STUDIO_ROOT: root }
+			});
+
+			// Stopped with this command, not left running behind it.
+			for (const signal of ["SIGTERM", "SIGINT"] as const)
+				process.on(signal, () => running.kill(signal));
+
+			return new Promise<number>((done) =>
+				running.on("exit", (code) => done(code ?? 0))
+			);
+		}
+		case "books": {
+			const workers =
+				options.workers === undefined ? undefined : Number(options.workers);
+			if (workers !== undefined && (!Number.isInteger(workers) || workers < 0)) {
+				console.error("--workers is a whole number: 0 plays without any.");
+				return 1;
+			}
+
+			return makeAllBooks(root, slugs, workers);
+		}
+		case "dev":
+		case "dev-serve": {
+			if (slugs.length !== 1) {
+				console.error("Name the one game to play: keros3ne-studio dev <slug>");
+				return 1;
+			}
+			const port = Number(options.port ?? 4190);
+			const balanceText =
+				typeof options.balance === "string" ? options.balance : "25.00";
+			const { parseKero } = await import("./kero.ts");
+			const balance = parseKero(balanceText);
+			if (!Number.isInteger(port) || port <= 0 || balance === null) {
+				console.error(
+					"--port is a number, and --balance an amount such as 25.00."
+				);
+				return 1;
+			}
+			const [folder] = pickGames(root, slugs);
+			const dev = await import("./dev.ts");
+			return command === "dev"
+				? dev.supervise({ cli: import.meta.path, root, folder, port, balance })
+				: dev.serve({ root, folder, port, balance });
+		}
+		case "version":
+			console.log(version);
+			return 0;
+		default:
+			console.log(HELP);
+			return command === undefined || command === "help" || "help" in options
+				? 0
+				: 1;
+	}
+}
+
+if (import.meta.main) {
+	main(process.argv.slice(2)).then(
+		(code) => {
+			if (code !== -1) process.exit(code);
+		},
+		(error) => {
+			console.error(errorText(error));
+			process.exit(1);
+		}
+	);
+}

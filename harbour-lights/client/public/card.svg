@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400">
+	<defs>
+		<radialGradient id="sky" cx="50%" cy="25%" r="80%">
+			<stop offset="0" stop-color="#2f6680"/>
+			<stop offset=".6" stop-color="#173341"/>
+			<stop offset="1" stop-color="#0f2530"/>
+		</radialGradient>
+	</defs>
+	<rect width="300" height="400" fill="url(#sky)"/>
+	<path d="M170 100l120-45v90zM130 100L10 55v90z" fill="#ffd56b" opacity=".3"/>
+	<path d="M128 250l12-150h20l12 150z" fill="#f4efe6"/>
+	<path d="M131 210h38M135 160h30" stroke="#c8423b" stroke-width="12"/>
+	<rect x="132" y="82" width="36" height="24" rx="3" fill="#ffd56b"/>
+	<path d="M124 82h52l-26-24z" fill="#c8423b"/>
+	<path d="M0 255c30-14 60 14 100 0s70-14 100 0 70 14 100 0v145H0z" fill="#1d4152"/>
+</svg>

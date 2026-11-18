@@ -1,0 +1,25 @@
+{
+	"rules": [
+		{
+			"type": "text",
+			"text": "Three reels turn and stop, showing three symbols each. Three of a kind along the middle row pays."
+		},
+		{
+			"type": "text",
+			"text": "Each reel holds the same 20 symbols, so every spin stops one of 8,000 ways."
+		}
+	],
+	"paytable": [
+		{
+			"type": "table",
+			"head": ["Three of a kind", "Pays"],
+			"rows": [
+				["Lighthouse", "1000.00x"],
+				["Anchor", "250.00x"],
+				["Buoy", "50.00x"],
+				["Shell", "10.00x"],
+				["Fish", "4.00x"]
+			]
+		}
+	]
+}

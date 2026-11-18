@@ -1,0 +1,11 @@
+{
+	"slug": "gem-drop",
+	"name": "Gem Drop",
+	"blurb": "A small game for the SDK's own tests of books.",
+	"category": "slots",
+	"modes": [
+		{ "id": "spin", "name": "Spin", "costBp": 10000, "table": "spin" },
+		{ "id": "bonus", "name": "Bought bonus", "costBp": 250000, "table": "bought" }
+	],
+	"counters": [{ "id": "gem", "full": 10, "worthBp": 200, "table": "gem-pour" }]
+}

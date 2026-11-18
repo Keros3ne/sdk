@@ -1,0 +1,18 @@
+node_modules
+.DS_Store
+
+# A game's client, built by the SDK
+**/client/dist
+
+# Books: a game's tables of outcomes, made from its maths with `bun run books`. Only
+# books.json, the record of them, is kept; the books themselves go with a release.
+**/books/*.index
+**/books/*.rows
+**/books/checked.json
+
+# Storybook, built as a site
+storybook-static
+
+# Tests
+test-results
+playwright-report
