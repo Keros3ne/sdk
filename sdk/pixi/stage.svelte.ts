@@ -8,7 +8,7 @@
  * Created: 2026-11-17
  */
 
-import { getContext, onDestroy, setContext } from "svelte";
+import { getContext, onDestroy, setContext, untrack } from "svelte";
 import type { Application, Container, FederatedPointerEvent, Ticker } from "pixi.js";
 
 const KEY = Symbol("keros3ne-pixi-stage");
@@ -111,11 +111,16 @@ export function onTick(tick: (ticker: Ticker) => void): void {
 	const { app } = getStage();
 
 	$effect(() => {
-		const ticker = app().ticker;
+		const application = app();
+		const ticker = application.ticker;
 		const run = () => tick(ticker);
 
 		ticker.add(run);
 
-		return () => ticker.remove(run);
+		// A stage taken away with its pieces (a view given way to another) has destroyed its
+		// ticker before the pieces are told: there is nothing left to be taken off.
+		return () => {
+			if (untrack(app) === application) ticker.remove(run);
+		};
 	});
 }
