@@ -8,7 +8,9 @@
 
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { defineConfig } from "vite";
+import { localResolve } from "../local-packages.ts";
 
 export default defineConfig({
+	...localResolve(),
 	plugins: [svelte({ configFile: false, compilerOptions: { runes: true } })]
 });

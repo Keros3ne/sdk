@@ -1,4 +1,4 @@
-# @keros3ne/studio-sdk
+# @keros3ne/sdk
 
 Build games for KEROS3NE, a social casino played with play money. This is the contract every
 studio game is held to, and the tools to build one: how a game's outcomes are made into
@@ -52,7 +52,7 @@ studio.json                 what this repository holds
 <shared>/                   anything this repository's clients share, named in "shared"
 ```
 
-The SDK is a dependency (`"@keros3ne/studio-sdk": "github:Keros3ne/sdk#v0.14.0"`), and
+The SDK is a dependency (`"@keros3ne/sdk": "github:Keros3ne/sdk#v0.14.0"`), and
 `keros3ne-studio` is its command line (`bun x keros3ne-studio check`). The SDK's own
 repository is also a studio's repository, with one game, to read or to start from.
 
@@ -97,7 +97,7 @@ repository depends on at a tag.
 - A client imports its files by their paths: `import Sheet from "@studio-name/kit/Sheet.svelte"`.
 - The package is held to a client's rules: what it imports by a relative address is its
   own, and it loads nothing from the network. Its `package.json` has no `exports` and no build: say what
-  it needs as `peerDependencies` (`@keros3ne/studio-sdk`, `svelte`), so that your package
+  it needs as `peerDependencies` (`@keros3ne/sdk`, `svelte`), so that your package
   manager lets it find them.
 - A game is pinned to the tag it names. Releasing the package changes no game until that
   game's repository names the new tag and is released itself.
@@ -130,6 +130,10 @@ Maths shares nothing: a game's books are made from its own folder alone.
   rated). Players are shown one word for it: low, medium or high.
 - `shapes` are the shapes the game has a view for: `["wide", "tall"]` for one drawn for a
   phone too. Left out, wide only ("Draw a view for each shape", below).
+- `steps` are what your bar moves the bet by, where they are not the site's own: bands
+  from the smallest bets up, `{ "under": 200, "by": 20 }` for "by 0.20 under 2.00", the
+  last with no `under`. Give the bar the same (`bets: { steps }`). A studio game's bet is
+  never typed, so the site takes only a bet those steps reach, and refuses any other.
 - `minStake` and `maxStake`, in cents, narrow the bets the site takes. The bet times a
   mode's cost must come to whole cents, or the site refuses the bet: a mode at a bet and a
   quarter needs a smallest bet of 0.20.
@@ -174,8 +178,8 @@ A game may keep meters for a player from one bet to the next:
 `maths/index.ts` exports, by default, how each table's rounds play out:
 
 ```ts
-import { defineBooks, type PlayedRow } from "@keros3ne/studio-sdk/book-play";
-import { createRound } from "@keros3ne/studio-sdk/slots";
+import { defineBooks, type PlayedRow } from "@keros3ne/sdk/book-play";
+import { createRound } from "@keros3ne/sdk/slots";
 
 function spin(rng): PlayedRow {
 	const round = createRound();
@@ -193,12 +197,12 @@ export default defineBooks({
 });
 ```
 
-- **Written with** `@keros3ne/studio-sdk/book-play` and, for a slot,
-  `@keros3ne/studio-sdk/slots`: grids from strips or weights, lines, ways, pays anywhere
+- **Written with** `@keros3ne/sdk/book-play` and, for a slot,
+  `@keros3ne/sdk/slots`: grids from strips or weights, lines, ways, pays anywhere
   and clusters, falls and free spins with their limits, and a recorder for a round's
   events. Keep the rules themselves in a file of their own (`rules.ts`), which the client
   may read to draw what the events say.
-- **Pure.** The maths imports those, `@keros3ne/studio-sdk/rng`, `valibot` and its own
+- **Pure.** The maths imports those, `@keros3ne/sdk/rng`, `valibot` and its own
   files, and nothing else. No clock, no network, no randomness of its own: a book must come
   out the same each time it is made. The scan (`scanMaths` in `/testing`) fails any file
   that so much as names `Math.random`, `Date.now`, `new Date`, `fetch`, `process`,
@@ -585,10 +589,10 @@ is the SDK's, as the client build is: you bring no configuration for it.
 
 - A story is a `*.stories.ts` file under a game's `client/`, in Storybook's usual form: a
   component and the props to show it with (`Meta` and `StoryObj` come from
-  `@keros3ne/studio-sdk/stories`). A piece drawn on a stage needs the stage round
+  `@keros3ne/sdk/stories`). A piece drawn on a stage needs the stage round
   it, so a story's component is usually a small Svelte file of its own (`ReelsStory.svelte`)
   that puts the piece on a `Stage` with a button or two to work it.
-- `roundFromBooks()` (`@keros3ne/studio-sdk/stories`) hands a story a round played from the
+- `roundFromBooks()` (`@keros3ne/sdk/stories`) hands a story a round played from the
   game's real books, as the site would play it. Play it through the game's own handlers
   (`playSteps`), and the story shows what a player will see. A round that stops at a choice
   says what may be picked: ask again with the same `seed` and the choice added.
@@ -693,7 +697,7 @@ new slug.
 | `/stories`            | what a story is written with, and rounds from the books for it          |
 | `/client-build`       | how every client is built                                               |
 | `/testing`            | the site's own checks: the scans of a game's maths and client           |
-| `/stand-in`           | a stand-in for the site that plays rounds by its rules, for `dev`       |
+| `/stand-in`           | the engine's stand-in for a site: its bet pipeline in memory, for `dev` |
 | `/*.css`              | the style sheets of the bar, the controls and the loading screen        |
 
 The protocol's version is part of every message, and goes up when a message changes in a

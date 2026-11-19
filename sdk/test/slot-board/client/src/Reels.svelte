@@ -7,8 +7,8 @@ Author: dwclake
 Created: 2026-11-17
 -->
 <script lang="ts">
-	import { getEmitter, onEvent } from "@keros3ne/studio-sdk/emitter";
-	import { Board } from "@keros3ne/studio-sdk/slot";
+	import { getEmitter, onEvent } from "@keros3ne/sdk/emitter";
+	import { Board } from "@keros3ne/sdk/slot";
 	import { START, type StageEvent, type Sym } from "./round.ts";
 
 	let { onstop }: { onstop: (reel: number) => void } = $props();

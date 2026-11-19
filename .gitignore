@@ -22,3 +22,6 @@ playwright-report
 
 # What SvelteKit works out as it builds a client
 **/client/.svelte-kit
+
+# A link to the clone of the engine (package.json, imports)
+/local

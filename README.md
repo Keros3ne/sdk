@@ -19,7 +19,7 @@ together, and each depends on the SDK at a tag. You need [Bun](https://bun.sh).
 - **To read, or to try things:** clone this repository. It is a studio's repository as
   well as the SDK's, and everything below runs in it.
 - **For a game of your own:** a repository with a `package.json` that depends on the SDK
-  (`"@keros3ne/studio-sdk": "github:Keros3ne/sdk#v0.14.0"`), a `studio.json`
+  (`"@keros3ne/sdk": "github:Keros3ne/sdk#v0.14.0"`), a `studio.json`
   (`{ "sdk": "^0.14.0", "games": ["your-game"] }`), and the game in a folder named by its
   slug, laid out as `game-title/` is. `bun x keros3ne-studio` is the command line the
   scripts below run. What your games share goes in a package of its own (the contract's
@@ -67,7 +67,7 @@ bun run typecheck
    out the events of the row it is given, and calls `settled()` once it has been shown. It
    uses the SDK's stage, board, control bar and controls, draws for a wide frame (16 by 10)
    and a phone's (9 by 16), says what happens for a screen reader, and honours reduced
-   motion. It imports the SDK (`@keros3ne/studio-sdk/...`, which is this repository
+   motion. It imports the SDK (`@keros3ne/sdk/...`, which is this repository
    itself), Svelte, Pixi, your own files, and whatever other packages you install: you
    build it, so what it is made of is yours to choose.
 3. **The guide** is the game's rules and paytable as words and tables, held to the rules'
@@ -98,5 +98,21 @@ Game Title, and players are not shown it.
 `bun run test` runs the SDK's unit tests and, in a browser, those of its bar and controls;
 `bun run test:browser` runs its stage, its board, Storybook and `dev` in a browser. Its
 version is in `package.json`, and a release of it is a tag.
+
+### The engine
+
+What plays a game is the engine's (`@keros3ne/engine`, a repository of its own that this
+one depends on at a tag): the random stream, the books and their checks, the manifest, the
+rules of a bet, and the bet pipeline a site plays every bet by. The SDK gives a studio
+those under its own names (`/rng`, `/book-play`, `/bets`, ...), so a studio imports
+everything it writes a game with from one package, and `keros3ne-studio dev` plays a game
+on the engine's stand-in: the same pipeline, over a store in memory.
+
+To change the two together before either is released, clone the engine beside this
+repository and link it: `mkdir -p local && ln -s ../../engine local/engine`. Then
+`bun run local <script>` runs any script here on that clone (`bun run local test`,
+`bun run local test:browser`, `bun run typecheck:local`). The SDK reaches the engine
+through `imports` in `package.json` (`#engine/...`), whose `local` condition names the
+clone's files; without it, the same imports are the installed package.
 
 MIT licensed: see `LICENSE`.

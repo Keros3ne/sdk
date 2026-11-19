@@ -36,7 +36,7 @@ describe("a client's source", () => {
 			scan({
 				"game/client/src/Game.svelte": `<script lang="ts">
 	import { onMount } from "svelte";
-	import { Stage } from "@keros3ne/studio-sdk/pixi";
+	import { Stage } from "@keros3ne/sdk/pixi";
 	import { Texture } from "pixi.js";
 	import confetti from "canvas-confetti";
 	import Sheet from "@studio-name/kit/Sheet.svelte";
@@ -64,7 +64,7 @@ describe("a client's source", () => {
 		expect(
 			scan({
 				"game/client/src/Reels.stories.ts": `import type { Meta } from "@storybook/svelte-vite";\nimport ReelsStory from "./ReelsStory.svelte";`,
-				"game/client/src/ReelsStory.svelte": `<script lang="ts">\n\timport { Board } from "@keros3ne/studio-sdk/slot";\n</script>`
+				"game/client/src/ReelsStory.svelte": `<script lang="ts">\n\timport { Board } from "@keros3ne/sdk/slot";\n</script>`
 			})
 		).toEqual([]);
 	});

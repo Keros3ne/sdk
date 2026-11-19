@@ -11,8 +11,10 @@
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
+import { localResolve } from "./sdk/local-packages.ts";
 
 export default defineConfig({
+	...localResolve(),
 	plugins: [svelte({ configFile: false, compilerOptions: { runes: true } })],
 	test: {
 		// Books are made in several of these: a few at a time leaves the machine usable.

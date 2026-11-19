@@ -9,8 +9,8 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { extname, join, resolve } from "node:path";
-import { buildClient } from "@keros3ne/studio-sdk/client-build";
-import { CLIENT_FILE_TYPES, clientHeaders } from "@keros3ne/studio-sdk/frame";
+import { buildClient } from "@keros3ne/sdk/client-build";
+import { CLIENT_FILE_TYPES, clientHeaders } from "@keros3ne/sdk/frame";
 
 /**
  * Builds the client in `folder` and serves it on `port` under `slug`, as the site would.

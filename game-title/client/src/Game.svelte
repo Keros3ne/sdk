@@ -11,17 +11,17 @@ Created: 2026-11-18
 -->
 <script lang="ts">
 	import { untrack } from "svelte";
-	import type { BarHandle } from "@keros3ne/studio-sdk/bar";
+	import type { BarHandle } from "@keros3ne/sdk/bar";
 	import {
 		Refusal,
 		balanceBeforePayout,
 		formatKero,
 		type GameHost
-	} from "@keros3ne/studio-sdk/client";
-	import { ControlBar } from "@keros3ne/studio-sdk/controls";
-	import { provideEmitter } from "@keros3ne/studio-sdk/emitter";
-	import { playEvents, type Handlers } from "@keros3ne/studio-sdk/events";
-	import { Views, type Shape } from "@keros3ne/studio-sdk/shape";
+	} from "@keros3ne/sdk/client";
+	import { ControlBar } from "@keros3ne/sdk/controls";
+	import { provideEmitter } from "@keros3ne/sdk/emitter";
+	import { playEvents, type Handlers } from "@keros3ne/sdk/events";
+	import { Views, type Shape } from "@keros3ne/sdk/shape";
 	import { LINE_ROW, type Spin } from "../../maths/rules";
 	import type { RoundView, RowEvent, StageEvent } from "./round.ts";
 	import { NAMES } from "./symbols.ts";

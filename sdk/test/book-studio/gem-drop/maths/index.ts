@@ -10,8 +10,8 @@
  * Created: 2026-11-17
  */
 
-import { defineBooks, type PlayedRow } from "@keros3ne/studio-sdk/book-play";
-import type { Rng } from "@keros3ne/studio-sdk/rng";
+import { defineBooks, type PlayedRow } from "@keros3ne/sdk/book-play";
+import type { Rng } from "@keros3ne/sdk/rng";
 
 /** What the bonus is worth, either way it is taken: twenty bets. */
 const BONUS_BP = 200_000;

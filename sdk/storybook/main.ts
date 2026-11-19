@@ -54,15 +54,15 @@ const config: StorybookConfig = {
 			// otherwise bundle it ahead as it does a finished package, and cannot.
 			exclude: [
 				...(viteConfig.optimizeDeps?.exclude ?? []),
-				"@keros3ne/studio-sdk",
+				"@keros3ne/sdk",
 				// And so are the packages the studio's games share.
 				...Object.keys(readManifest(root).packages ?? {})
 			],
 			// What the SDK itself draws with is a finished package, and is still bundled ahead.
 			include: [
 				...(viteConfig.optimizeDeps?.include ?? []),
-				"@keros3ne/studio-sdk > pixi.js",
-				"@keros3ne/studio-sdk > pixi.js/unsafe-eval"
+				"@keros3ne/sdk > pixi.js",
+				"@keros3ne/sdk > pixi.js/unsafe-eval"
 			]
 		},
 		server: {

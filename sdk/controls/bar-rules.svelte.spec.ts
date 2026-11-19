@@ -169,9 +169,6 @@ describe("the SDK's control bar", () => {
 		game.remove();
 
 		// A little short, it gives up the amounts' unit and some of its gaps, and keeps the bet whole.
-		void unmount(mounted!);
-		mounted = null;
-		game.remove();
 		makeBar({ balance: 25_00 }, 800);
 		for (let frames = 0; frames < 4; frames++) await settle();
 		flushSync();

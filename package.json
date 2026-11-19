@@ -1,6 +1,6 @@
 {
-	"name": "@keros3ne/studio-sdk",
-	"version": "0.18.3",
+	"name": "@keros3ne/sdk",
+	"version": "0.19.0",
 	"description": "Build games for KEROS3NE: how a game's outcomes are made into books, the client's bridge to the site, the stage, the control bar and controls, Storybook, the site's own checks, and keros3ne-studio, the command line to make a game's books, check it and play it. Clone it to start a studio.",
 	"license": "MIT",
 	"type": "module",
@@ -52,6 +52,7 @@
 		"./loading-look": "./sdk/loading-look.ts",
 		"./client-build": "./sdk/client-build.ts",
 		"./client-pack": "./sdk/client-pack.ts",
+		"./cli-path": "./sdk/cli-path.ts",
 		"./controls": "./sdk/controls/index.ts",
 		"./testing": "./sdk/testing.ts",
 		"./verify": "./sdk/verify.ts",
@@ -60,20 +61,29 @@
 		"./bar.css": "./sdk/bar.css",
 		"./loading.css": "./sdk/loading.css"
 	},
+	"imports": {
+		"#engine/*": {
+			"local": "./local/engine/src/*.ts",
+			"default": "@keros3ne/engine/*"
+		}
+	},
 	"scripts": {
 		"books": "bun sdk/cli.ts books",
 		"client": "bun sdk/cli.ts client",
 		"check": "bun sdk/cli.ts check",
 		"dev": "bun sdk/cli.ts dev game-title",
 		"stories": "bun sdk/cli.ts stories",
-		"test": "bun --bun vitest --run",
+		"test": "bun node_modules/vitest/vitest.mjs --run",
 		"typecheck": "svelte-check --tsconfig ./tsconfig.json",
+		"typecheck:local": "svelte-check --tsconfig ./tsconfig.local.json",
 		"format": "prettier --write .",
 		"lint": "prettier --check .",
-		"test:browser": "bun --bun playwright install chromium && bun --bun playwright test",
-		"pack": "bun sdk/cli.ts pack"
+		"test:browser": "bun node_modules/@playwright/test/cli.js install chromium && bun node_modules/@playwright/test/cli.js test",
+		"pack": "bun sdk/cli.ts pack",
+		"local": "LOCAL_PACKAGES=1 BUN_OPTIONS=--conditions=local NODE_OPTIONS=--conditions=local bun run"
 	},
 	"dependencies": {
+		"@keros3ne/engine": "github:Keros3ne/engine#v0.7.0",
 		"@fontsource-variable/geist": "^5.3.0",
 		"@fontsource-variable/geist-mono": "^5.3.0",
 		"@noble/hashes": "^2.4.0",

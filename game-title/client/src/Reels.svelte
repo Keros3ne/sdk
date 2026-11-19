@@ -7,10 +7,10 @@ Author: dwclake
 Created: 2026-11-18
 -->
 <script lang="ts">
-	import { getEmitter, onEvent } from "@keros3ne/studio-sdk/emitter";
-	import { Graphics } from "@keros3ne/studio-sdk/pixi";
-	import { Board } from "@keros3ne/studio-sdk/slot";
-	import type { Cell } from "@keros3ne/studio-sdk/slots";
+	import { getEmitter, onEvent } from "@keros3ne/sdk/emitter";
+	import { Graphics } from "@keros3ne/sdk/pixi";
+	import { Board } from "@keros3ne/sdk/slot";
+	import type { Cell } from "@keros3ne/sdk/slots";
 	import { LINE_ROW, REELS, ROWS, STRIP, type SymbolName } from "../../maths/rules";
 	import type { StageEvent } from "./round.ts";
 

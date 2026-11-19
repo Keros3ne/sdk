@@ -21,6 +21,7 @@ import { checkGuide } from "./guide.ts";
 import { clientHeaders, CLIENT_FILE_TYPES } from "./frame.ts";
 import { fromGame } from "./host.ts";
 import { watchClient } from "./client-build.ts";
+import { LOCAL_CONDITIONS } from "./local-packages.ts";
 import { createStandIn } from "./stand-in.ts";
 import { loadGame, loadGuide, type GameFolder } from "./studio-folder.ts";
 
@@ -110,6 +111,7 @@ async function hostScript(): Promise<string> {
 	const built = await Bun.build({
 		entrypoints: [source],
 		target: "browser",
+		conditions: LOCAL_CONDITIONS,
 		minify: false
 	});
 	if (!built.success)
@@ -274,15 +276,15 @@ export async function serve(options: Options): Promise<number> {
 					case "ready":
 						reply = {
 							type: "init",
-							...standIn.init(body.reducedMotion === true)
+							...(await standIn.init(body.reducedMotion === true))
 						};
 						break;
 					case "open":
 					case "act": {
 						const result =
 							message.type === "open"
-								? standIn.open(message.bet, message.params)
-								: standIn.act(message.action);
+								? await standIn.open(message.bet, message.params)
+								: await standIn.act(message.action);
 						reply = result.ok
 							? { type: "round", id: message.id, round: result.round }
 							: {
@@ -298,7 +300,7 @@ export async function serve(options: Options): Promise<number> {
 							type: "progress",
 							id: message.id,
 							bet: message.bet,
-							progress: standIn.progress(message.bet)
+							progress: await standIn.progress(message.bet)
 						};
 						break;
 					case "history":

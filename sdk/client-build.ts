@@ -46,6 +46,7 @@ import { fileURLToPath } from "node:url";
 import adapter from "@sveltejs/adapter-static";
 import { sveltekit } from "@sveltejs/kit/vite";
 import type { InlineConfig, Plugin } from "vite";
+import { localResolve } from "./local-packages.ts";
 import { PROTOCOL } from "./protocol.ts";
 
 /** A file of the SDK's own, beside this one. */
@@ -154,6 +155,7 @@ export function clientConfig(folder: string): InlineConfig {
 		root: client,
 		logLevel: "warn",
 		clearScreen: false,
+		...localResolve(),
 		plugins: [
 			sveltekit({
 				compilerOptions: {

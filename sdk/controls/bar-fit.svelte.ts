@@ -76,11 +76,19 @@ export function createBarFit(): BarFit {
 
 			// Measured again whenever the bar or what is in this side changes size, which giving
 			// something up does: so it goes on, a level at a time, until play is in the middle.
-			const watcher = new ResizeObserver(measure);
+			// Measured in the next frame, never inside the observer's own call: a change of
+			// layout made there is one the browser cannot deliver in the same pass, and it
+			// says so in the console.
+			let frame = 0;
+			const watcher = new ResizeObserver(() => {
+				cancelAnimationFrame(frame);
+				frame = requestAnimationFrame(measure);
+			});
 			watcher.observe(bar);
 			watcher.observe(inside);
 
 			return () => {
+				cancelAnimationFrame(frame);
 				watcher.disconnect();
 				delete bar.dataset.fit;
 			};

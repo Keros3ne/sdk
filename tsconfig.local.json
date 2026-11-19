@@ -1,0 +1,10 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"customConditions": ["local"],
+		"paths": {
+			"#engine/*": ["./local/engine/src/*"],
+			"valibot": ["./node_modules/valibot"]
+		}
+	}
+}

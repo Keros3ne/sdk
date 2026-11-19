@@ -6,8 +6,8 @@ Author: dwclake
 Created: 2026-11-18
 -->
 <script lang="ts">
-	import type { Shape } from "@keros3ne/studio-sdk/shape";
-	import StoryFrame from "@keros3ne/studio-sdk/story";
+	import type { Shape } from "@keros3ne/sdk/shape";
+	import StoryFrame from "@keros3ne/sdk/story";
 	import Game from "./Game.svelte";
 	import { storyHost } from "./story-host.ts";
 	import "./style.css";

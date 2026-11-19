@@ -6,7 +6,7 @@
  * Created: 2026-11-17
  */
 
-import type { Cell, Grid } from "@keros3ne/studio-sdk/slots";
+import type { Cell, Grid } from "@keros3ne/sdk/slots";
 
 export type Sym = "a" | "b" | "c" | "d";
 

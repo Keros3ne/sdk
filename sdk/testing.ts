@@ -17,10 +17,12 @@ export const CLIENT_FILE_MAX_BYTES = 5_000_000;
 
 /**
  * What a game's maths may import: valibot, its own files, and the parts of the SDK that
- * maths is written with (how books are played, the slot helpers, the random stream).
+ * maths is written with (how books are played, the slot helpers, the random stream). The
+ * SDK is named as the package, or as `#sdk/...` where a studio's package.json gives it that
+ * name in its `imports` (the SDK's own test game does, to be run on a clone of the SDK).
  */
 const MATHS_IMPORTS =
-	/^(valibot|@keros3ne\/studio-sdk\/(book-play|slots|rng|maths)|\.\/[\w./-]+)$/;
+	/^(valibot|(@keros3ne\/sdk|#sdk)\/(book-play|slots|rng|maths)|\.\/[\w./-]+)$/;
 
 /**
  * Anything that would make two makings of the same books differ, or reach outside the

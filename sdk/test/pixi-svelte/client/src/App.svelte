@@ -8,9 +8,9 @@ Author: dwclake
 Created: 2026-11-17
 -->
 <script lang="ts">
-	import { LoadingScreen, createLoading } from "@keros3ne/studio-sdk/loading";
+	import { LoadingScreen, createLoading } from "@keros3ne/sdk/loading";
 	import { Rectangle, type Application } from "pixi.js";
-	import { Container, Graphics, Sprite, Stage, Text } from "@keros3ne/studio-sdk/pixi";
+	import { Container, Graphics, Sprite, Stage, Text } from "@keros3ne/sdk/pixi";
 	import Frames from "./Frames.svelte";
 
 	let moved = $state(false);
