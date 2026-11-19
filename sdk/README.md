@@ -398,7 +398,9 @@ and refuses a client built for another version of the protocol.
     **The SDK's bar** (`ControlBar` in `/controls`) is what a game has unless its studio
     makes another: a dock of frosted glass along the bottom of the game, with round buttons.
     The menu and the balance, the bet with buttons to lower and raise it, play in the bar's
-    dead centre, autoplay and the speed of play after it, and the last win. On a game 600px
+    dead centre, autoplay and the speed of play after it, and the last win. Where that
+    would not fit with play in the middle, the bet is one button and the amounts lose their
+    unit (`createBarFit()` in `/controls` is how, for a bar of your own). On a game 600px
     wide or narrower it is one row (the menu, the bet as one button that opens the bets on
     offer, play, autoplay, speed), with the balance and the last win in a strip along the
     top. What a studio sets on it is simple:

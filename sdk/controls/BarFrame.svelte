@@ -154,6 +154,7 @@ Created: 2026-11-19
 		const narrow = width <= NARROW;
 
 		shared.narrow = narrow;
+		shared.width = width;
 		root.toggleAttribute("data-narrow", narrow);
 
 		// A bigger bar still has to fit across the game; at its usual size or under it is left as

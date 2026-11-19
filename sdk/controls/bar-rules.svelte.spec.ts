@@ -124,6 +124,58 @@ describe("the SDK's control bar", () => {
 		expect(bar.rect().width).toBe(1000);
 	});
 
+	it("keeps play in its dead centre at any width and any balance, the bet one button where the whole would not fit", async () => {
+		for (const [width, balance] of [
+			[640, 25_00],
+			[760, 25_00],
+			[900, 25_00],
+			[900, 9_999_999_99],
+			[1200, 9_999_999_99],
+			[1600, 9_999_999_99]
+		]) {
+			makeBar({ balance }, width);
+			await document.fonts.ready;
+			await settle();
+			await settle();
+			flushSync();
+			await settle();
+
+			const where = `at ${width} with ${balance}`;
+			expect(
+				Math.abs(middle(".sdk-bar-play") - middle(".sdk-bar")),
+				where
+			).toBeLessThan(1);
+			// Nothing runs out of the bar.
+			const dock = box(".sdk-bar");
+			for (const item of game.querySelectorAll(".sdk-bar .sdk-bar-segment")) {
+				const at = item.getBoundingClientRect();
+				if (at.width === 0) continue;
+
+				expect(at.left, where).toBeGreaterThanOrEqual(dock.left);
+				expect(at.right, where).toBeLessThanOrEqual(dock.right);
+			}
+
+			void unmount(mounted!);
+			mounted = null;
+			game.remove();
+		}
+
+		// With room for all of it the bet has its minus and plus; without, it is one button.
+		makeBar({ balance: 25_00 }, 1200);
+		await settle();
+		expect(game.querySelector(".sdk-bar-betbutton")).toBeNull();
+		expect(game.querySelector(".sdk-bar-minus")).not.toBeNull();
+		void unmount(mounted!);
+		mounted = null;
+		game.remove();
+
+		makeBar({ balance: 25_00 }, 660);
+		await settle();
+		await settle();
+		flushSync();
+		expect(game.querySelector(".sdk-bar-betbutton")).not.toBeNull();
+	});
+
 	it("is one row on a narrow game, with the balance and the last win along the top", async () => {
 		const bar = makeBar({}, 390);
 		await document.fonts.ready;

@@ -86,6 +86,8 @@ export class BarState {
 	winFresh = $state(false);
 	/** Whether the game is narrow: 600px or under. */
 	narrow = $state(false);
+	/** How wide the game is, in pixels: a bar lays itself out for the room it has (`ROOMY`). */
+	width = $state(0);
 
 	/** The offers either side of the bet, which a typed bet may fall between. */
 	readonly lower = $derived.by(() => this.bets.findLast((offer) => offer < this.stake));

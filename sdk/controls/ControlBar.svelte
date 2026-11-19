@@ -2,7 +2,10 @@
 The SDK's control bar: what a game is played with, where its studio has not made a bar of
 its own. A dock of frosted glass along the bottom of the game, with round buttons: the
 menu and the balance, the bet with minus and plus, play in the bar's middle, autoplay and
-the speed of play after it, and the last win. On a narrow game (600px or under) it is one
+the speed of play after it, and the last win. Where that would not fit with play in the
+middle (a game not wide enough, a very long balance) the bet is one button and the amounts
+stand without their unit.
+On a narrow game (600px or under) it is one
 row (the menu, the bet as a button that opens the bets on offer, play, autoplay, speed),
 and the balance and the last win are in a strip along the top.
 
@@ -28,6 +31,7 @@ Created: 2026-11-17
 	import type { Snippet } from "svelte";
 	import type { BarHandle, BarItem, Hideable } from "../bar-rules.ts";
 	import type { BarLook } from "../look.ts";
+	import { createBarFit } from "./bar-fit.svelte.ts";
 	import type { BarOptions } from "./bar-state.svelte.ts";
 	import BarAutoplay from "./BarAutoplay.svelte";
 	import BarBalance from "./BarBalance.svelte";
@@ -98,6 +102,9 @@ Created: 2026-11-17
 
 	/** One item's look, where the bar's look says one for it. */
 	const of = (item: BarItem) => look?.segments?.[item];
+	/** Whether the full layout fits with play in the bar's middle. */
+	const fit = createBarFit();
+
 	const shows = (item: Hideable) => !hide.includes(item);
 	/** The edge across from the bar, where a narrow game's balance and win are. */
 	const across = $derived(place === "top" ? "bottom" : "top");
@@ -126,11 +133,19 @@ Created: 2026-11-17
 			</BarPart>
 		{:else}
 			<BarPart edge={place} class="sdk-bar">
-				<div class="sdk-bar-left">
+				<div class="sdk-bar-left" {@attach fit.watch}>
 					{#if shows("menu")}<BarMenu look={of("menu")}>
 							{@render menu?.()}
 						</BarMenu>{/if}
-					<BarBalance look={of("balance")} /><BarBet look={of("bet")} {typed} />
+					<!-- With room, the bet has its minus and plus and the amounts their unit. With
+					     less, the bet is one button, so that the two sides still fit and play is
+					     in the middle. -->
+					<BarBalance look={of("balance")} unit={!fit.cramped} />
+					{#if fit.cramped}
+						<BarBetButton look={of("bet")} />
+					{:else}
+						<BarBet look={of("bet")} {typed} />
+					{/if}
 				</div>
 				<BarPlay look={of("play")} />
 				<div class="sdk-bar-right">
@@ -140,7 +155,7 @@ Created: 2026-11-17
 							look={of("speed")}
 						/>
 					</div>
-					{#if shows("win")}<BarWin look={of("win")} />{/if}
+					{#if shows("win")}<BarWin look={of("win")} unit={!fit.cramped} />{/if}
 				</div>
 			</BarPart>
 		{/if}
