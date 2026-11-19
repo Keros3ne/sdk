@@ -1,7 +1,7 @@
 {
-	"sdk": "0.15.0",
+	"sdk": "0.15.1",
 	"files": {
-		"_app/immutable/assets/2.F1cCV_ug.css": "703bb866c4aac9da78f4ef7bf30fc5f50a556cd1632dab3bd7b926c5dda2832c",
+		"_app/immutable/assets/2.BTMDl9QL.css": "8a56edccf99e98cddc59a7b2a2741a72c41f301e98fbd1955f46b89136f407e0",
 		"_app/immutable/assets/Game.DLnvze3J.css": "eb3d7e378c7d9d121edb7a2ea490a2328c39b3913d12ee572b59ca814925f1e5",
 		"_app/immutable/assets/geist-cyrillic-ext-wght-normal.DjL33-gN.woff2": "2317fa4bb293c9c0b110e18315d529235c47a0ddd3338cea3d8c7955e927899e",
 		"_app/immutable/assets/geist-cyrillic-wght-normal.BEAKL7Jp.woff2": "6894439694946a589d157ece003086960a6a4013d74a813dab7602efdb3d8c09",
@@ -44,17 +44,17 @@
 		"_app/immutable/chunks/q507O_TX.js": "236cd2a51c0e49e717ffabe7274da590bc9c6074cfe62f7a99d6602a0645799b",
 		"_app/immutable/chunks/rq3AEvlt.js": "b1fc229d50beca6edcdfe4fd56eb86fa297a8e3bf977d0d6a571bc18e8c978b9",
 		"_app/immutable/chunks/wv21gqtn.js": "0784ce8b87fbb8fb90d1c9209cfbfd6ee0706726a35ace75ca5893f1d4a1d41f",
-		"_app/immutable/entry/app.0YD2NOu8.js": "867ddfe4af42ccf5fa93e2e8237880f1c5722bc95f452ea1334bbb1c20f11d39",
+		"_app/immutable/entry/app.CSFvBt_j.js": "8d4cc673bfa45e7041a51cfc6e608342afaaddf361a28ca89a4225dbc918b6ea",
 		"_app/immutable/entry/payload.DSmR2FwN.js": "b7cba7b44b2397c7d28f7db4a34ec734a985e64ff27d74ddf8d9645cf814f09f",
 		"_app/immutable/entry/start.VGqaq7Ti.js": "ca9e694d948505c9063a3a243c1c79938f894249c353a2438d50c23845994838",
 		"_app/immutable/loading-first.cbAC6Hgl.js": "71b002e87825cb8ee712537d5407af86a7d1e2022942266814ae1a47dda6aa17",
 		"_app/immutable/nodes/0.CVjTwPWd.js": "dd6977c715f605ada7748e3dbd1fd9d3a2e1c1935cd3a59b2b7b18dc60a1a9a6",
 		"_app/immutable/nodes/1.DPmUipRf.js": "67ec274bdc38084bcbee36080bc876f708d6b09ce51dbc12f4a869fe663aac45",
-		"_app/immutable/nodes/2.DYd7cvdo.js": "f1972b10085bdb444405b9b71f5bb473b8780bcd9580486e5b3240dc8cc8813b",
-		"_app/immutable/start.cnzs4JWO.js": "727cece0958e827f49aff86d7cf10e77919ba32a7d7a5e9ae0f4a462dda43835",
+		"_app/immutable/nodes/2.CBPSr1i3.js": "f1972b10085bdb444405b9b71f5bb473b8780bcd9580486e5b3240dc8cc8813b",
+		"_app/immutable/start.N_XSwlo2.js": "37f5d2c25a3667e2c8494ffcce1c4f9c5739ad9046fb0331b82e132227cc8772",
 		"_app/version.json": "86249873b098511d1e1aafaccf2ee07df3b1b0b8a8433b1052e55d636cabd4a0",
 		"card.svg": "45a021f39f214c20f738764278c46b3d77046117f71245f1dc2cfdf3c7b0db92",
-		"index.html": "2e30b9d5dcd4a0079b1a5aab98a860982c23a11371d52419d23d0405e4aaad4a",
+		"index.html": "4e0eff7879a518c70b00cc054f181a0654e10b03393fa4fd4e329c2a642e795c",
 		"loading-logo.svg": "3b7ddb8a708f3bffc6b316eed618664c4777f364a9046e829a67816e6bf5dc49"
 	}
 }

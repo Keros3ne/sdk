@@ -37,6 +37,11 @@
  * `sdk-loading-contained`, filling its container rather than the frame, and `data-waiting`,
  * filled by the page's own script (static/loading-progress.js) as the page's code arrives.
  */
+/* The bar's typeface, which the name is written in unless a studio gives another: declared
+   here, so that a page with a loading screen can wait for it (`document.fonts.load`) before
+   any of the game's own code, and its style sheets, have arrived. */
+@import "@fontsource-variable/geist/wght.css";
+
 .sdk-loading {
 	position: fixed;
 	z-index: 50;
