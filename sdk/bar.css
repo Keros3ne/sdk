@@ -151,6 +151,15 @@
 .sdk-bar-right > :first-child:not(:last-child) {
 	margin-right: auto;
 }
+/* A bar short of room brings its items closer (./controls/bar-fit.svelte.ts). */
+.sdk-bar[data-fit="1"],
+.sdk-bar[data-fit="2"],
+.sdk-bar[data-fit="1"] .sdk-bar-left,
+.sdk-bar[data-fit="2"] .sdk-bar-left,
+.sdk-bar[data-fit="1"] .sdk-bar-right,
+.sdk-bar[data-fit="2"] .sdk-bar-right {
+	gap: calc(8px * var(--s));
+}
 /* Autoplay and speed, after play. */
 .sdk-bar-pace {
 	display: flex;
@@ -355,6 +364,9 @@
 }
 .sdk-bar-frame .sdk-bar-betbutton .sdk-bar-betvalue {
 	min-width: calc(36px * var(--s));
+}
+.sdk-bar-frame .sdk-bar-betbutton .sdk-bar-label {
+	color: color-mix(in srgb, var(--bar-ink, #f4f1f2) 82%, transparent);
 }
 .sdk-bar-frame .sdk-bar-betbutton output {
 	font-size: calc(17px * var(--s));

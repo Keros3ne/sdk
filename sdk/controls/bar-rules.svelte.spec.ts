@@ -135,10 +135,9 @@ describe("the SDK's control bar", () => {
 		]) {
 			makeBar({ balance }, width);
 			await document.fonts.ready;
-			await settle();
-			await settle();
+			// It gives up a level at a time, each a layout of its own.
+			for (let frames = 0; frames < 6; frames++) await settle();
 			flushSync();
-			await settle();
 
 			const where = `at ${width} with ${balance}`;
 			expect(
@@ -169,9 +168,22 @@ describe("the SDK's control bar", () => {
 		mounted = null;
 		game.remove();
 
+		// A little short, it gives up the amounts' unit and some of its gaps, and keeps the bet whole.
+		void unmount(mounted!);
+		mounted = null;
+		game.remove();
+		makeBar({ balance: 25_00 }, 800);
+		for (let frames = 0; frames < 4; frames++) await settle();
+		flushSync();
+		expect(game.querySelector<HTMLElement>(".sdk-bar")!.dataset.fit).toBe("1");
+		expect(game.querySelector(".sdk-bar .sdk-bar-unit")).toBeNull();
+		expect(game.querySelector(".sdk-bar-minus")).not.toBeNull();
+		void unmount(mounted!);
+		mounted = null;
+		game.remove();
+
 		makeBar({ balance: 25_00 }, 660);
-		await settle();
-		await settle();
+		for (let frames = 0; frames < 6; frames++) await settle();
 		flushSync();
 		expect(game.querySelector(".sdk-bar-betbutton")).not.toBeNull();
 	});

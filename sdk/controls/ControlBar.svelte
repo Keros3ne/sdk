@@ -3,8 +3,9 @@ The SDK's control bar: what a game is played with, where its studio has not made
 its own. A dock of frosted glass along the bottom of the game, with round buttons: the
 menu and the balance, the bet with minus and plus, play in the bar's middle, autoplay and
 the speed of play after it, and the last win. Where that would not fit with play in the
-middle (a game not wide enough, a very long balance) the bet is one button and the amounts
-stand without their unit.
+middle (a game not wide enough, a very long balance) it gives up a little at a time: first
+the unit after its amounts and some of the room between its items, then the bet's minus
+and plus, for one button.
 On a narrow game (600px or under) it is one
 row (the menu, the bet as a button that opens the bets on offer, play, autoplay, speed),
 and the balance and the last win are in a strip along the top.
@@ -140,7 +141,7 @@ Created: 2026-11-17
 					<!-- With room, the bet has its minus and plus and the amounts their unit. With
 					     less, the bet is one button, so that the two sides still fit and play is
 					     in the middle. -->
-					<BarBalance look={of("balance")} unit={!fit.cramped} />
+					<BarBalance look={of("balance")} unit={!fit.tight} />
 					{#if fit.cramped}
 						<BarBetButton look={of("bet")} />
 					{:else}
@@ -155,7 +156,7 @@ Created: 2026-11-17
 							look={of("speed")}
 						/>
 					</div>
-					{#if shows("win")}<BarWin look={of("win")} unit={!fit.cramped} />{/if}
+					{#if shows("win")}<BarWin look={of("win")} unit={!fit.tight} />{/if}
 				</div>
 			</BarPart>
 		{/if}
