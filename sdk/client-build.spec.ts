@@ -60,6 +60,8 @@ describe("a client's build", () => {
 
 		// What the page shows first is in the page.
 		expect(page).toContain("<title>Plain</title>");
+		// Dark, as the site round it is: no white ground before it has drawn anything.
+		expect(page).toContain(`<meta name="color-scheme" content="dark" />`);
 		expect(page).toContain("pressed 0</button>");
 
 		// Every script is a file of the client's own, asked for by a relative address.

@@ -10,7 +10,10 @@
  * `client/src/routes`, with `client/public` copied as it is, into `client/dist`: plain
  * files with relative addresses, so the site can serve them from whatever path it likes.
  * There is no configuration of a studio's own: the page's frame is the SDK's
- * (./client-app.html), and so is every setting here.
+ * (./client-app.html), and so is every setting here. That frame says the page is dark, as
+ * the site is: a browser gives a framed page that differs from the page round it a white
+ * ground of its own until it has drawn something, which showed as a white flash before a
+ * game's loading screen.
  *
  * SvelteKit's version is exact (package.json), because what it builds is finished here
  * (`finishClient`), and that depends on the shape of what it builds:

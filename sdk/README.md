@@ -255,6 +255,11 @@ SDK's is the only one, with SvelteKit at an exact version, because what SvelteKi
 is finished for the frame afterwards (the script a SvelteKit page starts itself with is
 moved into a file, since the frame allows no script written into a page).
 
+**The page is dark until you draw on it.** The SDK's frame for your page declares
+`color-scheme: dark`, as the site round it is, so a player sees no white before your
+loading screen; give your page a ground of its own colour, a solid colour under any
+gradient.
+
 **The page is rendered when it is built.** What `+page.svelte` draws first is in
 `index.html` itself, on the screen before any of your code has arrived: that is where
 the loading screen comes from. So the page, and whatever it imports at its top, must be
