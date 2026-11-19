@@ -37,7 +37,11 @@ const config: StorybookConfig = {
 		{ directory: join(sdk, "stories"), files: "*.stories.ts", titlePrefix: "SDK" },
 		// The studio's: beside each game's client, and in what its games share.
 		{ directory: root, files: "*/client/**/*.stories.ts" },
-		{ directory: root, files: "*/stories/**/*.stories.ts" }
+		// Not where the studio's folder is the SDK's own repository: its `sdk/stories` are the
+		// SDK's, listed above, and listed twice the second copy of each does not open.
+		...(resolve(root, "sdk") === sdk
+			? []
+			: [{ directory: root, files: "*/stories/**/*.stories.ts" }])
 	],
 	core: { disableTelemetry: true, disableWhatsNewNotifications: true },
 	viteFinal: (viteConfig) => ({

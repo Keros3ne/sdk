@@ -4,10 +4,10 @@
  * <select> opens a menu the game cannot style, and one that may not open at all
  * inside a frame in full screen. These are the replacements.
  *
- * Left alone they look like the site's own controls (its style is Colophon's, in
- * src/app.css): close surfaces and 1px hairlines, small corners, a menu that is an
- * underlined field, a chosen option raised in its row, the one main action solid
- * ink, and the accent only for focus and for what is chosen or on. The values here
+ * Left alone they are of the same glass as the control bar (./bar.css), in the site's
+ * colours (src/app.css): popups of dark glass with round corners, choices as pills with
+ * the one chosen solid ink, a menu that is an underlined field, the one main action
+ * solid ink, and the accent only for focus and for what is on. The values here
  * repeat the site's, which a game's frame cannot read; change both together.
  *
  * A game makes them its own through each control's `look` prop (./look.ts,
@@ -20,7 +20,7 @@
  *   --sdk-on-accent  what is drawn on the accent
  *   --sdk-main       the one main action in a popup (start autoplay), and a slider's fill
  *   --sdk-on-main    what is drawn on it
- *   --sdk-radius     the corners of buttons and choices: 4px, or 999px for pills
+ *   --sdk-radius     the corners of buttons and choices: pills, left alone; 4px for squares
  *
  * The controls: a menu (`createMenu`), a field to type in (`createField`), a popup
  * (`createPopup`), a switch, a row of choices, an action, a slider, and autoplay.
@@ -181,7 +181,7 @@
 	min-height: 40px;
 	padding: 0 14px;
 	border: 1px solid var(--sdk-line, #42363b);
-	border-radius: var(--sdk-radius, 4px);
+	border-radius: var(--sdk-radius, 999px);
 	background: var(--sdk-surface, #2f232b);
 	color: var(--sdk-ink, #f4f1f2);
 	font: inherit;
@@ -206,14 +206,16 @@
 	gap: 6px;
 	width: max-content;
 	max-width: min(300px, calc(100vw - 12px));
-	padding: 8px;
-	border: 1px solid var(--sdk-line, #42363b);
-	border-radius: 6px;
-	background: var(--sdk-surface, #2f232b);
+	padding: 12px;
+	border: 1px solid var(--sdk-line, rgb(255 255 255 / 0.22));
+	border-radius: 22px;
+	/* Glass, as the bar is: what is behind shows through, blurred. */
+	background: var(--sdk-surface, rgb(26 19 24 / 0.82));
+	backdrop-filter: blur(22px) saturate(1.25);
 	color: var(--sdk-ink, #f4f1f2);
 	box-shadow:
-		0 1px 2px rgb(0 0 0 / 0.3),
-		0 10px 28px rgb(0 0 0 / 0.45);
+		inset 0 1px 0 rgb(255 255 255 / 0.2),
+		0 14px 36px rgb(0 0 0 / 0.45);
 	font-weight: 500;
 	text-align: left;
 }
@@ -242,7 +244,7 @@
 	min-height: 44px;
 	padding: 6px 12px;
 	border: 1px solid transparent;
-	border-radius: 4px;
+	border-radius: 14px;
 	background: rgb(255 255 255 / 0.05);
 	color: inherit;
 	font: inherit;
@@ -266,7 +268,7 @@
 	min-height: 40px;
 	padding: 0 4px;
 	border: 0;
-	border-radius: 4px;
+	border-radius: 14px;
 	background: none;
 	color: var(--sdk-ink, #f4f1f2);
 	font: inherit;
@@ -327,46 +329,42 @@
 .sdk-choices-row {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 2px;
+	gap: 4px;
 	width: max-content;
 	max-width: 100%;
-	padding: 2px;
-	border: 1px solid var(--sdk-line, #42363b);
-	border-radius: var(--sdk-radius, 4px);
-	background: rgb(0 0 0 / 0.12);
 }
 /* More options than a row holds: a grid of five, the first over the rest where it is the odd one. */
 .sdk-choices-row[data-grid] {
 	display: grid;
-	grid-template-columns: repeat(5, minmax(44px, 1fr));
+	grid-template-columns: repeat(var(--sdk-columns, 5), minmax(44px, 1fr));
 }
 .sdk-choices-row[data-lead] > :first-child {
 	grid-column: 1 / -1;
 }
+/* Each choice a pill of glass; the one chosen solid, as the bar's play button is. */
 .sdk-choice {
 	min-width: 44px;
-	min-height: 36px;
+	min-height: 40px;
 	padding: 0 12px;
 	border: 0;
-	border-radius: calc(var(--sdk-radius, 4px) - 1px);
-	background: transparent;
-	color: var(--sdk-dim, #d6ccd2);
+	border-radius: var(--sdk-radius, 999px);
+	background: rgb(255 255 255 / 0.08);
+	color: var(--sdk-ink, #f4f1f2);
 	font: inherit;
 	font-size: 14px;
 	font-weight: 500;
 	cursor: pointer;
 }
 .sdk-choice:hover:not(:disabled) {
-	color: var(--sdk-ink, #f4f1f2);
+	background: rgb(255 255 255 / 0.16);
 }
 .sdk-choice:disabled {
 	opacity: 0.45;
 	cursor: default;
 }
 .sdk-choice[aria-checked="true"] {
-	background: var(--sdk-surface, #2f232b);
-	color: var(--sdk-ink, #f4f1f2);
-	outline: 1px solid var(--sdk-line, #42363b);
+	background: var(--sdk-main, #f4f1f2);
+	color: var(--sdk-on-main, #25191c);
 }
 
 /* A square, for a button that stops something. Drawn, so it needs no font to have it. */
@@ -454,7 +452,7 @@
 	min-height: 40px;
 	padding: 0 14px;
 	border: 1px solid var(--sdk-main, var(--sdk-ink, #f4f1f2));
-	border-radius: var(--sdk-radius, 4px);
+	border-radius: var(--sdk-radius, 999px);
 	background: var(--sdk-main, var(--sdk-ink, #f4f1f2));
 	color: var(--sdk-on-main, #25191c);
 	font: inherit;

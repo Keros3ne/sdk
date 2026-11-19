@@ -73,7 +73,7 @@ afterEach(() => {
 });
 
 describe("the control bar as a component", () => {
-	it("is the SDK's bar: its five segments in the site's order", async () => {
+	it("is the SDK's bar: its items in its order", async () => {
 		bar({
 			autoplay: {
 				counts: [10],
@@ -91,6 +91,8 @@ describe("the control bar as a component", () => {
 			"balance",
 			"bet",
 			"play",
+			"autoplay",
+			"speed",
 			"win"
 		]);
 	});
@@ -203,20 +205,23 @@ describe("the control bar as a component", () => {
 		expect(written.textContent).toBe("4 rounds played");
 	});
 
-	it("is laid out anew when its layout changes, and refuses one that breaks the rules", async () => {
-		const props = bar({ layout: undefined as object | undefined });
+	it("is sized anew when its scale changes, and refuses to leave out what a player needs", async () => {
+		const props = bar({ scale: 1 });
 		await settle();
 		const before = game.querySelector(".sdk-bar")!.getBoundingClientRect().height;
 
-		props.layout = { scale: 1.4 };
+		props.scale = 1.4;
 		flushSync();
 		await settle();
 		expect(
 			game.querySelector(".sdk-bar")!.getBoundingClientRect().height
 		).toBeGreaterThan(before * 1.2);
 
-		// The bet is not a studio's to hide, written as a component or not.
-		expect(() => bar({ layout: { hide: ["bet"] } })).toThrow(/cannot be hidden/);
+		// The bet is not a studio's to hide.
+		expect(() => {
+			bar({ hide: ["bet"] });
+			flushSync();
+		}).toThrow(/cannot be hidden/);
 	});
 
 	it("does not read the balance while it is being set up, only once it is in the page", async () => {
@@ -329,7 +334,7 @@ describe("the controls as components", () => {
 });
 
 describe("a look", () => {
-	it("dresses the bar and its segments through the bar's props, and follows them as they change", async () => {
+	it("dresses the bar and its items through the bar's props, and follows them as they change", async () => {
 		const props = bar({
 			look: {
 				surface: "rgb(15, 37, 48)",
@@ -340,11 +345,13 @@ describe("a look", () => {
 		});
 		await settle();
 
-		const drawn = game.querySelector<HTMLElement>(".sdk-bar")!;
+		const drawn = game.querySelector<HTMLElement>(".sdk-bar-frame")!;
 		expect(drawn.style.getPropertyValue("--bar-surface")).toBe("rgb(15, 37, 48)");
 		expect(drawn.style.getPropertyValue("--bar-line-strong")).toBe("#fff");
 		expect(drawn.style.getPropertyValue("--bar-segment-radius")).toBe("12px");
-		expect(getComputedStyle(drawn).backgroundColor).toBe("rgb(15, 37, 48)");
+		expect(getComputedStyle(game.querySelector(".sdk-bar")!).backgroundColor).toBe(
+			"rgb(15, 37, 48)"
+		);
 		const play = game.querySelector<HTMLElement>('[data-segment="play"]')!;
 		expect(play.style.getPropertyValue("--bar-segment-surface")).toBe("rgb(1, 2, 3)");
 		// Where it is and how big are still the bar's own to set, on the same element.

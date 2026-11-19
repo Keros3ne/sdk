@@ -21,10 +21,10 @@ Created: 2026-11-17
 		disabled?: boolean;
 		onchange?: (value: Value) => void;
 		/**
-		 * Laid out as a grid, five to a line, for more options than a row holds: the first
+		 * Laid out as a grid, five to a line (or the number given), for more options than a row holds: the first
 		 * takes a line of its own where that leaves the rest in whole lines (an Off over tens).
 		 */
-		grid?: boolean;
+		grid?: boolean | number;
 		/** Called when an option is pressed, the one already chosen too: to close what holds this. */
 		onpick?: (value: Value) => void;
 	}
@@ -52,6 +52,8 @@ Created: 2026-11-17
 			options.findIndex((option) => option.value === value)
 		)
 	);
+
+	const columns = $derived(typeof grid === "number" ? grid : 5);
 
 	/** Chooses an option, going round at either end, and with `focus` moves the keyboard to it. */
 	function choose(index: number, focus = false) {
@@ -90,7 +92,8 @@ Created: 2026-11-17
 	<div
 		class="sdk-choices-row"
 		data-grid={grid ? "" : undefined}
-		data-lead={grid && options.length % 5 === 1 ? "" : undefined}
+		data-lead={grid === true && options.length % columns === 1 ? "" : undefined}
+		style:--sdk-columns={grid ? columns : undefined}
 		bind:this={row}
 		{onkeydown}
 	>

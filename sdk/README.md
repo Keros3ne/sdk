@@ -382,37 +382,57 @@ and refuses a client built for another version of the protocol.
 3. **Honour `reducedMotion`.**
 4. **Resume.** If `init.round` is set, the player has a round open, waiting at a choice,
    from this device or another.
-5. **Use the control bar.** Every game has the SDK's bar (`ControlBar` in `/controls`), so
-   that a player who knows one game knows what everything is in the next. It is five
-   segments: the menu, the balance, the bet with buttons to lower and raise it, play with
-   autoplay and the speed of play beside it, and the last win. Left alone they are in that
-   order and the bar looks as the site's own games' does. What the segments are is the
-   site's, and a segment is never broken apart. The rest is yours, through its `layout`:
-    - `place`: `bottom`, `top` or `float`; `at`, where a floating bar's middle is, as
-      fractions of the game; `scale`, from 0.8 to 1.5.
-    - `width`, for a docked bar, a half to all of the game's width (never narrower than what
-      is in it), and `align`, `start`, `center` or `end`. `bar.rect()` says where the bar is,
-      to put a game's own button on the same row beside it.
-    - `order`, the five segments left to right. Play stays in the middle of the bar where
-      there is room.
-    - `hide`: the menu and the win only. The balance, the bet and play are always shown.
-    - `sizes`, each segment 0.8 to 1.25 times the rest: `{ play: 1.2 }`.
-    - `arrange`: inside the bet's segment, `split` (minus, the bet, plus) or plus over minus
-      in a column at the bet's left or right (`column-start`, `column-end`); inside play's,
-      `split` (autoplay at its left, speed at its right), or the two together at one side
-      (`row-start`, `row-end`, `column-start`, `column-end`).
+5. **Use the control bar.** Every game is played with the SDK's bar or a bar made of the
+   SDK's items, so that a player who knows one game knows what everything is in the next.
 
-    A layout that breaks these throws when the bar is made. How the bar and each segment look
-    is its `look` prop (`BarLook` in `/controls`): colours, typefaces, edges, corners, how
-    see-through, and for every segment (`look.segment`) or one (`look.segments.play`) its
-    own ground, edge, corners and padding:
-    `look={{ surface: "#0f2530", accent: "#ffd56b", segment: { radius: "12px" } }}`.
+    **The SDK's bar** (`ControlBar` in `/controls`) is what a game has unless its studio
+    makes another: a dock of frosted glass along the bottom of the game, with round buttons.
+    The menu and the balance, the bet with buttons to lower and raise it, play in the bar's
+    dead centre, autoplay and the speed of play after it, and the last win. On a game 600px
+    wide or narrower it is one row (the menu, the bet as one button that opens the bets on
+    offer, play, autoplay, speed), with the balance and the last win in a strip along the
+    top. What a studio sets on it is simple:
+    - `look` (`BarLook` in `/controls`): its colours and typefaces, how round its buttons
+      are, and `tint`, a colour its glass is stained with, as stained glass is:
+      `look={{ tint: "#6a3df0", accent: "#ffd56b", onAccent: "#0f2530" }}`. One item's own
+      ground, edge, corners and padding are `look.segments.play`, and every item's
+      `look.segment`.
+    - `place`, `bottom` or `top`; `scale`, from 0.8 to 1.5; and `hide`, the menu and the win
+      only.
+
+    **A bar of your own** is the same items, placed where you like. Each is a component
+    (`/controls`): `BarMenu`, `BarBalance`, `BarBet` (with minus and plus) or `BarBetButton`
+    (one button that opens the bets), `BarPlay`, `BarAutoplay`, `BarSpeed` and `BarWin`.
+    Write them inside a `BarFrame`, which takes what `ControlBar` takes and holds what the
+    items share, in one `BarPart` or several, each placed and dressed by your own style
+    sheet:
+
+        <BarFrame {bets} {startBet} {limits} {play} {onplay} {balance} {win} {busy} bind:bet bind:bar>
+          {#snippet children(shared)}
+            <BarPart edge="top" class="my-readouts"><BarBalance /><BarWin /></BarPart>
+            <BarPart class="my-bar">
+              <BarMenu /><BarBet arrange="column-end" /><BarPlay size={1.3} /><BarAutoplay /><BarSpeed />
+            </BarPart>
+          {/snippet}
+        </BarFrame>
+
+    An item takes more through its own props than the SDK's bar offers: `look` (its ground,
+    edge, corners, padding, shadow, blur), `size` against the rest of the bar (0.5 to 2),
+    and what is its own (a readout's `label` and `unit`, the bet's `arrange`, the bet
+    button's `columns`). `shared.narrow` says whether the game is 600px wide or under, for a
+    bar laid out differently there. A part says which `edge` of the game it is at: the room
+    it takes there is what `bar.inset()` reports, and its items' popups open away from it.
+    What a bar of your own must still be:
+    - Made of the SDK's items. Never draw a bet control, a balance or a play button of
+      your own.
+    - Complete: the balance, the bet and play are in every bar, and a frame without one of
+      them throws. The rest are yours to leave out.
+
     `bets` is a list, or the steps the bet buttons move by
     (`{ steps: [{ under: 100, by: 10 }, { by: 100 }] }`: by 0.10 under 1.00, then by 1.00).
-    The bet is always one of those on offer: a player does not type one. On a game
-    600px wide or narrower the bar is always the site's two rows across the whole width,
-    whatever was asked for. Draw clear of it with `bar.inset()`, or with `--sdk-bar-top` and
-    `--sdk-bar-bottom` in a style sheet.
+    The bet is always one of those on offer: a player does not type one. Draw clear of the
+    bar with `bar.inset()`, or with `--sdk-bar-top` and `--sdk-bar-bottom` in a style sheet;
+    `bar.rect()` says where its bottom part is, to put a button of the game's own beside it.
 
     What the bar shows is its props: `balance`, `win`, `busy` while a round is played or
     shown, `autoLeft` as autoplay runs. The bet comes back with `bind:bet`, and `bind:bar`
@@ -437,11 +457,10 @@ and refuses a client built for another version of the protocol.
     are shown, and turbo quickens everything. Set the ordinary pace so that a player new to
     the game can follow all of it; turbo is for one who knows it. The speed is the player's
     choice alone: autoplay never changes it.
-    - Never draw another bet control, balance or play button of your own.
-    - Restyle the bar through its `look` prop and lay it out through `layout`, and nothing
-      else: not through a style sheet.
-    - What a game adds for itself (a button to buy a bonus) goes outside the bar: above it,
-      or on its row beside a narrower bar.
+    - Dress the SDK's bar and its items through their props (`look`, `size`), and place a
+      bar of your own with classes on its parts: never by reaching into an item's markup.
+    - What a game adds for itself (a button to buy a bonus) is not one of the bar's items: in
+      a bar of your own it goes where you like among them, and with the SDK's bar, above it.
     - Autoplay is chosen in Auto's popup (Off, or a number of plays: ten to a hundred by
       tens unless the game gives `counts` of its own), which closes and only readies it:
       the play button then shows the number over a triangle, and pressing it calls

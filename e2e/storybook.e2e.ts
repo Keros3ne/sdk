@@ -92,13 +92,14 @@ test("the control bar in a story is the bar, and can be played", async ({ page }
 
 	await expect(bar).toBeVisible();
 	await bar.getByRole("button", { name: "Raise the bet" }).click();
-	await expect(page.getByText("Bet: 2.00")).toBeVisible();
+	await expect(page.getByText("Bet: 1.20")).toBeVisible();
 	await bar.getByRole("button", { name: "Spin", exact: true }).click();
 	await expect(page.getByText(/^Played/)).toBeVisible();
 
-	// On a narrow game it is in two rows, as it is on the site.
+	// On a narrow game it is one row, with the balance and the last win along the top.
 	await open(page, "sdk-control-bar--on-a-narrow-game");
-	await expect(page.locator(".sdk-bar[data-narrow]")).toBeVisible();
+	await expect(page.locator(".sdk-bar-frame[data-narrow] .sdk-bar-strip")).toBeVisible();
+	await expect(page.locator(".sdk-bar-betbutton")).toBeVisible();
 	expect(errors).toEqual([]);
 });
 

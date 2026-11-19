@@ -1,165 +1,204 @@
 /*
- * The control bar (./bar.ts): five segments, the same in every studio game, each
- * kept whole (menu; balance; the bet and its buttons; autoplay, play and speed;
- * the last win). Left alone, it is drawn as the site's own games draw it.
+ * The control bar: its frame, its parts and its items (./controls), and the SDK's own
+ * bar made of them (./controls/ControlBar.svelte), which is what a game has unless its
+ * studio makes another: a dock of frosted glass along the bottom of the game, with round
+ * buttons, and on a narrow game one row of them with the balance and the last win in a
+ * strip along the top.
  *
- * Through the bar's `layout` a studio chooses where it is (along the
- * bottom, along the top, or floating), how big (0.8 to 1.5 times its usual size,
- * each segment 0.8 to 1.25 times that), how wide a docked bar is, the order of the
- * segments, and whether the menu and the win are shown. Every measure here is
- * multiplied by the size (`--s`, from `--bar-s` and `--segment-scale`, which bar.ts
- * sets, not a style sheet).
+ * Every measure here is multiplied by the bar's size (`--s`, from `--bar-s`, which the
+ * frame sets, and an item's own `--segment-scale`): a new measure is written
+ * `calc(Npx * var(--s))`.
  *
- * How it looks is the studio's, told through the bar's `look` prop (./look.ts,
- * `BarLook`), which sets these on the bar. Left alone it looks like
- * the site's own controls (Colophon's style, in src/app.css): the site's surface, 1px
- * hairlines, buttons with 4px corners and a symbol in each, the play button solid ink,
- * small labels in Geist Mono, and the accent only for what is on and for focus. The
- * values here repeat the site's, which a game's frame cannot read; change both together.
+ * How a bar looks is its `look` prop (./look.ts, `BarLook`), which sets these on its frame.
+ * Left alone, the glass is the site's own dark surface seen through, the text and the play
+ * button the site's ink, and the accent only for what is on and for focus. The values here
+ * repeat the site's (src/app.css), which a game's frame cannot read; change both together.
  *
- *   --bar-surface        what the bar is drawn on. May be see-through.
+ *   --bar-surface        what the bar is drawn on: glass, left alone
+ *   --bar-tint           a colour the glass is stained with. Clear, left alone.
+ *   --bar-blur           the glass's `backdrop-filter`
+ *   --bar-popup          what its popups are drawn on
  *   --bar-rule           the hairline between the bar and the game. `transparent` for none.
  *   --bar-ink            its text and symbols
- *   --bar-dim            its small labels
+ *   --bar-dim            its small labels, and a win that is not the last play's
+ *   --bar-win            the last win, while it is the last play's own
  *   --bar-line           the edge of its buttons
  *   --bar-line-strong    the edge of a button under the pointer
  *   --bar-button         what its buttons are drawn on
- *   --bar-button-radius  the corners of its buttons. 50% makes them circles.
- *   --bar-accent         the play button, and whatever is switched on. Left alone,
- *                        the play button is solid ink and what is on is the site's
- *                        accent, as on the site itself.
+ *   --bar-button-radius  the corners of its buttons. Circles, left alone.
+ *   --bar-accent         the play button. Left alone, solid ink.
  *   --bar-on-accent      the symbol on the play button
+ *   --bar-on             whatever is switched on or open. Left alone, the site's accent.
  *   --bar-font           its typeface. Left alone it is the site's own.
  *   --bar-label-font     its small labels' typeface. Left alone, the site's mono.
- *   --bar-edge           the line round a floating bar
- *   --bar-radius         the corners of a floating bar
- *   --bar-shadow         the shadow under a floating bar
- *   --bar-blur           a `backdrop-filter` for a see-through bar, such as `blur(8px)`
- *   --bar-gap            the room between segments
+ *   --bar-gap            the room between items
  *
- * Each segment is a box of its own, drawn with nothing round it unless a studio asks.
- * `look.segment` sets these for every segment, and `look.segments` for one
- * (`{ play: { ... } }`, the names as in `layout.order`):
+ * Each item is a box of its own, drawn with nothing round it unless asked: an item's own
+ * `look` prop sets these on it, `look.segment` on the bar for every item, and
+ * `look.segments` for one (`{ play: { ... } }`):
  *
- *   --bar-segment-surface  what a segment is drawn on
+ *   --bar-segment-surface  what an item is drawn on
  *   --bar-segment-border   its edge, as a `border`: `1px solid #fff4`
  *   --bar-segment-radius   its corners
  *   --bar-segment-padding  the room inside its edge
  *   --bar-segment-shadow   a shadow under it
- *   --bar-segment-blur     a `backdrop-filter` for a see-through segment
- *
- * With the bar's own surface and rule `transparent` and each segment given a surface,
- * an edge and corners, the segments float apart over the game.
- *
- * What it may not: break a segment apart, put anything of the game's inside the bar,
- * or hide what a player needs (the balance, the bet, play). A game's style sheet
- * should leave everything here but these properties alone. On a game 600px wide or
- * narrower the bar is always docked, in the site's two rows whatever order was
- * asked for, so that the play button is under a thumb.
+ *   --bar-segment-blur     a `backdrop-filter` for a see-through item
  */
 @import "@fontsource-variable/geist/wght.css";
 @import "@fontsource-variable/geist-mono/wght.css";
 
-.sdk-bar {
+/* The frame: over the whole game, taking no presses itself. Its parts do. */
+.sdk-bar-frame {
+	--bar-glass: color-mix(
+		in srgb,
+		var(--bar-tint, transparent) 26%,
+		rgb(30 22 28 / 0.6)
+	);
+	--bar-glass-popup: color-mix(
+		in srgb,
+		var(--bar-tint, transparent) 30%,
+		rgb(26 19 24 / 0.82)
+	);
+	--bar-glass-blur: blur(22px) saturate(1.25);
 	--sdk-ink: var(--bar-ink, #f4f1f2);
-	--sdk-surface: var(--bar-popup, #2f232b);
+	--sdk-surface: var(--bar-popup, var(--bar-glass-popup));
 	--sdk-dim: var(--bar-dim, #c0aeb2);
-	--sdk-line: var(--bar-line, #42363b);
-	--sdk-accent: var(--bar-accent, #d49791);
-	--sdk-on-accent: var(--bar-on-accent, #25191c);
+	--sdk-line: var(--bar-line, rgb(255 255 255 / 0.22));
+	--sdk-accent: var(--bar-on, #d49791);
+	--sdk-on-accent: #25191c;
+	--sdk-main: var(--bar-accent, #f4f1f2);
+	--sdk-on-main: var(--bar-on-accent, #25191c);
 
-	/* The size chosen by the studio. bar.ts sets --bar-s on the element. */
+	/* The size chosen by the studio. The frame sets --bar-s on itself. */
 	--s: var(--bar-s, 1);
 
 	position: absolute;
 	z-index: 4;
-	left: 0;
-	right: 0;
-	bottom: 0;
+	inset: 0;
 	box-sizing: border-box;
-	/* Taller only for a segment made bigger. */
-	min-height: calc(72px * var(--s));
-	display: grid;
-	/* The two sides take equal shares of what is left, so play is in the middle; where one side
-	   needs more than its share, it has what it needs, and play moves over. */
-	grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
-	grid-template-areas: "left play right";
-	align-items: center;
-	gap: var(--bar-gap, calc(8px * var(--s)));
-	padding: 0 calc(12px * var(--s));
-	background: var(--bar-surface, #281b1f);
-	/* A hairline where it meets the game, as the site's own bars have. */
-	box-shadow: inset 0 1px 0 var(--bar-rule, var(--bar-line, #42363b));
+	pointer-events: none;
 	color: var(--bar-ink, #f4f1f2);
 	font:
 		500 calc(15px * var(--s))/1.2 var(--bar-font, "Geist Variable"),
 		ui-sans-serif,
 		system-ui,
 		sans-serif;
-	backdrop-filter: var(--bar-blur, none);
 	user-select: none;
 	/* A double tap on a button, even a disabled one, does not zoom the game. */
 	touch-action: manipulation;
 }
-/* Along the top instead. Its popups open downward (bar.ts). */
-.sdk-bar[data-place="top"] {
-	top: 0;
-	bottom: auto;
-	box-shadow: inset 0 -1px 0 var(--bar-rule, var(--bar-line, #42363b));
-}
-/*
- * Floating: as wide as what is in it, with an edge and a shadow of its own.
- * bar.ts puts it where the studio asked, and keeps it inside the game.
- */
-.sdk-bar[data-place="float"] {
-	right: auto;
-	bottom: auto;
-	width: max-content;
-	max-width: calc(100% - 16px);
-	grid-template-columns: repeat(3, auto);
-	padding: 0 calc(14px * var(--s));
-	border: 1px solid var(--bar-edge, var(--bar-line, #42363b));
-	border-radius: var(--bar-radius, calc(6px * var(--s)));
-	box-shadow: var(
-		--bar-shadow,
-		0 1px 2px rgb(0 0 0 / 0.3),
-		0 10px 28px rgb(0 0 0 / 0.45)
-	);
-}
-.sdk-bar * {
+.sdk-bar-frame * {
 	box-sizing: border-box;
 }
+.sdk-bar-frame > * {
+	pointer-events: auto;
+}
 /* What a game leaves out (the speed button, `speeds: "none"`), even where a rule gives it a display. */
-.sdk-bar [hidden] {
+.sdk-bar-frame [hidden] {
 	display: none !important;
 }
+
+/* A part: one piece of the bar on the game. Along its edge, across the game, left alone. */
+.sdk-bar-part {
+	position: absolute;
+	left: 0;
+	right: 0;
+}
+.sdk-bar-part[data-edge="bottom"] {
+	bottom: 0;
+}
+.sdk-bar-part[data-edge="top"] {
+	top: 0;
+}
+
 /*
- * The two sides of play. On each, the segment next to play sits close beside it and the
- * rest go out to the bar's edge; a side with one segment puts it at the edge.
+ * The SDK's bar: a dock of glass, edge to edge. Play is the middle column; the two sides
+ * take equal shares of what is left, so play is in the bar's dead centre.
+ */
+.sdk-bar {
+	min-height: calc(88px * var(--s));
+	display: grid;
+	grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+	align-items: center;
+	gap: var(--bar-gap, calc(14px * var(--s)));
+	padding: 0 calc(12px * var(--s));
+	background: var(--bar-surface, var(--bar-glass));
+	/* A hairline where it meets the game. */
+	box-shadow: inset 0 1px 0 var(--bar-rule, rgb(255 255 255 / 0.16));
+	backdrop-filter: var(--bar-blur, var(--bar-glass-blur));
+}
+.sdk-bar[data-edge="top"],
+.sdk-bar-strip[data-edge="top"] {
+	box-shadow: inset 0 -1px 0 var(--bar-rule, rgb(255 255 255 / 0.16));
+}
+/*
+ * The two sides of play. On each, what is next to play sits close beside it and the rest
+ * go out to the bar's edge.
  */
 .sdk-bar-left,
 .sdk-bar-right {
 	display: flex;
 	align-items: center;
-	gap: var(--bar-gap, calc(8px * var(--s)));
+	gap: var(--bar-gap, calc(14px * var(--s)));
 	min-width: 0;
 }
-.sdk-bar-left {
-	grid-area: left;
-}
-.sdk-bar-left
-	> :nth-last-child(1 of :not([hidden])):not(:nth-child(1 of :not([hidden]))) {
+.sdk-bar-left > :last-child:not(:first-child) {
 	margin-left: auto;
 }
 .sdk-bar-right {
-	grid-area: right;
 	justify-content: flex-end;
 }
-.sdk-bar-right
-	> :nth-child(1 of :not([hidden])):not(:nth-last-child(1 of :not([hidden]))) {
+.sdk-bar-right > :first-child:not(:last-child) {
 	margin-right: auto;
 }
-/* A segment: one box, kept whole, sized by its own scale against the bar's. */
+/* Autoplay and speed, after play. */
+.sdk-bar-pace {
+	display: flex;
+	align-items: center;
+	gap: calc(8px * var(--s));
+}
+
+/* A narrow game's strip: the balance and the last win, in the same glass. */
+.sdk-bar-strip {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: calc(8px * var(--s)) calc(16px * var(--s));
+	background: var(--bar-surface, var(--bar-glass));
+	box-shadow: inset 0 -1px 0 var(--bar-rule, rgb(255 255 255 / 0.16));
+	backdrop-filter: var(--bar-blur, var(--bar-glass-blur));
+}
+.sdk-bar-strip[data-edge="bottom"] {
+	box-shadow: inset 0 1px 0 var(--bar-rule, rgb(255 255 255 / 0.16));
+}
+.sdk-bar-strip .sdk-bar-balance,
+.sdk-bar-strip .sdk-bar-win {
+	padding: 0;
+}
+
+/*
+ * A narrow game's one row: the menu and the bet, play, autoplay and speed. Each side
+ * shares out what room it has left, so play stays in the middle.
+ */
+.sdk-bar-frame[data-narrow] .sdk-bar {
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+	gap: 0;
+	padding: 0 calc(6px * var(--s));
+}
+.sdk-bar-frame[data-narrow] .sdk-bar-left,
+.sdk-bar-frame[data-narrow] .sdk-bar-right {
+	justify-content: space-evenly;
+	gap: 0;
+}
+.sdk-bar-frame[data-narrow] .sdk-bar-left > *,
+.sdk-bar-frame[data-narrow] .sdk-bar-right > * {
+	margin: 0;
+}
+.sdk-bar-frame[data-narrow] .sdk-bar-readout output {
+	font-size: calc(17px * var(--s));
+}
+
+/* An item: one box, kept whole, sized by its own scale against the bar's. */
 .sdk-bar-segment {
 	--s: calc(var(--bar-s, 1) * var(--segment-scale, 1));
 	display: flex;
@@ -174,13 +213,7 @@
 	backdrop-filter: var(--bar-segment-blur, none);
 	font-size: calc(15px * var(--s));
 }
-.sdk-bar-segment[data-segment="play"] {
-	grid-area: play;
-}
-/*
- * Inside the bet's and play's segments, the parts are where the studio put them
- * (`layout.arrange`). Buttons one over another are shorter, so that the two fit the bar.
- */
+/* The bet with plus over minus at one side of it. Buttons one over another are shorter, so the two fit the bar. */
 .sdk-bar-segment[data-arrange^="column"] {
 	display: grid;
 	grid-auto-flow: column;
@@ -188,95 +221,40 @@
 	row-gap: calc(4px * var(--s));
 	align-items: center;
 }
-.sdk-bar .sdk-bar-segment[data-arrange^="column"] .sdk-bar-minus,
-.sdk-bar .sdk-bar-segment[data-arrange^="column"] .sdk-bar-plus,
-.sdk-bar .sdk-bar-segment[data-segment="play"][data-arrange^="column"] .sdk-bar-button {
-	height: calc(30px * var(--s));
-	min-height: calc(30px * var(--s));
+.sdk-bar-frame .sdk-bar-segment[data-arrange^="column"] .sdk-bar-button {
+	height: calc(36px * var(--s));
+	min-height: calc(36px * var(--s));
+	border-radius: calc(18px * var(--s));
 }
-.sdk-bar .sdk-bar-segment[data-arrange^="column"] .sdk-bar-button svg {
+.sdk-bar-frame .sdk-bar-segment[data-arrange^="column"] .sdk-bar-button svg {
 	width: calc(20px * var(--s));
 	height: calc(20px * var(--s));
 }
-.sdk-bar-segment[data-segment="bet"][data-arrange="column-start"] {
+.sdk-bar-segment[data-arrange="column-start"] {
 	grid-template-areas: "plus value" "minus value";
 }
-.sdk-bar-segment[data-segment="bet"][data-arrange="column-end"] {
+.sdk-bar-segment[data-arrange="column-end"] {
 	grid-template-areas: "value plus" "value minus";
 }
-.sdk-bar-segment[data-segment="bet"][data-arrange^="column"] .sdk-bar-plus {
+.sdk-bar-segment[data-arrange^="column"] .sdk-bar-plus {
 	grid-area: plus;
 }
-.sdk-bar-segment[data-segment="bet"][data-arrange^="column"] .sdk-bar-minus {
+.sdk-bar-segment[data-arrange^="column"] .sdk-bar-minus {
 	grid-area: minus;
 }
-.sdk-bar-segment[data-segment="bet"][data-arrange^="column"] .sdk-bar-betvalue,
-.sdk-bar-segment[data-segment="bet"][data-arrange^="column"] .sdk-bar-betfield {
+.sdk-bar-segment[data-arrange^="column"] .sdk-bar-betvalue,
+.sdk-bar-segment[data-arrange^="column"] .sdk-bar-betfield {
 	grid-area: value;
 }
-/* Play's segment: autoplay and speed together at one side of play. */
-.sdk-bar-segment[data-segment="play"][data-arrange="row-start"] .sdk-bar-play {
-	order: 1;
-}
-.sdk-bar-segment[data-segment="play"][data-arrange="row-end"] .sdk-bar-play {
-	order: -1;
-}
-.sdk-bar-segment[data-segment="play"][data-arrange="column-start"] {
-	grid-template-areas: "auto play" "speed play";
-}
-.sdk-bar-segment[data-segment="play"][data-arrange="column-end"] {
-	grid-template-areas: "play auto" "play speed";
-}
-.sdk-bar-segment[data-segment="play"][data-arrange^="column"] .sdk-bar-auto {
-	grid-area: auto;
-}
-.sdk-bar-segment[data-segment="play"][data-arrange^="column"] .sdk-bar-speed {
-	grid-area: speed;
-}
-.sdk-bar-segment[data-segment="play"][data-arrange^="column"] .sdk-bar-play {
-	grid-area: play;
+
+/* What the player reads: a small label over an amount. */
+.sdk-bar-readout {
+	display: grid;
+	gap: 1px;
+	min-width: 0;
 }
 .sdk-bar-balance {
 	padding-left: calc(6px * var(--s));
-}
-.sdk-bar-betvalue,
-.sdk-bar-betfield {
-	min-width: calc(76px * var(--s));
-	text-align: center;
-}
-/* Where the bet can be typed it is a button: pressed, it becomes a field to type a bet in. Drawn as the readout it is. */
-.sdk-bar button.sdk-bar-betvalue {
-	padding: 0;
-	border: 0;
-	background: none;
-	color: inherit;
-	font: inherit;
-	cursor: text;
-}
-.sdk-bar button.sdk-bar-betvalue:hover:not(:disabled) output {
-	text-decoration: underline;
-	text-decoration-color: var(--bar-line-strong, #53474e);
-	text-underline-offset: 4px;
-}
-.sdk-bar button.sdk-bar-betvalue:disabled {
-	opacity: 1;
-}
-.sdk-bar-betfield {
-	width: calc(84px * var(--s));
-	height: calc(40px * var(--s));
-	padding: 0 calc(4px * var(--s));
-	border: 0;
-	border-bottom: 1px solid var(--bar-accent, #d49791);
-	border-radius: 0;
-	background: transparent;
-	color: inherit;
-	font: inherit;
-	font-size: calc(19px * var(--s));
-	font-variant-numeric: tabular-nums;
-	outline: none;
-}
-.sdk-bar-play {
-	margin: 0 calc(6px * var(--s));
 }
 .sdk-bar-win {
 	padding-right: calc(6px * var(--s));
@@ -289,12 +267,6 @@
 .sdk-bar-win[data-fresh] output {
 	color: var(--bar-win, #8fc79a);
 }
-
-.sdk-bar-readout {
-	display: grid;
-	gap: 1px;
-	min-width: 0;
-}
 .sdk-bar-label {
 	font-family: var(--bar-label-font, "Geist Mono Variable"), ui-monospace, monospace;
 	font-size: calc(11px * var(--s));
@@ -303,8 +275,24 @@
 	text-transform: uppercase;
 	color: var(--bar-dim, #c0aeb2);
 }
-/* The bet's names share one cell, so the label is as wide as the longest, and only the one in
-   use is seen. The others are hidden by visibility, not left out, so they keep their room. */
+.sdk-bar-readout output {
+	font-size: calc(19px * var(--s));
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+/* The unit after an amount, a little smaller than its figures. No room for it beside a bet. */
+.sdk-bar-unit {
+	font-size: 0.72em;
+}
+
+/* The bet. Its names share one cell, so the label is as wide as the longest, and only the one
+   in use is seen. The others are hidden by visibility, not left out, so they keep their room. */
+.sdk-bar-betvalue,
+.sdk-bar-betfield {
+	min-width: calc(76px * var(--s));
+	text-align: center;
+}
 .sdk-bar-betlabel {
 	display: grid;
 	white-space: nowrap;
@@ -315,50 +303,117 @@
 .sdk-bar-betlabel > span:not(.sdk-bar-betlabel-on) {
 	visibility: hidden;
 }
-.sdk-bar-readout output {
+/* Where the bet can be typed it is a button: pressed, it becomes a field to type a bet in. Drawn as the readout it is. */
+.sdk-bar-frame button.sdk-bar-betvalue {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	cursor: text;
+}
+.sdk-bar-frame button.sdk-bar-betvalue:hover:not(:disabled) output {
+	text-decoration: underline;
+	text-decoration-color: var(--bar-line-strong, rgb(255 255 255 / 0.5));
+	text-underline-offset: 4px;
+}
+.sdk-bar-frame button.sdk-bar-betvalue:disabled {
+	opacity: 1;
+}
+.sdk-bar-betfield {
+	width: calc(84px * var(--s));
+	height: calc(40px * var(--s));
+	padding: 0 calc(4px * var(--s));
+	border: 0;
+	border-bottom: 1px solid var(--bar-on, #d49791);
+	border-radius: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
 	font-size: calc(19px * var(--s));
-	font-weight: 500;
 	font-variant-numeric: tabular-nums;
-	white-space: nowrap;
+	outline: none;
+}
+/* The bet as one button, which opens the bets on offer: a pill of the buttons' glass. */
+.sdk-bar-frame .sdk-bar-betbutton {
+	min-height: calc(52px * var(--s));
+	padding: 0 calc(12px * var(--s));
+	border: 1px solid var(--bar-line, rgb(255 255 255 / 0.22));
+	border-radius: 999px;
+	background: var(--bar-button, rgb(255 255 255 / 0.1));
+	box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
+	color: inherit;
+}
+.sdk-bar-frame .sdk-bar-betbutton .sdk-bar-betvalue {
+	min-width: calc(36px * var(--s));
+}
+.sdk-bar-frame .sdk-bar-betbutton output {
+	font-size: calc(17px * var(--s));
+}
+.sdk-bar-frame .sdk-bar-bets .sdk-choices-row {
+	max-height: 232px;
+	overflow-y: auto;
+}
+.sdk-bar-frame .sdk-bar-bets .sdk-choice {
+	padding: 0 6px;
+	font-variant-numeric: tabular-nums;
 }
 
-/* Every button in the bar has a symbol in it, inside a hairline with small corners. */
-.sdk-bar .sdk-bar-button,
-.sdk-bar .sdk-bar-play {
+/* Every button in the bar is round, of glass, with a symbol in it. */
+.sdk-bar-frame .sdk-bar-button,
+.sdk-bar-frame .sdk-bar-play {
 	display: inline-grid;
 	place-items: center;
 	flex: none;
-	width: calc(44px * var(--s));
-	min-width: calc(44px * var(--s));
-	height: calc(44px * var(--s));
-	min-height: calc(44px * var(--s));
+	width: calc(52px * var(--s));
+	min-width: calc(52px * var(--s));
+	height: calc(52px * var(--s));
+	min-height: calc(52px * var(--s));
 	padding: 0;
-	border: 1px solid var(--bar-line, #42363b);
-	border-radius: var(--bar-button-radius, calc(4px * var(--s)));
-	background: var(--bar-button, transparent);
+	border: 1px solid var(--bar-line, rgb(255 255 255 / 0.22));
+	border-radius: var(--bar-button-radius, 50%);
+	background: var(--bar-button, rgb(255 255 255 / 0.1));
+	box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
 	color: var(--bar-ink, #f4f1f2);
 	font: inherit;
 	font-weight: 500;
 	cursor: pointer;
 }
-.sdk-bar .sdk-bar-play {
-	width: calc(58px * var(--s));
-	min-width: calc(58px * var(--s));
-	height: calc(58px * var(--s));
-	min-height: calc(58px * var(--s));
+.sdk-bar-frame .sdk-bar-button svg {
+	width: calc(24px * var(--s));
+	height: calc(24px * var(--s));
+}
+.sdk-bar-frame button:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+.sdk-bar-frame .sdk-bar-button:hover:not(:disabled) {
+	border-color: var(--bar-line-strong, rgb(255 255 255 / 0.5));
+}
+/* Play: the bar's one solid button, standing proud of it. */
+.sdk-bar-frame .sdk-bar-play {
+	width: calc(72px * var(--s));
+	min-width: calc(72px * var(--s));
+	height: calc(72px * var(--s));
+	min-height: calc(72px * var(--s));
 	border-color: var(--bar-accent, #f4f1f2);
+	border-radius: 50%;
 	background: var(--bar-accent, #f4f1f2);
+	box-shadow:
+		inset 0 calc(-3px * var(--s)) 0 rgb(0 0 0 / 0.12),
+		0 calc(6px * var(--s)) calc(18px * var(--s)) rgb(0 0 0 / 0.35);
 	color: var(--bar-on-accent, #25191c);
 }
-.sdk-bar .sdk-bar-play svg {
-	width: calc(30px * var(--s));
-	height: calc(30px * var(--s));
+.sdk-bar-frame .sdk-bar-play svg {
+	width: calc(36px * var(--s));
+	height: calc(36px * var(--s));
 }
 .sdk-bar-symbol {
 	display: grid;
 }
-/* Autoplay on play: a big triangle while plays wait for it, a big square while they run, the
-   number over it. The triangle's middle is left of the button's, and the number with it. */
+/* Autoplay on play: a triangle while plays wait for it, a square while they run, the number
+   in it. The symbol is as big as the round button holds, drawn with a fine line, so the
+   number can be large and bold and still clear of it. */
 .sdk-bar-play-auto {
 	display: grid;
 	place-items: center;
@@ -366,142 +421,53 @@
 .sdk-bar-play-auto > * {
 	grid-area: 1 / 1;
 }
-.sdk-bar .sdk-bar-play .sdk-bar-play-auto svg {
-	width: calc(44px * var(--s));
-	height: calc(44px * var(--s));
-	stroke-width: 1;
+.sdk-bar-frame .sdk-bar-play .sdk-bar-play-auto svg {
+	width: calc(54px * var(--s));
+	height: calc(54px * var(--s));
+	stroke-width: 0.6;
+}
+/* The triangle's middle is left of the button's: it is moved over, and the number with it. */
+.sdk-bar-frame .sdk-bar-play[data-auto="ready"] .sdk-bar-play-auto svg {
+	translate: calc(4px * var(--s)) 0;
 }
 .sdk-bar-play-count {
-	font-size: calc(11px * var(--s));
-	font-weight: 600;
+	font-size: calc(17px * var(--s));
+	font-weight: 700;
 	font-variant-numeric: tabular-nums;
 	line-height: 1;
 }
+.sdk-bar-play[data-auto="ready"] .sdk-bar-play-count {
+	translate: calc(2px * var(--s)) 0;
+	font-size: calc(15px * var(--s));
+}
+/* Three figures are written smaller, to stay clear of the triangle round them. */
+.sdk-bar-play[data-auto="ready"] .sdk-bar-play-count[data-long] {
+	translate: calc(1px * var(--s)) 0;
+	font-size: calc(11px * var(--s));
+}
 /* Free spins: the count over the spin symbol, drawn faint so the figure reads. */
 .sdk-bar-play[data-auto="free"] .sdk-bar-play-auto .sdk-bar-symbol {
-	opacity: 0.35;
+	opacity: 0.22;
 }
-.sdk-bar .sdk-bar-play[data-auto="free"]:disabled {
+.sdk-bar-frame .sdk-bar-play[data-auto="free"]:disabled {
 	opacity: 1;
 }
 .sdk-bar-play[data-auto="free"] .sdk-bar-play-count {
-	font-size: calc(16px * var(--s));
+	font-size: calc(22px * var(--s));
 }
-.sdk-bar-play[data-auto="ready"] .sdk-bar-play-count {
-	translate: calc(-1px * var(--s)) 0;
+/* Switched on, open, or autoplay chosen and waiting for play. */
+.sdk-bar-frame .sdk-bar-speed:not([data-speed="0"]),
+.sdk-bar-frame .sdk-bar-button[aria-expanded="true"],
+.sdk-bar-frame .sdk-bar-betbutton[aria-expanded="true"],
+.sdk-bar-frame .sdk-autoplay[data-ready] {
+	border-color: var(--bar-on, #d49791);
+	color: var(--bar-on, #d49791);
 }
-/* Autoplay chosen and waiting for play. */
-.sdk-bar .sdk-autoplay[data-ready] {
-	border-color: var(--bar-accent, #d49791);
-	color: var(--bar-accent, #d49791);
-}
-.sdk-bar .sdk-bar-button svg {
-	width: calc(24px * var(--s));
-	height: calc(24px * var(--s));
-}
-.sdk-bar button:disabled {
-	opacity: 0.4;
-	cursor: default;
-}
-.sdk-bar .sdk-bar-button:hover:not(:disabled) {
-	border-color: var(--bar-line-strong, #53474e);
-}
-/* Switched on, or open. */
-.sdk-bar .sdk-bar-speed:not([data-speed="0"]),
-.sdk-bar .sdk-bar-button[aria-expanded="true"] {
-	border-color: var(--bar-accent, #d49791);
-	color: var(--bar-accent, #d49791);
-}
-/* Autoplay, running: a stop sign and the plays left, in the same circle. */
-.sdk-bar .sdk-autoplay {
-	min-width: calc(44px * var(--s));
+.sdk-bar-frame .sdk-autoplay {
 	font-size: calc(13px * var(--s));
 	font-variant-numeric: tabular-nums;
 }
-.sdk-bar .sdk-autoplay[aria-label^="Stop"] {
-	display: inline-flex;
-	flex-direction: column;
-	gap: 2px;
-	border-color: var(--bar-accent, #d49791);
-	color: var(--bar-accent, #d49791);
-}
-.sdk-bar .sdk-autoplay .sdk-stop {
-	margin: 0;
-}
-.sdk-bar button:focus-visible {
-	outline: 2px solid var(--bar-accent, #d49791);
+.sdk-bar-frame button:focus-visible {
+	outline: 2px solid var(--bar-on, #d49791);
 	outline-offset: 2px;
-}
-
-/*
- * On a narrow game the bar is the site's two rows, whatever order the studio asked for:
- * what the player reads and the bet above, the menu and play below, with play in the
- * middle under a thumb. Each segment stays whole. Narrow is the game's width, not the
- * screen's (bar.ts sets `data-narrow`): a game in a page of the site is narrower than
- * the screen it is on.
- */
-/* The unit after an amount, a little smaller than its figures. No room for it on a narrow game,
-   or a bar with less room than it needs (bar.ts): the labels say Balance and Win. */
-.sdk-bar-unit {
-	font-size: 0.7em;
-	letter-spacing: 0.04em;
-}
-.sdk-bar[data-narrow] .sdk-bar-unit,
-.sdk-bar[data-tight] .sdk-bar-unit {
-	display: none;
-}
-.sdk-bar[data-narrow] {
-	min-height: 0;
-	grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
-	grid-template-rows: auto auto;
-	grid-template-areas:
-		"balance bet win"
-		"menu play .";
-	gap: calc(4px * var(--s)) calc(6px * var(--s));
-	padding: calc(4px * var(--s)) calc(8px * var(--s));
-	justify-items: center;
-}
-/* The sides give way, so that each segment takes its own place in the two rows. */
-.sdk-bar[data-narrow] .sdk-bar-left,
-.sdk-bar[data-narrow] .sdk-bar-right {
-	display: contents;
-}
-.sdk-bar[data-narrow] .sdk-bar-segment {
-	margin: 0;
-}
-/* Its ends line up: the menu under the balance at the left. */
-.sdk-bar[data-narrow] [data-segment="balance"] {
-	grid-area: balance;
-	justify-self: start;
-}
-.sdk-bar[data-narrow] [data-segment="bet"] {
-	grid-area: bet;
-	gap: calc(4px * var(--s));
-}
-/* The bet's buttons beside it are a little shorter in the top row, so that the two rows are no
-   taller than they were with the bet's buttons beside play. */
-.sdk-bar[data-narrow] [data-segment="bet"][data-arrange="split"] .sdk-bar-button {
-	height: calc(40px * var(--s));
-	min-height: calc(40px * var(--s));
-}
-.sdk-bar[data-narrow] [data-segment="win"] {
-	grid-area: win;
-	justify-self: end;
-}
-.sdk-bar[data-narrow] [data-segment="menu"] {
-	grid-area: menu;
-	justify-self: start;
-}
-.sdk-bar[data-narrow] [data-segment="play"] {
-	gap: calc(6px * var(--s));
-}
-.sdk-bar[data-narrow] .sdk-bar-play {
-	margin: 0;
-}
-.sdk-bar[data-narrow] .sdk-bar-betvalue,
-.sdk-bar[data-narrow] .sdk-bar-betfield {
-	min-width: calc(64px * var(--s));
-}
-.sdk-bar[data-narrow] .sdk-bar-readout output {
-	font-size: calc(17px * var(--s));
 }

@@ -1,56 +1,57 @@
 /**
- * The studio SDK's control bar, laid out in a real browser: what a studio may change about
- * it (the order of its segments, which are hidden, how each is arranged inside, how wide it
- * is) and what it may not (a segment broken apart, what a player needs hidden).
+ * The control bar's rules, in a real browser, since they are about where things are
+ * drawn: that the SDK's bar is its items in its order with play in its dead centre, wide
+ * and narrow; that it says what room it takes; that what a studio may ask of it is
+ * followed and what it may not is refused; and that a studio's own bar, made of the same
+ * items, is a bar as long as it shows the balance, the bet and play.
  *
  * Author: dwclake
- * Created: 2026-11-19
+ * Created: 2026-11-17
  */
 
 import { flushSync, mount, unmount } from "svelte";
 import { afterEach, describe, expect, it } from "vitest";
-import type { BarLayout, BarHandle as Bar } from "../bar.ts";
+import type { BarHandle as Bar } from "../bar.ts";
+import CustomBar from "./CustomBar.fixture.svelte";
 import { ControlBar } from "./index.ts";
 
 let game: HTMLElement;
 let mounted: Record<string, unknown> | null = null;
 
-/**
- * A bar in a game of this width, laid out as asked. What comes back is the bar as the
- * component hands it to a game, with each thing done to it shown on the page at once, as
- * a test reads the page on the next line.
- */
-function makeBar(layout?: BarLayout, width = 1000, betLabels?: string[]): Bar {
-	let made: Bar | undefined;
-
+/** A positioned box the size of a game, for a bar to be placed in. */
+function room(width: number): HTMLElement {
 	game = document.createElement("div");
 	game.style.cssText = `position: relative; width: ${width}px; height: 600px;`;
 	document.body.append(game);
 
+	return game;
+}
+
+/**
+ * The SDK's bar in a game of this width, set as asked. What comes back is the bar as the
+ * component hands it to a game, with each thing done to it shown on the page at once, as
+ * a test reads the page on the next line.
+ */
+function makeBar(more: Record<string, unknown> = {}, width = 1000): Bar {
+	let made: Bar | undefined;
+
 	mounted = mount(ControlBar, {
-		target: game,
+		target: room(width),
 		props: {
 			bets: [10, 20, 50, 100],
 			startBet: 20,
 			limits: { minStake: 10, maxStake: 100 },
 			balance: 25_00,
-			betLabels,
 			play: { label: "Spin", symbol: "spin" },
 			onplay: () => {},
 			autoplay: {
-				counts: [10],
 				noun: ["spin", "spins"],
 				onstart: () => {},
 				onstop: () => {}
 			},
-			layout,
 			within: "parent",
-			get bar() {
-				return made;
-			},
-			set bar(next: Bar | undefined) {
-				made = next;
-			}
+			onready: (bar: Bar) => (made = bar),
+			...more
 		}
 	});
 	flushSync();
@@ -69,42 +70,22 @@ function makeBar(layout?: BarLayout, width = 1000, betLabels?: string[]): Bar {
 
 				return result;
 			};
-		},
-		set(bar, key, value) {
-			Reflect.set(bar, key, value);
-			flushSync();
-
-			return true;
 		}
 	});
 }
 
 const box = (selector: string) => game.querySelector(selector)!.getBoundingClientRect();
-const segmentsInOrder = () =>
-	[...game.querySelectorAll<HTMLElement>(".sdk-bar-segment")]
-		.filter((segment) => !segment.hidden)
+const middle = (selector: string) => {
+	const { left, right } = box(selector);
+
+	return (left + right) / 2;
+};
+/** The items drawn inside this, left to right. */
+const itemsIn = (selector: string) =>
+	[...game.querySelectorAll<HTMLElement>(`${selector} .sdk-bar-segment`)]
+		.filter((segment) => segment.getBoundingClientRect().width > 0)
 		.sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left)
 		.map((segment) => segment.dataset.segment);
-/** Whether every part of a segment is drawn inside the segment's own box. */
-const whole = (name: string) => {
-	const segment = game
-		.querySelector(`[data-segment="${name}"]`)!
-		.getBoundingClientRect();
-	return [
-		...game.querySelectorAll(
-			`[data-segment="${name}"] button:not([hidden]), [data-segment="${name}"] output`
-		)
-	].every((part) => {
-		const r = part.getBoundingClientRect();
-		return (
-			r.width === 0 ||
-			(r.left >= segment.left - 0.5 &&
-				r.right <= segment.right + 0.5 &&
-				r.top >= segment.top - 0.5 &&
-				r.bottom <= segment.bottom + 0.5)
-		);
-	});
-};
 const settle = () =>
 	new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
 
@@ -114,199 +95,254 @@ afterEach(() => {
 	game?.remove();
 });
 
-describe("the control bar", () => {
-	it("is the site's five segments in the site's order, play in the middle, when left alone", async () => {
-		makeBar();
+describe("the SDK's control bar", () => {
+	it("is its items in its order along the bottom, with play in its dead centre", async () => {
+		const bar = makeBar();
+		await document.fonts.ready;
 		await settle();
-		expect(segmentsInOrder()).toEqual(["menu", "balance", "bet", "play", "win"]);
-		const play = box(".sdk-bar-play");
-		expect(
-			Math.abs(play.left + play.width / 2 - (box(".sdk-bar").left + 500))
-		).toBeLessThan(1);
-		// Autoplay at play's left and speed at its right.
-		expect(box(".sdk-bar-auto").right).toBeLessThan(play.left);
-		expect(box(".sdk-bar-speed").left).toBeGreaterThan(play.right);
-		for (const name of ["menu", "balance", "bet", "play", "win"])
-			expect(whole(name), name).toBe(true);
+
+		expect(itemsIn(".sdk-bar")).toEqual([
+			"menu",
+			"balance",
+			"bet",
+			"play",
+			"autoplay",
+			"speed",
+			"win"
+		]);
+		expect(Math.abs(middle(".sdk-bar-play") - middle(".sdk-bar"))).toBeLessThan(1);
+		expect(game.querySelector(".sdk-bar-strip")).toBeNull();
+
+		// It lies along the bottom, and says what room it takes there.
+		const dock = box(".sdk-bar");
+		const around = game.getBoundingClientRect();
+		expect(Math.round(dock.bottom)).toBe(Math.round(around.bottom));
+		expect(bar.inset()).toEqual({ top: 0, bottom: Math.ceil(dock.height - 0.01) });
+		expect(game.style.getPropertyValue("--sdk-bar-bottom")).toBe(
+			`${bar.inset().bottom}px`
+		);
+		expect(bar.rect().width).toBe(1000);
 	});
 
-	it("names the bet as the game asks, from names declared up front, without the segment changing size", async () => {
-		const bar = makeBar(undefined, 1000, ["Bonus spin"]);
+	it("is one row on a narrow game, with the balance and the last win along the top", async () => {
+		const bar = makeBar({}, 390);
+		await document.fonts.ready;
+		await settle();
+
+		expect(itemsIn(".sdk-bar")).toEqual(["menu", "bet", "play", "autoplay", "speed"]);
+		expect(itemsIn(".sdk-bar-strip")).toEqual(["balance", "win"]);
+		expect(Math.abs(middle(".sdk-bar-play") - middle(".sdk-bar"))).toBeLessThan(1);
+
+		// No button touches the next, and none is outside the game.
+		const buttons = [...game.querySelectorAll<HTMLElement>(".sdk-bar > * button")]
+			.filter(
+				(button) => button.offsetParent && !button.closest(".sdk-popup-panel")
+			)
+			.map((button) => button.getBoundingClientRect())
+			.sort((a, b) => a.left - b.left);
+		const around = game.getBoundingClientRect();
+		expect(buttons.length).toBe(5);
+		expect(buttons[0].left).toBeGreaterThanOrEqual(around.left);
+		expect(buttons.at(-1)!.right).toBeLessThanOrEqual(around.right);
+		for (let index = 1; index < buttons.length; index++)
+			expect(buttons[index].left - buttons[index - 1].right).toBeGreaterThanOrEqual(
+				4
+			);
+
+		// Both parts count in the room the bar takes.
+		const inset = bar.inset();
+		expect(inset.top).toBe(Math.ceil(box(".sdk-bar-strip").height - 0.01));
+		expect(inset.bottom).toBe(Math.ceil(box(".sdk-bar").height - 0.01));
+	});
+
+	it("chooses a bet from its button on a narrow game, which closes when one is chosen", async () => {
+		const bar = makeBar({}, 390);
+		await settle();
+
+		const opener = game.querySelector<HTMLButtonElement>(".sdk-bar-betbutton")!;
+		opener.click();
+		flushSync();
+
+		const offers = [
+			...game.querySelectorAll<HTMLButtonElement>(".sdk-bar-bets .sdk-choice")
+		];
+		expect(offers.map((offer) => offer.textContent?.trim())).toEqual([
+			"0.10",
+			"0.20",
+			"0.50",
+			"1.00"
+		]);
+
+		offers[2].click();
+		flushSync();
+		expect(bar.bet).toBe(50);
+		expect(opener.getAttribute("aria-expanded")).toBe("false");
+		expect(opener.textContent).toContain("0.50");
+	});
+
+	it("names the bet as the game asks, from names declared up front, without the bet changing size", async () => {
+		const bar = makeBar({ betLabels: ["Bonus spin"] });
 		await settle();
 		const label = () =>
 			[...game.querySelectorAll<HTMLElement>(".sdk-bar-betlabel > span")]
 				.filter((name) => getComputedStyle(name).visibility === "visible")
-				.map((name) => name.textContent)
+				.map((name) => name.textContent?.trim())
 				.join();
-		const button = () => game.querySelector(".sdk-bar-betvalue")!;
 		const before = box('[data-segment="bet"]');
 		expect(label()).toBe("Bet");
 
 		bar.setBetLabel("Bonus spin");
 		await settle();
 		expect(label()).toBe("Bonus spin");
-		expect(button().textContent).toContain("0.20");
+		expect(game.querySelector(".sdk-bar-betvalue")!.textContent).toContain("0.20");
 		const after = box('[data-segment="bet"]');
 		expect(after.width).toBe(before.width);
 		expect(after.left).toBe(before.left);
-		expect(whole("bet")).toBe(true);
 
-		bar.setBetLabel(null);
-		expect(label()).toBe("Bet");
-		expect(() => bar.setBetLabel("Mega spin")).toThrow(/betLabels/);
+		expect(() => bar.setBetLabel("Not declared")).toThrow(/betLabels/);
+	});
+
+	it("refuses a name for the bet too long for its label", () => {
+		expect(() => makeBar({ betLabels: ["A very long name"] })).toThrow(
+			/1 to 10 characters/
+		);
 	});
 
 	it("shows the free spins left on the play button, which cannot stop them", async () => {
 		const bar = makeBar();
-		const play = () => game.querySelector<HTMLButtonElement>(".sdk-bar-play")!;
-		bar.setFreeSpins(6);
-		expect(play().getAttribute("aria-label")).toBe("Free spins, 6 left");
-		expect(play().querySelector(".sdk-bar-play-count")!.textContent).toBe("6");
-		expect(play().disabled).toBe(true);
-		bar.setFreeSpins(5);
-		expect(play().querySelector(".sdk-bar-play-count")!.textContent).toBe("5");
-		bar.setFreeSpins(null);
-		expect(play().getAttribute("aria-label")).toBe("Spin");
-		expect(play().disabled).toBe(false);
-		expect(play().querySelector(".sdk-bar-play-count")).toBeNull();
-	});
-
-	it("refuses a name for the bet too long for the segment", () => {
-		expect(() => makeBar(undefined, 1000, ["A very very long name"])).toThrow(
-			/1 to 10/
-		);
-	});
-
-	it("puts the segments in the order a studio asks, keeping play in the middle and each segment whole", async () => {
-		makeBar({ order: ["win", "bet", "play", "balance", "menu"] });
 		await settle();
-		expect(segmentsInOrder()).toEqual(["win", "bet", "play", "balance", "menu"]);
-		const play = box(".sdk-bar-play");
-		expect(
-			Math.abs(play.left + play.width / 2 - (box(".sdk-bar").left + 500))
-		).toBeLessThan(1);
-		// The segment beside play is close to it; the rest are out at the edge.
-		expect(play.left - box('[data-segment="bet"]').right).toBeLessThan(80);
-		expect(box(".sdk-bar").right - box('[data-segment="menu"]').right).toBeLessThan(
-			20
-		);
-		for (const name of ["menu", "balance", "bet", "play", "win"])
-			expect(whole(name), name).toBe(true);
+		const play = game.querySelector<HTMLButtonElement>(".sdk-bar-play")!;
+
+		bar.setFreeSpins(8);
+		expect(play.disabled).toBe(true);
+		expect(play.getAttribute("aria-label")).toBe("Free spins, 8 left");
+		expect(play.querySelector(".sdk-bar-play-count")!.textContent?.trim()).toBe("8");
+
+		bar.setFreeSpins(null);
+		expect(play.disabled).toBe(false);
+		expect(play.getAttribute("aria-label")).toBe("Spin");
 	});
 
-	it("hides the menu and the win if asked, and refuses to hide anything a player needs", async () => {
+	it("keeps autoplay's count on the play button inside the button", async () => {
+		const bar = makeBar();
+		await document.fonts.ready;
+		await settle();
+
+		bar.autoLeft = 100;
+		flushSync();
+		await settle();
+
+		const play = box(".sdk-bar-play");
+		const count = box(".sdk-bar-play-count");
+		expect(count.left).toBeGreaterThan(play.left);
+		expect(count.right).toBeLessThan(play.right);
+		expect(game.querySelector(".sdk-bar-play")!.getAttribute("aria-label")).toBe(
+			"Stop autoplay, 100 spins left"
+		);
+	});
+
+	it("leaves out the menu and the win if asked, and refuses to leave out what a player needs", async () => {
 		makeBar({ hide: ["menu", "win"] });
 		await settle();
-		expect(segmentsInOrder()).toEqual(["balance", "bet", "play"]);
+
+		expect(itemsIn(".sdk-bar")).toEqual([
+			"balance",
+			"bet",
+			"play",
+			"autoplay",
+			"speed"
+		]);
+		expect(Math.abs(middle(".sdk-bar-play") - middle(".sdk-bar"))).toBeLessThan(1);
+
+		void unmount(mounted!);
+		mounted = null;
 		game.remove();
-		for (const segment of ["balance", "bet", "play"] as const)
-			expect(() => makeBar({ hide: [segment] })).toThrow(/cannot be hidden/);
+		expect(() => makeBar({ hide: ["balance"] })).toThrow(/cannot be hidden/);
 	});
 
-	it("refuses an order that leaves out a segment or names one twice", () => {
-		expect(() =>
-			makeBar({ order: ["menu", "balance", "bet", "play"] as never })
-		).toThrow(/each of/);
-		expect(() => makeBar({ order: ["menu", "menu", "bet", "play", "win"] })).toThrow(
-			/each of/
-		);
-	});
-
-	it("arranges the bet's plus and minus in a column at either side of the bet", async () => {
-		for (const [arrange, side] of [
-			["column-end", "right"],
-			["column-start", "left"]
-		] as const) {
-			makeBar({ arrange: { bet: arrange } });
-			await settle();
-			const [plus, minus, bet] = [
-				box(".sdk-bar-plus"),
-				box(".sdk-bar-minus"),
-				box(".sdk-bar-betvalue")
-			];
-			expect(plus.bottom, arrange).toBeLessThanOrEqual(minus.top);
-			expect(Math.abs(plus.left - minus.left), arrange).toBeLessThan(1);
-			if (side === "right")
-				expect(plus.left, arrange).toBeGreaterThanOrEqual(bet.right);
-			else expect(plus.right, arrange).toBeLessThanOrEqual(bet.left);
-			// Still inside the bar's height, and still one segment.
-			expect(plus.top, arrange).toBeGreaterThanOrEqual(box(".sdk-bar").top);
-			expect(minus.bottom, arrange).toBeLessThanOrEqual(box(".sdk-bar").bottom);
-			expect(whole("bet"), arrange).toBe(true);
-			game.remove();
-		}
-	});
-
-	it("arranges autoplay and speed together at one side of play, in a row or a column", async () => {
-		for (const arrange of [
-			"row-start",
-			"row-end",
-			"column-start",
-			"column-end"
-		] as const) {
-			makeBar({ arrange: { play: arrange } });
-			await settle();
-			const [auto, speed, play] = [
-				box(".sdk-bar-auto"),
-				box(".sdk-bar-speed"),
-				box(".sdk-bar-play")
-			];
-			const before = arrange.endsWith("start");
-			for (const part of [auto, speed])
-				if (before) expect(part.right, arrange).toBeLessThanOrEqual(play.left);
-				else expect(part.left, arrange).toBeGreaterThanOrEqual(play.right);
-			if (arrange.startsWith("column"))
-				expect(auto.bottom, arrange).toBeLessThanOrEqual(speed.top);
-			else expect(Math.abs(auto.top - speed.top), arrange).toBeLessThan(1);
-			expect(whole("play"), arrange).toBe(true);
-			game.remove();
-		}
-		expect(() => makeBar({ arrange: { play: "diagonal" as never } })).toThrow(
-			/arranged/
-		);
-	});
-
-	it("is as wide as asked, to the side asked, and says where it is for a button beside it", async () => {
-		const bar = makeBar({ width: 0.8, align: "start" });
+	it("lies along the top if asked, its popups opening downward", async () => {
+		const bar = makeBar({ place: "top" });
 		await settle();
-		const rect = bar.rect();
-		expect(rect.left).toBe(0);
-		expect(rect.width).toBe(800);
-		expect(rect.top + rect.height).toBe(600);
-		bar.setLayout({ align: "end" });
-		expect(bar.rect().left).toBe(200);
-		// Never narrower than what is in it.
-		bar.setLayout({ width: 0.5 });
-		// (scrollWidth is a whole pixel; the box may be a fraction under it.)
-		expect(bar.rect().width).toBeGreaterThan(500);
-		expect(bar.rect().width).toBeGreaterThanOrEqual(
-			game.querySelector(".sdk-bar")!.scrollWidth - 1
+
+		const dock = box(".sdk-bar");
+		expect(Math.round(dock.top)).toBe(Math.round(game.getBoundingClientRect().top));
+		expect(bar.inset()).toEqual({ top: Math.ceil(dock.height - 0.01), bottom: 0 });
+
+		game.querySelector<HTMLButtonElement>('button[aria-label="Auto"]')!.click();
+		flushSync();
+		expect(box(".sdk-bar-auto .sdk-popup-panel").top).toBeGreaterThanOrEqual(
+			box('button[aria-label="Auto"]').bottom
 		);
 	});
 
-	it("is the site's two rows on a narrow game whatever was asked, each segment still whole", async () => {
-		makeBar(
-			{
-				order: ["win", "bet", "play", "balance", "menu"],
-				width: 0.6,
-				arrange: { bet: "column-start" }
-			},
-			380
-		);
+	it("is bigger or smaller as asked, but never too big to fit across the game", async () => {
+		makeBar({ scale: 1.25 });
 		await settle();
-		const bar = box(".sdk-bar");
-		expect(bar.width).toBe(380);
-		// Above: the balance, the bet and the win; below: the menu and play, play in the middle.
-		const top = (name: string) => box(`[data-segment="${name}"]`).top;
-		expect(top("balance")).toBe(top("win"));
-		expect(top("play")).toBeGreaterThan(top("bet"));
-		const play = box(".sdk-bar-play");
-		expect(Math.abs(play.left + play.width / 2 - (bar.left + 190))).toBeLessThan(2);
-		// The arrangement inside a segment is still the studio's.
+		const frame = () => game.querySelector<HTMLElement>(".sdk-bar-frame")!;
+		expect(frame().style.getPropertyValue("--bar-s")).toBe("1.25");
+
+		void unmount(mounted!);
+		mounted = null;
+		game.remove();
+		makeBar({ scale: 1.5 }, 800);
+		await settle();
+		expect(Number(frame().style.getPropertyValue("--bar-s"))).toBeLessThan(1.5);
+		expect(box(".sdk-bar").width).toBe(800);
+	});
+});
+
+describe("a studio's own bar", () => {
+	it("is the SDK's items where the studio put them, each dressed and sized as it asked", async () => {
+		let made: Bar | undefined;
+		mounted = mount(CustomBar, {
+			target: room(1000),
+			props: { onready: (bar: Bar) => (made = bar) }
+		});
+		flushSync();
+		await settle();
+
+		expect(itemsIn(".custom-top")).toEqual(["win", "balance"]);
+		expect(itemsIn(".custom-bottom")).toEqual([
+			"play",
+			"speed",
+			"autoplay",
+			"bet",
+			"menu"
+		]);
+
+		// An item takes more through its own props than the SDK's bar offers.
+		expect(game.querySelector(".custom-top .sdk-bar-label")!.textContent).toBe(
+			"Last win"
+		);
+		expect(game.querySelector(".custom-top .sdk-bar-win .sdk-bar-unit")).toBeNull();
+		expect(
+			game
+				.querySelector<HTMLElement>('[data-segment="balance"]')!
+				.style.getPropertyValue("--bar-segment-surface")
+		).toBe("rgb(1, 2, 3)");
+		expect(box(".sdk-bar-play").width).toBe(108);
 		expect(box(".sdk-bar-plus").bottom).toBeLessThanOrEqual(
 			box(".sdk-bar-minus").top
 		);
-		for (const name of ["menu", "balance", "bet", "play", "win"])
-			expect(whole(name), name).toBe(true);
+
+		// It is still a bar: it plays, and says what room its parts take.
+		expect(made!.inset().top).toBe(Math.ceil(box(".custom-top").height - 0.01));
+		expect(made!.inset().bottom).toBe(Math.ceil(box(".custom-bottom").height - 0.01));
+
+		game.querySelector<HTMLButtonElement>(
+			'button[aria-label="Raise the bet"]'
+		)!.click();
+		flushSync();
+		expect(made!.bet).toBe(50);
+	});
+
+	it("is refused without the balance, the bet or play", () => {
+		for (const without of ["balance", "bet", "play"] as const) {
+			expect(() => {
+				mount(CustomBar, { target: room(1000), props: { without } });
+				flushSync();
+			}).toThrow(new RegExp(`no ${without}`));
+			game.remove();
+		}
 	});
 });

@@ -10,7 +10,7 @@
  * Created: 2026-11-19
  */
 
-import type { BarSegment } from "./bar-rules.ts";
+import type { BarItem } from "./bar-rules.ts";
 
 /** How one of the SDK's controls looks: a menu, a popup, a switch, choices, a slider, a field. */
 export interface ControlLook {
@@ -34,7 +34,10 @@ export interface ControlLook {
 	radius?: string;
 }
 
-/** How one segment of the control bar looks: drawn with nothing round it unless asked. */
+/**
+ * How one item of a control bar looks (the menu, the balance, the bet, play, autoplay, the
+ * speed, the win): drawn with nothing round it unless asked.
+ */
 export interface SegmentLook {
 	/** What it is drawn on. */
 	surface?: string;
@@ -80,20 +83,19 @@ export interface BarLook {
 	font?: string;
 	/** Its small labels' typeface. */
 	labelFont?: string;
-	/** The line round a floating bar. */
-	edge?: string;
-	/** The corners of a floating bar. */
-	radius?: string;
-	/** The shadow under a floating bar. */
-	shadow?: string;
-	/** A `backdrop-filter` for a see-through bar: `"blur(8px)"`. */
+	/**
+	 * A colour the bar's glass is stained with, as stained glass is: its surface and its
+	 * popups take it on, and what is behind still shows through. Clear, left out.
+	 */
+	tint?: string;
+	/** The `backdrop-filter` of the bar's glass: `"blur(8px)"`, or `"none"`. */
 	blur?: string;
 	/** The room between segments. */
 	gap?: string;
-	/** Every segment's look. */
+	/** Every item's look. */
 	segment?: SegmentLook;
-	/** One segment's look, over what `segment` says: `{ play: { radius: "16px" } }`. */
-	segments?: Partial<Record<BarSegment, SegmentLook>>;
+	/** One item's look, over what `segment` says: `{ play: { radius: "16px" } }`. */
+	segments?: Partial<Record<BarItem, SegmentLook>>;
 }
 
 /** A property and the value to give it. */

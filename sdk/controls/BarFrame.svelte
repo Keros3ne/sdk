@@ -1,0 +1,332 @@
+<!--
+A control bar's frame: what makes a bar a bar, with nothing drawn. It holds the bar's
+state (the bet, the speed, autoplay, the balance, the last win) and gives it to the items
+inside it, which may be anywhere in it, in one part or several (./BarPart.svelte). It
+measures the game, says what room the bar takes, and hands the game the bar (`bind:bar`).
+
+The SDK's own bar (./ControlBar.svelte) is a frame with the items laid out in it. A studio
+that wants another bar writes its own frame the same way:
+
+    <BarFrame {bets} {startBet} {limits} {play} {onplay} {balance} {win} {busy} bind:bet bind:bar>
+      <BarPart class="my-bar">
+        <BarMenu /><BarBalance /><BarBet /><BarPlay /><BarAutoplay /><BarSpeed /><BarWin />
+      </BarPart>
+    </BarFrame>
+
+Every bar shows the balance, the bet and play: a frame without one of them throws. The
+frame covers the game and takes no presses itself; its parts do.
+
+Author: dwclake
+Created: 2026-11-19
+-->
+<script lang="ts">
+	import { untrack, type Snippet } from "svelte";
+	import "../ui.css";
+	import "../bar.css";
+	import {
+		BAR_SCALE,
+		CONTENT,
+		NARROW,
+		REQUIRED_ITEMS,
+		SMALLEST,
+		type BarHandle
+	} from "../bar-rules.ts";
+	import { barProperties, dress, type BarLook } from "../look.ts";
+	import { BarState, provideBar, type BarOptions } from "./bar-state.svelte.ts";
+
+	interface Props extends BarOptions {
+		/** How the bar looks: its colours, typefaces and buttons (../look.ts). It may change. */
+		look?: BarLook;
+		/** Its size against the usual: from 0.8 to 1.5. Never so big that it does not fit across the game. */
+		scale?: number;
+		/**
+		 * What the bar is placed in and measured against. The whole page, as in a game's own
+		 * frame; or `parent`, the element this is written in, which must be positioned: for
+		 * a page that holds a game among other things.
+		 */
+		within?: "page" | "parent";
+		/** The player's balance, in cents. */
+		balance: number;
+		/**
+		 * What the last play won, in cents: 0 when a play starts, and what it won once that is
+		 * shown. The bar keeps the last win of more than nothing in view: green while it is the
+		 * last play's, greyed once a later play has started or won nothing.
+		 */
+		win?: number;
+		/** While a round is played or shown: the bet cannot be changed, nor play pressed. */
+		busy?: boolean;
+		/** How many plays of autoplay are left, as the game counts them down. */
+		autoLeft?: number;
+		/** What the next play will cost, when that is not the bet itself. `null` for the bet. */
+		cost?: number | null;
+		/** What the bet is called, one of `betLabels`. `null` for "Bet". */
+		betLabel?: string | null;
+		/** Free spins left, shown on the play button. `null` gives the button back. */
+		freeSpins?: number | null;
+		/** More about the play button for a screen reader. */
+		playDescription?: string;
+		/** Out: the bet chosen, in cents. */
+		bet?: number;
+		/** Out: the bar itself. */
+		bar?: BarHandle;
+		/** Called once the bar is made and in the page. */
+		onready?: (bar: BarHandle) => void;
+		/** More classes for the frame. */
+		class?: string;
+		/** The bar's parts and items. Given the bar's state, for a layout that follows it (`narrow`). */
+		children: Snippet<[BarState]>;
+	}
+
+	let {
+		look,
+		scale = 1,
+		within = "page",
+		balance,
+		win,
+		busy,
+		autoLeft,
+		cost,
+		betLabel,
+		freeSpins,
+		playDescription,
+		bet = $bindable(),
+		bar = $bindable(),
+		onready,
+		class: frameClass,
+		children,
+		...options
+	}: Props = $props();
+
+	const shared = provideBar(new BarState(() => options));
+
+	let root = $state<HTMLElement>();
+	let container: HTMLElement | undefined;
+	let inset = { top: 0, bottom: 0 };
+
+	// What the bar shows follows the frame's props, where they are given.
+	$effect(() => {
+		shared.balance = balance;
+	});
+	$effect(() => {
+		if (win !== undefined) shared.setWin(win);
+	});
+	$effect(() => {
+		if (busy !== undefined) shared.busy = busy;
+	});
+	$effect(() => {
+		if (autoLeft !== undefined) shared.left = Math.max(0, autoLeft);
+	});
+	$effect(() => {
+		if (cost !== undefined) shared.cost = cost;
+	});
+	$effect(() => {
+		if (betLabel !== undefined) shared.setBetLabel(betLabel);
+	});
+	$effect(() => {
+		if (freeSpins !== undefined) shared.setFreeSpins(freeSpins);
+	});
+	$effect(() => {
+		if (playDescription !== undefined) shared.playLabel = playDescription;
+	});
+	// And the bet chosen goes back to whoever bound it, at once.
+	shared.onBet((next) => (bet = next));
+
+	/** The bar's parts, as they are in the page now. */
+	const parts = () => [
+		...(root?.querySelectorAll<HTMLElement>(":scope > .sdk-bar-part") ?? [])
+	];
+
+	/** The part a game's own button is placed beside: the one at the bottom, or the first. */
+	const mainPart = () =>
+		parts().find((part) => part.dataset.edge === "bottom") ?? parts()[0];
+
+	/**
+	 * Measures the game: whether it is narrow, how big the bar may be in it, and what room
+	 * the bar's parts take at its top and bottom.
+	 */
+	function place() {
+		if (!root || !container) return;
+
+		const width = container.clientWidth;
+		const height = container.clientHeight;
+		if (!root.isConnected || !width || !height) return;
+
+		const narrow = width <= NARROW;
+
+		shared.narrow = narrow;
+		root.toggleAttribute("data-narrow", narrow);
+
+		// A bigger bar still has to fit across the game; at its usual size or under it is left as
+		// asked. A narrow bar that does not fit at its usual size is made smaller, to three quarters.
+		const room = width / (narrow ? CONTENT.narrow : CONTENT.wide);
+		const fits = narrow ? Math.max(SMALLEST, Math.min(1, room)) : Math.max(1, room);
+		const sized = Math.min(
+			Math.max(BAR_SCALE.min, Math.min(BAR_SCALE.max, scale)),
+			fits
+		);
+
+		root.style.setProperty("--bar-s", String(Math.round(sized * 1000) / 1000));
+
+		// Rounded up, from the game's exact height (`clientHeight` is rounded to a whole pixel):
+		// a game drawing clear of the bar must never be a fraction of a pixel under it.
+		const origin = container.getBoundingClientRect();
+		const next = { top: 0, bottom: 0 };
+		for (const part of parts()) {
+			const box = part.getBoundingClientRect();
+			if (!box.width || !box.height) continue;
+
+			if (part.dataset.edge === "top")
+				next.top = Math.max(next.top, Math.ceil(box.bottom - origin.top - 0.01));
+			else
+				next.bottom = Math.max(
+					next.bottom,
+					Math.ceil(origin.bottom - box.top - 0.01)
+				);
+		}
+
+		inset = next;
+		container.style.setProperty("--sdk-bar-top", `${inset.top}px`);
+		container.style.setProperty("--sdk-bar-bottom", `${inset.bottom}px`);
+	}
+
+	/** Where an element is in the game, in pixels from its top left. */
+	function rectOf(element: HTMLElement | undefined) {
+		const box = element?.getBoundingClientRect();
+		const origin = container?.getBoundingClientRect();
+		if (!box || !origin) return { left: 0, top: 0, width: 0, height: 0 };
+
+		return {
+			left: box.left - origin.left,
+			top: box.top - origin.top,
+			width: box.width,
+			height: box.height
+		};
+	}
+
+	/** The bar as a game holds it: what it may ask of the bar and tell it. */
+	const api: BarHandle = {
+		get element() {
+			return mainPart()!;
+		},
+		get bet() {
+			return shared.stake;
+		},
+		get speed() {
+			return shared.speed;
+		},
+		quick: (inBonus) => shared.quick(inBonus),
+		pace: (inBonus) => shared.pace(inBonus),
+		get volume() {
+			return shared.volume;
+		},
+		get busy() {
+			return shared.busy;
+		},
+		set busy(next: boolean) {
+			shared.busy = next;
+		},
+		get autoLeft() {
+			return shared.left;
+		},
+		set autoLeft(next: number) {
+			shared.left = Math.max(0, next);
+		},
+		setBalance: (cents) => void (shared.balance = cents),
+		setWin: (cents) => shared.setWin(cents),
+		setCost: (cents) => void (shared.cost = cents),
+		setBetLabel: (label) => shared.setBetLabel(label),
+		setFreeSpins: (spins) => shared.setFreeSpins(spins),
+		onBet: (listener) => shared.onBet(listener),
+		describePlay: (label) => void (shared.playLabel = label),
+		focusPlay: () => shared.playElement?.focus({ preventScroll: true }),
+		top: () => rectOf(mainPart()).top,
+		rect() {
+			place();
+
+			return rectOf(mainPart());
+		},
+		inset() {
+			place();
+
+			return inset;
+		}
+	};
+
+	/**
+	 * Once the frame is drawn: it is told what it is placed in, marks that as where its popups
+	 * must keep, and measures again whenever the game or one of its parts changes size.
+	 */
+	function mount(frame: HTMLElement) {
+		for (const item of REQUIRED_ITEMS)
+			if (!shared.items.has(item))
+				throw new Error(
+					`A bar must show the balance, the bet and play: this one has no ${item}.`
+				);
+
+		const around = within === "parent" ? frame.parentElement : null;
+
+		container = around ?? document.documentElement;
+		// The bar's popups keep inside it (Popup.svelte).
+		container.dataset.sdkBounds = "";
+
+		const watcher = new ResizeObserver(place);
+		watcher.observe(container);
+
+		// Parts come and go as the layout changes (a narrow game has other parts than a wide one).
+		const watch = () => {
+			for (const part of parts()) watcher.observe(part);
+			place();
+		};
+		const comings = new MutationObserver(watch);
+		comings.observe(frame, { childList: true });
+		watch();
+
+		shared.measures = {
+			element: mainPart,
+			inset: () => api.inset(),
+			rect: () => api.rect()
+		};
+
+		untrack(() => {
+			bet = shared.stake;
+			bar = api;
+			onready?.(api);
+		});
+
+		return () => {
+			watcher.disconnect();
+			comings.disconnect();
+			bar = undefined;
+		};
+	}
+
+	// The bar is drawn in the browser only. It is placed by measuring the game it is in, which
+	// a server cannot do, and a page drawn by a server shows its own loading until the bar is in.
+	// Known from the start, not found out in an effect: a page being taken over from a
+	// server must not have what it draws change under it part way.
+	const drawn = typeof document !== "undefined";
+
+	// A bar made bigger or smaller is measured anew.
+	$effect(() => {
+		void scale;
+		place();
+	});
+</script>
+
+{#if drawn}
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div
+		class={["sdk-bar-frame", frameClass]}
+		{@attach dress(() => barProperties(look))}
+		bind:this={root}
+		onkeydown={(event) => {
+			// Escape puts away autoplay that is waiting. With the popup open, the popup takes it to close.
+			if (event.key !== "Escape" || shared.ready === 0 || shared.left > 0) return;
+
+			shared.ready = 0;
+		}}
+		{@attach mount}
+	>
+		{@render children(shared)}
+	</div>
+{/if}
