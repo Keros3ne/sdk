@@ -320,6 +320,12 @@ describe("a studio's own bar", () => {
 				.querySelector<HTMLElement>('[data-segment="balance"]')!
 				.style.getPropertyValue("--bar-segment-surface")
 		).toBe("rgb(1, 2, 3)");
+		// Its colours too: the switched-on colour is the item's own to say.
+		expect(
+			game
+				.querySelector<HTMLElement>('[data-segment="speed"]')!
+				.style.getPropertyValue("--bar-on")
+		).toBe("rgb(4, 5, 6)");
 		expect(box(".sdk-bar-play").width).toBe(108);
 		expect(box(".sdk-bar-plus").bottom).toBeLessThanOrEqual(
 			box(".sdk-bar-minus").top

@@ -36,7 +36,10 @@ export interface ControlLook {
 
 /**
  * How one item of a control bar looks (the menu, the balance, the bet, play, autoplay, the
- * speed, the win): drawn with nothing round it unless asked.
+ * speed, the win), as the item's own `look` prop: its box, drawn with nothing round it
+ * unless asked, and its own colours, over what the bar it is in gives every item. A studio
+ * making a bar of its own dresses each item here, where the SDK's bar only takes a look
+ * for all of them at once.
  */
 export interface SegmentLook {
 	/** What it is drawn on. */
@@ -51,6 +54,24 @@ export interface SegmentLook {
 	shadow?: string;
 	/** A `backdrop-filter` for a see-through segment: `"blur(6px)"`. */
 	blur?: string;
+	/** Its text and symbols. */
+	ink?: string;
+	/** Its small label. */
+	dim?: string;
+	/** What its buttons are drawn on, their edge, their edge under the pointer, and their corners. */
+	button?: string;
+	line?: string;
+	lineStrong?: string;
+	buttonRadius?: string;
+	/** Play's button, and the symbol on it. */
+	accent?: string;
+	onAccent?: string;
+	/** Its button while it is switched on or its popup is open, and its focus ring. */
+	on?: string;
+	/** What its popup is drawn on. */
+	popup?: string;
+	/** The last win's figures, while it is the last play's own. */
+	win?: string;
 }
 
 /** How the control bar looks. */
@@ -133,9 +154,20 @@ export function controlProperties(look: ControlLook | undefined): Dressing[] {
 	return properties(look, "--sdk-");
 }
 
-/** One segment's look as the properties the bar's style sheet reads. */
+/** The parts of an item's look that are its box: the rest are colours the whole bar has too. */
+const BOX = new Set(["surface", "border", "radius", "padding", "shadow", "blur"]);
+
+/**
+ * One item's look as the properties the bar's style sheet reads: its box as
+ * `--bar-segment-...`, and its colours as the bar's own properties (`--bar-ink`), set on
+ * the item, where they outweigh what the bar gives every item.
+ */
 export function segmentProperties(look: SegmentLook | undefined): Dressing[] {
-	return properties(look, "--bar-segment-");
+	const entries = Object.entries(look ?? {});
+	const box = Object.fromEntries(entries.filter(([part]) => BOX.has(part)));
+	const colours = Object.fromEntries(entries.filter(([part]) => !BOX.has(part)));
+
+	return [...properties(box, "--bar-segment-"), ...properties(colours, "--bar-")];
 }
 
 /** The bar's look, short of single segments', as the properties its style sheet reads (./bar.css). */

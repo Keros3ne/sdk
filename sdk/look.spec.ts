@@ -33,8 +33,11 @@ describe("a look", () => {
 			["--bar-segment-surface", "#0008"],
 			["--bar-segment-blur", "blur(6px)"]
 		]);
-		expect(segmentProperties({ radius: "16px" })).toEqual([
-			["--bar-segment-radius", "16px"]
+		// An item's box is the segment's; its colours are the bar's own properties, set on it.
+		expect(segmentProperties({ radius: "16px", on: "#fc0", ink: "#fff" })).toEqual([
+			["--bar-segment-radius", "16px"],
+			["--bar-on", "#fc0"],
+			["--bar-ink", "#fff"]
 		]);
 		expect(controlProperties(undefined)).toEqual([]);
 	});

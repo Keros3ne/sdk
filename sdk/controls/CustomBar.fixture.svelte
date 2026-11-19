@@ -47,7 +47,7 @@ Created: 2026-11-19
 		</BarPart>
 		<BarPart class="custom-bottom" gap={10}>
 			{#if without !== "play"}<BarPlay size={1.5} />{/if}
-			<BarSpeed /><BarAutoplay />
+			<BarSpeed look={{ on: "rgb(4, 5, 6)" }} /><BarAutoplay />
 			{#if without !== "bet"}<BarBet arrange="column-end" />{/if}
 			<BarMenu />
 		</BarPart>

@@ -201,6 +201,15 @@
 /* An item: one box, kept whole, sized by its own scale against the bar's. */
 .sdk-bar-segment {
 	--s: calc(var(--bar-s, 1) * var(--segment-scale, 1));
+	/* Said again here, so that an item's own colours reach the popup it opens. */
+	--sdk-ink: var(--bar-ink, #f4f1f2);
+	--sdk-surface: var(--bar-popup, var(--bar-glass-popup));
+	--sdk-dim: var(--bar-dim, #c0aeb2);
+	--sdk-line: var(--bar-line, rgb(255 255 255 / 0.22));
+	--sdk-accent: var(--bar-on, #d49791);
+	--sdk-main: var(--bar-accent, #f4f1f2);
+	--sdk-on-main: var(--bar-on-accent, #25191c);
+	color: var(--bar-ink, #f4f1f2);
 	display: flex;
 	align-items: center;
 	gap: calc(8px * var(--s));

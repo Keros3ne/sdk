@@ -418,7 +418,9 @@ and refuses a client built for another version of the protocol.
         </BarFrame>
 
     An item takes more through its own props than the SDK's bar offers: `look` (its ground,
-    edge, corners, padding, shadow, blur), `size` against the rest of the bar (0.5 to 2),
+    edge, corners, padding, shadow and blur, and its own colours: its ink and label, its
+    button's ground and edge, play's colours, the colour of what is switched on, the win's),
+    `size` against the rest of the bar (0.5 to 2),
     and what is its own (a readout's `label` and `unit`, the bet's `arrange`, the bet
     button's `columns`). `shared.narrow` says whether the game is 600px wide or under, for a
     bar laid out differently there. A part says which `edge` of the game it is at, and may
