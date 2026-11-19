@@ -3,56 +3,22 @@ Game Title: the client's page. It decides nothing. A spin is a row the site drew
 the game's book, and comes back through the SDK already settled; the game only plays it
 out (../Game.svelte), then tells the site it has been shown.
 
-This page is rendered when the client is built, so it holds only what can be drawn with no
-browser and no site: the loading screen. The game itself is asked for once the page is in
-a browser, where the site can answer.
+The SDK's page does what every game's page does: the loading screen from the first moment,
+the site's answer, and the game's own code asked for once the page is in a browser. A game
+says only what is its own: its name, its logo, how its loading screen looks, and where
+its root component is.
 
 Author: dwclake
 Created: 2026-11-18
 -->
 <script lang="ts">
-	import { onMount, type Component } from "svelte";
-	import { connect, type GameHost } from "@keros3ne/studio-sdk/client";
-	import { LoadingScreen, createLoading } from "@keros3ne/studio-sdk/loading";
-	import type { RoundView } from "../round.ts";
+	import GamePage from "@keros3ne/studio-sdk/page";
 	import "../style.css";
-
-	/** What the game is given: the site, and how to tell the loading screen of its progress. */
-	interface GameProps {
-		host: GameHost<RoundView, null>;
-		track?: <Work>(work: Promise<Work>) => Promise<Work>;
-		onready?: () => void;
-	}
-
-	const loading = createLoading();
-
-	let game = $state.raw<{ Game: Component<GameProps>; host: GameProps["host"] } | null>(
-		null
-	);
-
-	// Up first: the site's answer, the game's own code, and the bar's typeface.
-	onMount(async () => {
-		const typeface = loading.track(
-			document.fonts.load('500 15px "Geist Variable"').catch(() => null)
-		);
-		const [host, code] = await Promise.all([
-			loading.track(connect<RoundView, null>(), 2),
-			loading.track(import("../Game.svelte"), 2)
-		]);
-		await typeface;
-
-		game = { Game: code.default, host };
-	});
 </script>
 
-<svelte:head>
-	<title>Game Title</title>
-</svelte:head>
-
-<!-- The game's own: on the evening the game opens on (style.css's ground), so that when it
+<!-- On the evening the game opens on (style.css's ground), so that when the loading screen
      leaves only what is in front changes, with the studio's logo over the name. -->
-<LoadingScreen
-	{loading}
+<GamePage
 	title="Game Title"
 	logo="./loading-logo.svg"
 	look={{
@@ -64,15 +30,5 @@ Created: 2026-11-18
 		titleSpacing: "0.14em",
 		logoWidth: 96
 	}}
+	game={() => import("../Game.svelte")}
 />
-
-{#if game}
-	<game.Game
-		host={game.host}
-		track={(work) => loading.track(work, 2)}
-		onready={() => {
-			document.body.dataset.ready = "true";
-			void loading.done();
-		}}
-	/>
-{/if}

@@ -271,9 +271,13 @@ gradient.
 `index.html` itself, on the screen before any of your code has arrived: that is where
 the loading screen comes from. So the page, and whatever it imports at its top, must be
 able to render with no browser and no site: no `window`, no `document`, no Pixi, no
-`connect()` outside `onMount`. Keep the page small, and ask for the game itself in the
-browser (`await import("../Game.svelte")` in `onMount`), as Game Title's page does:
-the build still asks for that code from the start, with the rest.
+`connect()` outside `onMount`. The SDK's page does this for you: `GamePage` (`/page`) is
+the whole of a client's page, and a game says only its name, its logo, how its loading
+screen looks, and where its root component is
+(`<GamePage title="Game Title" game={() => import("../Game.svelte")} />`). It shows the
+loading screen, answers the site, asks for the game's code in the browser (the build still
+asks for that code from the start, with the rest), and hands the game `host`, `track` and
+`onready`.
 
 **What was built is put on record.** `keros3ne-studio client` builds each client into
 `client/dist` (not committed) and writes `client/client.json` (committed): the digest of
@@ -370,7 +374,12 @@ and refuses a client built for another version of the protocol.
 - **The control bar and controls** (`/controls`): `ControlBar`, and `Menu`, `Choices`,
   `Switch`, `Slider`, `Field`, `Action`, `Popup` and `Autoplay`, as components.
 - **The site in a story's place.** Have the game's root take the site as a prop (`host`),
-  and a story can hand it something that plays rounds from the books in the site's place.
+  and a story hands it `createStoryHost({ slug })` (`/stories`): a stand-in that opens
+  rounds from the game's real books, charges and pays as the site would, plays on from a
+  choice and keeps a game's counters. Say which rounds a story is of with `want` (a spin
+  that pays, one that lands the bonus), and what a way of playing costs with `cost`.
+  `StoryFrame` (`/story`) is the box a story shows the game in, in either of its shapes,
+  with what the game announces written under it.
 
 ### What a client must do
 
@@ -494,12 +503,14 @@ and refuses a client built for another version of the protocol.
 7. **Put a button where the thing it does is drawn.** When controls sit over a stage, work
    out their place from the same numbers the drawing uses, not from a second set of sizes
    in CSS.
-8. **Show a loading screen while the game gets ready.** Put `<LoadingScreen>` from
-   `/loading` in your page, and give it a `Loading` from `createLoading()`, which you tell
-   what the game waits for: `loading.track(connect())`, the game's own code
-   (`loading.track(import("../Game.svelte"))`), its pictures (the stage's `track`), the
-   bar's typeface (`document.fonts.load`). `loading.done()` takes the screen away, once
-   the game under it has been drawn. It covers the game from the first moment, however
+8. **Show a loading screen while the game gets ready.** `GamePage` (`/page`) does: it puts
+   the SDK's loading screen in your page and tells it what the game waits for (the site's
+   answer, the game's own code, the typefaces in `fonts`). Your game's root tells it of the
+   rest through the `track` it is handed (give it to the stage, for its pictures), and
+   calls `onready` once it can be played, which takes the screen away. A page of your own
+   making does the same with `<LoadingScreen>` and `createLoading()` from `/loading`:
+   `loading.track(...)` for each thing waited on, and `loading.done()` once the game under
+   the screen has been drawn. It covers the game from the first moment, however
    short the wait, so a player never sees the game being put together: call `done()` only
    when everything is ready to be seen. Because your page is rendered when it is built,
    the screen is in the page itself, and fills as your code arrives.
@@ -508,8 +519,7 @@ and refuses a client built for another version of the protocol.
     is in front changes:
 
     ```svelte
-    <LoadingScreen
-    	{loading}
+    <GamePage
     	title="Game Title"
     	logo="./loading-logo.svg"
     	look={{
@@ -518,6 +528,7 @@ and refuses a client built for another version of the protocol.
     		fill: "#ffd166",
     		titleCase: "uppercase"
     	}}
+    	game={() => import("../Game.svelte")}
     />
     ```
 
