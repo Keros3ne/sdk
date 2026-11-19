@@ -60,6 +60,8 @@ Usage:
 Options:
   --root <folder>    the studio's folder, with its studio.json (default: here)
   --workers <number> books: how many workers to play on (default: one for each core)
+  --own-names        check: allow the SDK under #sdk/... in maths. For the SDK's own test
+                     game only: a release is never checked with it
   --build            check: build each client again first, and hold what the source
                      builds now to the record
   --out <folder>     pack: where the files go (default: release)
@@ -99,7 +101,8 @@ const errorText = (error: unknown) =>
 async function checkOne(
 	folder: GameFolder,
 	root: string,
-	manifest: StudioManifest
+	manifest: StudioManifest,
+	ownNames: boolean
 ): Promise<string[]> {
 	if (!isBookGame(folder))
 		return [
@@ -110,7 +113,7 @@ async function checkOne(
 		// First, whether this SDK and the game understand each other at all.
 		...unsupported(folder.dir),
 		...(await checkBooksOf(folder)),
-		...scanMaths(folder.maths),
+		...scanMaths(folder.maths, { ownNames }),
 		...checkClient(folder, root, manifest)
 	];
 }
@@ -239,7 +242,7 @@ function checkStudio(root: string, manifest: StudioManifest): string[] {
 	return problems;
 }
 
-async function check(root: string, slugs: string[], build = false) {
+async function check(root: string, slugs: string[], build = false, ownNames = false) {
 	const manifest = readManifest(root);
 	let failed = false;
 	const studio = checkStudio(root, manifest);
@@ -259,7 +262,10 @@ async function check(root: string, slugs: string[], build = false) {
 				unbuilt.push(errorText(error));
 			}
 
-		const problems = [...unbuilt, ...(await checkOne(folder, root, manifest))];
+		const problems = [
+			...unbuilt,
+			...(await checkOne(folder, root, manifest, ownNames))
+		];
 		if (problems.length === 0) {
 			console.log(`${folder.slug}: passes every check.`);
 		} else {
@@ -391,7 +397,12 @@ async function main(argv: string[]): Promise<number> {
 	}
 	switch (command) {
 		case "check":
-			return check(root, slugs, "build" in options && command === "check");
+			return check(
+				root,
+				slugs,
+				"build" in options && command === "check",
+				"own-names" in options
+			);
 		case "stories": {
 			// Storybook's own command, with the SDK's configuration and no other.
 			const { createRequire } = await import("node:module");

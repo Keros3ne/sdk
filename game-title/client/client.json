@@ -1,5 +1,5 @@
 {
-	"sdk": "0.19.0",
+	"sdk": "0.19.1",
 	"protocol": "keros3ne-game/2",
 	"files": {
 		"_app/immutable/assets/2.B1t5QRC5.css": "4225b04ee7d09f8539d3401dd5da05d75717b95ba2d3f6ce81ee1c85be05bc01",

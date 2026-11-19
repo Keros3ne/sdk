@@ -17,12 +17,20 @@ export const CLIENT_FILE_MAX_BYTES = 5_000_000;
 
 /**
  * What a game's maths may import: valibot, its own files, and the parts of the SDK that
- * maths is written with (how books are played, the slot helpers, the random stream). The
- * SDK is named as the package, or as `#sdk/...` where a studio's package.json gives it that
- * name in its `imports` (the SDK's own test game does, to be run on a clone of the SDK).
+ * maths is written with (how books are played, the slot helpers, the random stream), named
+ * as the package.
  */
 const MATHS_IMPORTS =
-	/^(valibot|(@keros3ne\/sdk|#sdk)\/(book-play|slots|rng|maths)|\.\/[\w./-]+)$/;
+	/^(valibot|@keros3ne\/sdk\/(book-play|slots|rng|maths)|\.\/[\w./-]+)$/;
+
+/**
+ * The same parts of the SDK under `#sdk/...`, a name of a package.json's own `imports`.
+ * It is refused unless whoever asks for the scan says otherwise (`ownNames`), and nothing
+ * that takes a release into a site's studios ever does: a package.json could give that
+ * name to anything. It is for the SDK's own test game, which reaches a clone of the SDK
+ * that way, checked by itself and taken in on trial only.
+ */
+const OWN_NAME_IMPORTS = /^#sdk\/(book-play|slots|rng|maths)$/;
 
 /**
  * Anything that would make two makings of the same books differ, or reach outside the
@@ -44,7 +52,17 @@ const isStory = (name: string) => /\.stories\.ts$/.test(name);
  * The problems with a game's maths folder, in words: an import it may not make, anything
  * impure, or no exact test of its own. Empty when there are none.
  */
-export function scanMaths(folder: string): string[] {
+export function scanMaths(
+	folder: string,
+	options: {
+		/** Allow the SDK under `#sdk/...` too: for the SDK's own test game, never a release. */
+		ownNames?: boolean;
+	} = {}
+): string[] {
+	const mayImport = (from: string): boolean =>
+		MATHS_IMPORTS.test(from) ||
+		(options.ownNames === true && OWN_NAME_IMPORTS.test(from));
+
 	const problems: string[] = [];
 	const names = readdirSync(folder);
 	const sources = names.filter((name) => name.endsWith(".ts") && !isTest(name));
@@ -53,7 +71,7 @@ export function scanMaths(folder: string): string[] {
 		const file = join(folder, name);
 		const source = readFileSync(file, "utf8");
 		for (const from of importsOf(source))
-			if (!MATHS_IMPORTS.test(from)) problems.push(`${file} imports "${from}"`);
+			if (!mayImport(from)) problems.push(`${file} imports "${from}"`);
 		const impure = IMPURE.exec(source);
 		if (impure) problems.push(`${file} uses ${impure[0]}`);
 	}

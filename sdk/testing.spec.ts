@@ -28,6 +28,23 @@ describe("the site's checks, as a studio runs them", () => {
 		expect(scanMaths(maths)).toEqual([]);
 	});
 
+	it("refuse the SDK under a name of the package's own, unless asked for the SDK's test game", () => {
+		const maths = folder({
+			"index.ts": `import { defineBooks } from "#sdk/book-play";\nimport type { Rng } from "#sdk/rng";`,
+			"maths.spec.ts": `import { readFileSync } from "node:fs";`
+		});
+
+		// A package.json could give that name to anything: as a release is checked, it is refused.
+		expect(scanMaths(maths).join("\n")).toMatch(/imports "#sdk\/book-play"/);
+		expect(scanMaths(maths, { ownNames: true })).toEqual([]);
+		// And only those parts of it, even then.
+		const more = folder({
+			"index.ts": `import { connect } from "#sdk/client";\nimport x from "#other/thing";`,
+			"maths.spec.ts": ""
+		});
+		expect(scanMaths(more, { ownNames: true })).toHaveLength(2);
+	});
+
 	it("find maths that reaches outside itself, draws its own randomness, or has no test", () => {
 		const maths = folder({
 			"index.ts": `import { connect } from "@keros3ne/sdk/client";\nexport const roll = () => Math.random();`,
