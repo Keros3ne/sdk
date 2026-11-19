@@ -18,19 +18,21 @@ function kept(file?: string): string {
 describe("a client's files", () => {
 	it("are kept for good where the build named them by what is in them", () => {
 		expect(kept("_app/immutable/chunks/BeiYQHnb.js")).toBe(
-			"public, max-age=31536000, immutable"
+			"public, max-age=31536000, immutable, no-transform"
 		);
 		expect(
 			kept("/_app/immutable/assets/geist-latin-wght-normal.BgDaEnEv.woff2")
-		).toBe("public, max-age=31536000, immutable");
+		).toBe("public, max-age=31536000, immutable, no-transform");
 	});
 
 	it("are asked for each time otherwise: the page, what public brought, a file not named", () => {
-		expect(kept("index.html")).toBe("no-cache");
-		expect(kept("card.svg")).toBe("no-cache");
-		expect(kept("_app/version.json")).toBe("no-cache");
-		expect(kept("assets/lantern.png")).toBe("no-cache");
-		expect(kept("art/_app/immutable/chunks/BeiYQHnb.js")).toBe("no-cache");
-		expect(kept()).toBe("no-cache");
+		expect(kept("index.html")).toBe("no-cache, no-transform");
+		expect(kept("card.svg")).toBe("no-cache, no-transform");
+		expect(kept("_app/version.json")).toBe("no-cache, no-transform");
+		expect(kept("assets/lantern.png")).toBe("no-cache, no-transform");
+		expect(kept("art/_app/immutable/chunks/BeiYQHnb.js")).toBe(
+			"no-cache, no-transform"
+		);
+		expect(kept()).toBe("no-cache, no-transform");
 	});
 });

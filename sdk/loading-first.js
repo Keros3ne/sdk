@@ -7,6 +7,10 @@
  * removes `data-waiting`) and fills what is left of the bar from what the game tracks, and
  * this has nothing left to fill.
  *
+ * It also tells the site the page has something to show (`drawn`, ./protocol.ts): a
+ * browser gives a frame a white ground until its page has drawn, so the site keeps the
+ * frame out of sight until then. `__PROTOCOL__` is written in by the build.
+ *
  * A file of its own, plain and unbundled: the policy a client is served under allows no
  * inline script, and this must run before any of the game's code has arrived.
  *
@@ -19,6 +23,17 @@
 
 	const screen = document.querySelector(".sdk-loading[data-waiting]");
 	if (!screen) return;
+
+	// The page is here, with its styles and its loading screen: the site, which has kept the
+	// frame out of sight until there was something in it to see, is told so. Said again
+	// until the game's own code takes over, in case the site was not yet listening.
+	const drawn = () => {
+		if (!screen.hasAttribute("data-waiting")) return;
+
+		window.parent.postMessage({ protocol: "__PROTOCOL__", type: "drawn" }, "*");
+		setTimeout(drawn, 250);
+	};
+	drawn();
 
 	// Each file of the game's code by its whole address, as the browser reports it, and its size.
 	const sizes = new Map();

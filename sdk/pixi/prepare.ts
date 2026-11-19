@@ -13,7 +13,16 @@
  * Created: 2026-11-17
  */
 
-import { Assets, Cache, ImageSource, Texture } from "pixi.js";
+import {
+	Application,
+	Assets,
+	BufferImageSource,
+	Cache,
+	ImageSource,
+	Texture,
+	WebGLRenderer,
+	type ApplicationOptions
+} from "pixi.js";
 
 let prepared: Promise<void> | null = null;
 
@@ -31,9 +40,62 @@ export function preparePixi(): Promise<void> {
 		await Assets.init({
 			preferences: { preferWorkers: false, preferCreateImageBitmap: false }
 		});
+
+		// Pixi's own white, one opaque pixel it draws every plain shape with, is uploaded
+		// with a setting browsers have deprecated for anything but a picture or a canvas,
+		// and one says so in the console. Opaque white is the same either way.
+		Texture.WHITE.source.alphaMode = "premultiplied-alpha";
+
+		// Pixi's own empty texture, which it puts wherever a texture is wanted and none is
+		// given, has nothing in it at all: the browser fills it in the first time it is drawn
+		// with, and one says so in the console. Given its one clear pixel, there is nothing
+		// to fill in, and it draws the same.
+		Texture.EMPTY.source = new BufferImageSource({
+			resource: new Uint8Array(4),
+			width: 1,
+			height: 1,
+			alphaMode: "premultiplied-alpha",
+			label: "EMPTY"
+		});
 	})();
 
 	return prepared;
+}
+
+/** What Pixi adds to an application as it is made: its ticker, its resizing. */
+interface Plugin {
+	init(this: Application, options: Partial<ApplicationOptions>): void;
+}
+
+/**
+ * Makes a Pixi application that draws with WebGL, ready for the frame.
+ *
+ * Not by Pixi's own `init`, which first finds out whether there is WebGL at all by making
+ * a context only to throw it away, and a browser writes in the console that a context was
+ * lost. The renderer is made here directly, and what `init` does after it is done here
+ * too. Where that fails (no WebGL), Pixi is left to choose for itself, as before.
+ */
+export async function makeApplication(
+	options: Partial<ApplicationOptions>
+): Promise<Application> {
+	await preparePixi();
+
+	try {
+		const application = new Application();
+		const renderer = new WebGLRenderer();
+		await renderer.init(options);
+		application.renderer = renderer;
+
+		const { _plugins: plugins } = Application as unknown as { _plugins: Plugin[] };
+		for (const plugin of plugins) plugin.init.call(application, options);
+
+		return application;
+	} catch {
+		const application = new Application();
+		await application.init({ ...options, preference: "webgl" });
+
+		return application;
+	}
 }
 
 /** One picture, loaded by an image element and made into a texture. */

@@ -91,10 +91,16 @@ async function start() {
 		className: "frame"
 	});
 	frame.setAttribute("sandbox", "allow-scripts");
-	frame.setAttribute("allow", "autoplay");
+	// Sound without a press inside the frame, where a browser knows the word: one that does
+	// not says so in the console.
+	if (!navigator.userAgent.includes("Firefox")) frame.setAttribute("allow", "autoplay");
+	// Out of sight until its page has something to show, as on the site: a browser gives a
+	// frame a white ground of its own until then.
+	frame.classList.add("waiting");
 	const load = () => {
 		held = false;
 		clearTimeout(fallback);
+		frame.classList.add("waiting");
 		frame.src = `/studio-frame/${slug}/index.html?t=${Date.now()}`;
 	};
 
@@ -280,6 +286,10 @@ async function start() {
 			return;
 		}
 		const message = parsed.output;
+		if (message.type === "drawn" || message.type === "ready") {
+			frame.classList.remove("waiting");
+			if (message.type === "drawn") return;
+		}
 		if (
 			message.type !== "ready" ||
 			!entries.lastElementChild?.textContent?.includes('"ready"')

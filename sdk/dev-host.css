@@ -135,6 +135,11 @@ input:focus-visible {
 	aspect-ratio: 16 / 10;
 }
 
+/* Until its page has something to show. */
+.frame.waiting {
+	opacity: 0;
+}
+
 .stage[data-shape="phone"] .frame {
 	width: min(100cqw, 100cqh * 9 / 16, 390px);
 	aspect-ratio: 9 / 16;

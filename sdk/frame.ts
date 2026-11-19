@@ -70,8 +70,11 @@ export function clientHeaders(
 		// fonts are cross-origin requests to it and need this to load.
 		"Access-Control-Allow-Origin": "*",
 		"Cross-Origin-Resource-Policy": "cross-origin",
+		// `no-transform`: served as they are. A proxy in front of a site (Cloudflare's, for
+		// one) may otherwise write a script of its own into a page it passes on, which the
+		// policy above then refuses, in the console, every time the page is opened.
 		"Cache-Control": NAMED_BY_CONTENT.test(file.replace(/^\/+/, ""))
-			? "public, max-age=31536000, immutable"
-			: "no-cache"
+			? "public, max-age=31536000, immutable, no-transform"
+			: "no-cache, no-transform"
 	};
 }

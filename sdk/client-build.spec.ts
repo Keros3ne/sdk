@@ -95,7 +95,7 @@ describe("a client's build", () => {
 	});
 
 	it("has a loading screen in the page as its props dress it, with the code to wait for and what fills it", async () => {
-		const { page, has, size } = await built("waits", {
+		const { page, has, read, size } = await built("waits", {
 			"src/routes/+layout.ts": RENDERED,
 			"src/later.ts": `export const LATER: string = "the game itself, asked for in the browser";`,
 			"src/routes/+page.svelte": `<script lang="ts">\n\timport { onMount } from "svelte";\n\timport { LoadingScreen, createLoading } from "${LOADING}";\n\n\tconst loading = createLoading();\n\tonMount(async () => {\n\t\tawait loading.track(import("../later.ts"));\n\t\tawait loading.done();\n\t});\n</script>\n\n<LoadingScreen\n\t{loading}\n\ttitle="Tide & Time"\n\tlogo="./mark.svg"\n\tlook={{ surface: "linear-gradient(#123, #456)", fill: "#fc0", barWidth: 180 }}\n/>`,
@@ -119,6 +119,11 @@ describe("a client's build", () => {
 			);
 		expect(filler).not.toBeNull();
 		expect(has(filler![1])).toBe(true);
+		// It tells the site the page has something to show, in the protocol the site speaks.
+		expect(read(filler![1])).toContain(
+			`{ protocol: "keros3ne-game/2", type: "drawn" }`
+		);
+		expect(read(filler![1])).not.toContain("__PROTOCOL__");
 		expect(page.indexOf(filler![0])).toBeLessThan(page.indexOf("modulepreload"));
 
 		// The code named is real, by about its size, each file asked for from the start; the game's

@@ -46,6 +46,7 @@ import { fileURLToPath } from "node:url";
 import adapter from "@sveltejs/adapter-static";
 import { sveltekit } from "@sveltejs/kit/vite";
 import type { InlineConfig, Plugin } from "vite";
+import { PROTOCOL } from "./protocol.ts";
 
 /** A file of the SDK's own, beside this one. */
 function ownFile(name: string): string {
@@ -155,7 +156,14 @@ export function clientConfig(folder: string): InlineConfig {
 		clearScreen: false,
 		plugins: [
 			sveltekit({
-				compilerOptions: { runes: true },
+				compilerOptions: {
+					runes: true,
+					// A component's styles are kept to it by a name made from what they say, not
+					// from where its file is: Svelte's own is made from the file's whole path, for
+					// a file outside the client's folder (the SDK's), so the same source built
+					// another client on another machine, and no record of it held anywhere else.
+					cssHash: ({ hash, css }) => `svelte-${hash(css)}`
+				},
 				adapter: adapter({ pages: "dist", assets: "dist", strict: true }),
 				outDir: WORK_FOLDER,
 				// A game's own files where they have always been, and the page's frame the SDK's.
@@ -258,7 +266,10 @@ export function finishClient(folder: string): void {
 	// asked for before the code it watches.
 	const waiting = /<div class="sdk-loading[^"]*"[^>]*\bdata-waiting\b/.exec(html);
 	if (waiting) {
-		const filler = readFileSync(ownFile("./loading-first.js"), "utf8");
+		const filler = readFileSync(ownFile("./loading-first.js"), "utf8").replaceAll(
+			"__PROTOCOL__",
+			PROTOCOL
+		);
 		const fillerFile = `${NAMED}/loading-first.${named(filler)}.js`;
 		writeFileSync(join(dist, fillerFile), filler);
 

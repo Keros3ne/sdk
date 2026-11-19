@@ -56,6 +56,13 @@ export interface HistoryBet {
 
 /** What the game sends. `id` ties a request to its reply. */
 export type FromGame =
+	/**
+	 * The page has something to show: its loading screen. Sent by the page itself, before
+	 * any of the game's code has arrived, and until that code runs. A browser gives a frame
+	 * a white ground of its own until its page has drawn, so the site keeps the frame out
+	 * of sight until it hears this (or `ready`, from a page with no loading screen).
+	 */
+	| { type: "drawn" }
 	| { type: "ready" }
 	/** Opens a round at a bet: the site charges the bet times what the way of playing (`params`) costs. */
 	| { type: "open"; id: number; bet: number; params: unknown }

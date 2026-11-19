@@ -14,6 +14,9 @@ export const ANNOUNCE_MAX = 300;
 const id = v.pipe(v.number(), v.integer(), v.minValue(0));
 /** Everything a game may send. Anything else is ignored. */
 export const fromGame = v.variant("type", [
+	// The page has something to show. Sent by the page itself before any of the game's code
+	// has arrived (./loading-first.js): the site keeps the frame out of sight until then.
+	v.object({ type: v.literal("drawn") }),
 	v.object({ type: v.literal("ready") }),
 	v.object({
 		type: v.literal("open"),

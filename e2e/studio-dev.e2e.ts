@@ -68,6 +68,8 @@ async function openGame(page: Page, url: string) {
 	await expect(game.locator('body[data-ready="true"]')).toBeAttached({
 		timeout: 20_000
 	});
+	// In sight, once its page said it had something to show.
+	await expect(page.locator("iframe.frame")).not.toHaveClass(/waiting/);
 	return game;
 }
 

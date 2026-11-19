@@ -9,9 +9,9 @@ Author: dwclake
 Created: 2026-11-17
 -->
 <script lang="ts">
-	import { Application } from "pixi.js";
+	import type { Application } from "pixi.js";
 	import { untrack, type Snippet } from "svelte";
-	import { loadPictures } from "./prepare.ts";
+	import { loadPictures, makeApplication } from "./prepare.ts";
 	import { setStage } from "./stage.svelte.ts";
 
 	interface Props {
@@ -65,14 +65,12 @@ Created: 2026-11-17
 		const work = untrack(async () => {
 			await loadPictures(pictures);
 
-			const application = new Application();
-			await application.init({
+			const application = await makeApplication({
 				canvas,
 				width,
 				height,
 				background,
 				backgroundAlpha: seeThrough ? 0 : 1,
-				preference: "webgl",
 				antialias: true,
 				resolution: window.devicePixelRatio || 1
 			});
