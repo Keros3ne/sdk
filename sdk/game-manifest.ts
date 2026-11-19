@@ -15,7 +15,8 @@
  *   }
  *
  * - `modes` are the ways of opening a round, the ordinary one first: what each costs, as
- *   a multiple of the bet in basis points, and the table its row is drawn from. A game
+ *   a multiple of the bet in basis points, a whole number of bets (20000, never 12500:
+ *   a cost must come to whole cents at every bet), and the table its row is drawn from. A game
  *   may have more tables than modes: a row's choice names the others (./book.ts).
  * - `shapes`, if given, are the shapes the game has a view for (./shapes.ts): `["wide",
  *   "tall"]` for one drawn for a phone too. Left out, it is drawn wide only, and the site
@@ -98,7 +99,11 @@ const mode = valibot.strictObject({
 		valibot.number(),
 		valibot.integer("A mode's cost is a whole number of basis points"),
 		valibot.minValue(BP, "A mode costs at least one bet"),
-		valibot.maxValue(MAX_COST_BP, "A mode costs at most a thousand bets")
+		valibot.maxValue(MAX_COST_BP, "A mode costs at most a thousand bets"),
+		valibot.check(
+			(costBp) => costBp % BP === 0,
+			"A mode costs a whole number of bets, so that it comes to whole cents at any bet"
+		)
 	),
 	table: name("A mode's table")
 });

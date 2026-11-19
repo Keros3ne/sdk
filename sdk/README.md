@@ -115,13 +115,14 @@ Maths shares nothing: a game's books are made from its own folder alone.
 	"minStake": 20,
 	"modes": [
 		{ "id": "spin", "name": "Spin", "costBp": 10000, "table": "spin" },
-		{ "id": "thaw", "name": "Buy the Thaw", "costBp": 245000, "table": "thaw" }
+		{ "id": "thaw", "name": "Buy the Thaw", "costBp": 250000, "table": "thaw" }
 	]
 }
 ```
 
 - **Modes** are the ways of opening a round, the ordinary one first: what each costs, as a
-  multiple of the bet in basis points (`10000` is one bet), and the table its row is drawn
+  multiple of the bet in basis points (`10000` is one bet; always a whole number of bets,
+  so that a cost comes to whole cents at any bet), and the table its row is drawn
   from. A cost is one bet at least and a thousand at most.
 - **Every mode returns exactly 96.00% of what it costs.** You declare no return and no
   volatility: the weights make the return so, the site's check sums it exactly, and how

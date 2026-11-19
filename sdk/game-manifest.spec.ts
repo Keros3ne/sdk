@@ -63,6 +63,9 @@ describe("a game's manifest", () => {
 		expect(refused({ modes: [{ ...game.modes[0], costBp: 10_000_001 }] })).toThrow(
 			/thousand bets/
 		);
+		expect(refused({ modes: [{ ...game.modes[0], costBp: 12_500 }] })).toThrow(
+			/whole number of bets/
+		);
 		expect(refused({ minStake: 0 })).toThrow(/minStake/);
 		expect(refused({ shapes: ["tall"] })).toThrow(/wide view/);
 		expect(refused({ shapes: ["wide", "wide"] })).toThrow(/twice/);
