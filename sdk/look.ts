@@ -77,6 +77,8 @@ export interface BarLook {
 	accent?: string;
 	/** The symbol on the play button. */
 	onAccent?: string;
+	/** Whatever is switched on or open, and focus. The site's accent, left out. */
+	on?: string;
 	/** The last win, while it is the last play's own. */
 	win?: string;
 	/** Its typeface. */
