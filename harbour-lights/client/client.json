@@ -1,5 +1,5 @@
 {
-	"sdk": "0.15.1",
+	"sdk": "0.15.2",
 	"files": {
 		"_app/immutable/assets/2.BTMDl9QL.css": "8a56edccf99e98cddc59a7b2a2741a72c41f301e98fbd1955f46b89136f407e0",
 		"_app/immutable/assets/Game.DLnvze3J.css": "eb3d7e378c7d9d121edb7a2ea490a2328c39b3913d12ee572b59ca814925f1e5",
@@ -51,10 +51,10 @@
 		"_app/immutable/nodes/0.CVjTwPWd.js": "dd6977c715f605ada7748e3dbd1fd9d3a2e1c1935cd3a59b2b7b18dc60a1a9a6",
 		"_app/immutable/nodes/1.DPmUipRf.js": "67ec274bdc38084bcbee36080bc876f708d6b09ce51dbc12f4a869fe663aac45",
 		"_app/immutable/nodes/2.CBPSr1i3.js": "f1972b10085bdb444405b9b71f5bb473b8780bcd9580486e5b3240dc8cc8813b",
-		"_app/immutable/start.N_XSwlo2.js": "37f5d2c25a3667e2c8494ffcce1c4f9c5739ad9046fb0331b82e132227cc8772",
+		"_app/immutable/start.Dp7zNyxY.js": "0e9ef3372c5859834ba4ea316cbde6541f4ece773d555cc88cc64ace1320b018",
 		"_app/version.json": "86249873b098511d1e1aafaccf2ee07df3b1b0b8a8433b1052e55d636cabd4a0",
 		"card.svg": "45a021f39f214c20f738764278c46b3d77046117f71245f1dc2cfdf3c7b0db92",
-		"index.html": "4e0eff7879a518c70b00cc054f181a0654e10b03393fa4fd4e329c2a642e795c",
+		"index.html": "ac6158f963905bdd73977a4698dae256b0c02c40698cb5961e271de86ac8c77a",
 		"loading-logo.svg": "3b7ddb8a708f3bffc6b316eed618664c4777f364a9046e829a67816e6bf5dc49"
 	}
 }

@@ -1,6 +1,6 @@
 /**
  * The scan of a client's source: that a client written in Svelte is read as one written
- * without it is, that it may import what the SDK brings it and nothing else, and that
+ * without it is, that it may import what packages it likes but no file outside what the site takes in, and that
  * its stories, which only Storybook loads, are not held to a client's rules.
  *
  * Author: dwclake
@@ -17,7 +17,7 @@ const root = mkdtempSync(join(tmpdir(), "keros3ne-client-scan-"));
 afterAll(() => rmSync(root, { recursive: true, force: true }));
 
 /** Writes a studio's files, and scans the client of its game. */
-function scan(files: Record<string, string>, packages: string[] = []): string[] {
+function scan(files: Record<string, string>): string[] {
 	const studio = mkdtempSync(join(root, "studio-"));
 
 	for (const [name, text] of Object.entries(files)) {
@@ -25,22 +25,21 @@ function scan(files: Record<string, string>, packages: string[] = []): string[] 
 		writeFileSync(join(studio, name), text);
 	}
 
-	return scanClientSource(
-		join(studio, "game", "client"),
-		studio,
-		[join(studio, "game")],
-		packages
-	);
+	return scanClientSource(join(studio, "game", "client"), studio, [
+		join(studio, "game")
+	]);
 }
 
 describe("a client's source", () => {
-	it("may import the SDK, Svelte and Pixi, and its own game's files", () => {
+	it("may import any package by name, and its own game's files", () => {
 		expect(
 			scan({
 				"game/client/src/Game.svelte": `<script lang="ts">
 	import { onMount } from "svelte";
 	import { Stage } from "@keros3ne/studio-sdk/pixi";
 	import { Texture } from "pixi.js";
+	import confetti from "canvas-confetti";
+	import Sheet from "@tidewater/kit/Sheet.svelte";
 	import { LINES } from "../../maths/rules";
 </script>`,
 				"game/client/src/routes/+page.svelte": `<script lang="ts">\n\timport Game from "../Game.svelte";\n</script>\n\n<Game />`
@@ -48,19 +47,15 @@ describe("a client's source", () => {
 		).toEqual([]);
 	});
 
-	it("is refused another package or a file outside its game, in a Svelte file as in any other", () => {
+	it("is refused a file outside its game, in a Svelte file as in any other", () => {
 		const problems = scan({
 			"game/client/src/Game.svelte": `<script lang="ts">
-	import confetti from "canvas-confetti";
 	import { secret } from "../../../other-game/maths";
 </script>`
 		});
 
-		expect(problems).toHaveLength(2);
+		expect(problems).toHaveLength(1);
 		expect(problems[0]).toMatch(
-			/Game\.svelte imports "canvas-confetti": a client may import the SDK/
-		);
-		expect(problems[1]).toMatch(
 			/Game\.svelte imports "\.\.\/\.\.\/\.\.\/other-game\/maths"/
 		);
 	});
@@ -72,21 +67,5 @@ describe("a client's source", () => {
 				"game/client/src/ReelsStory.svelte": `<script lang="ts">\n\timport { Board } from "@keros3ne/studio-sdk/slot";\n</script>`
 			})
 		).toEqual([]);
-	});
-
-	it("may import a package its repository names, by the package's name, and no other", () => {
-		const files = {
-			"game/client/src/Game.svelte": `<script lang="ts">
-	import Sheet from "@tidewater/kit/Sheet.svelte";
-	import "@tidewater/kit/kit.css";
-	import { play } from "@tidewater/kit-extras/sound";
-</script>`
-		};
-
-		expect(scan(files, ["@tidewater/kit", "@tidewater/kit-extras"])).toEqual([]);
-
-		const problems = scan(files, ["@tidewater/kit"]);
-		expect(problems).toHaveLength(1);
-		expect(problems[0]).toMatch(/imports "@tidewater\/kit-extras\/sound"/);
 	});
 });

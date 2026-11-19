@@ -89,10 +89,10 @@ repository depends on at a tag.
   installs: `"@tidewater/kit": "git+https://github.com/tidewater/kit.git#v1.2.0"`.
 - In the game's `studio.json` it is named in `packages`, at the same tag. That is what the
   site reads: it fetches the package at that tag as source, with nothing installed and
-  nothing run, reads it as it reads a client, and builds the client with it.
+  nothing run, and reads it as it reads a client.
 - A client imports its files by their paths: `import Sheet from "@tidewater/kit/Sheet.svelte"`.
-- The package is held to a client's rules: it imports the SDK, Svelte, Pixi and its own
-  files, and no other package. Its `package.json` has no `exports` and no build: say what
+- The package is held to a client's rules: what it imports by a relative address is its
+  own, and it loads nothing from the network. Its `package.json` has no `exports` and no build: say what
   it needs as `peerDependencies` (`@keros3ne/studio-sdk`, `svelte`), so that your package
   manager lets it find them.
 - A game is pinned to the tag it names. Releasing the package changes no game until that
@@ -272,9 +272,14 @@ the record alone) is how CI holds the record to the source.
 
 Files the build names by what is in them (everything under `_app/immutable/`) are kept
 by a player's browser for good; the page itself and what `public` brought are asked for
-each time. A client imports the SDK, Svelte and Pixi (which the SDK brings), its own
-game's files, its repository's shared folders and the packages its `studio.json` names,
-and nothing else: no other package, and nothing from the network.
+each time. You build your client, so what it imports by name is yours to choose: the
+SDK, Svelte and Pixi (which the SDK brings), and any other package you install. Two
+things are held (`check`): a file imported by a relative address is in the game's own
+folder or one of your repository's shared folders, which are what the site takes in to
+be read, and nothing is loaded from the network, which the frame would refuse anyway.
+**Nothing is refused or complained of in the console**: a client that runs cleanly says
+nothing there, and SvelteKit's one request of its own (whether a newer build has
+replaced it) is answered in the page by the build, since a client can make none.
 
 **What the sandbox means.** The frame has `sandbox="allow-scripts"`, and the files are served
 under a policy that enforces the same even if one is opened directly:

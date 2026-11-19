@@ -76,6 +76,11 @@ describe("a client's build", () => {
 		// The script moved finds the code it starts from its own address.
 		const script = read(start![1]);
 		expect(script).toContain("kit.start(");
+		// And answers SvelteKit's question of whether it has been replaced itself: a client
+		// can make no request, and one refused is written in the console.
+		expect(script).toMatch(/window\.fetch = /);
+		expect(script).toContain(`/\\/_app\\/version\\.json(\\?|$)/`);
+		expect(JSON.parse(read("_app/version.json"))).toEqual({ version: "client" });
 		const asked = [...script.matchAll(/import\("\.\/([^"]+)"\)/g)].map(
 			(found) => found[1]
 		);

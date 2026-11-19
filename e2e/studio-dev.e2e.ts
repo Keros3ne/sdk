@@ -78,6 +78,12 @@ test("dev plays a game against the stand-in, logs what the site would ignore, an
 	try {
 		const errors: string[] = [];
 		page.on("pageerror", (error) => errors.push(error.message));
+		// Nothing a client does is refused or complained of in the console, its own frame's
+		// included: a request the policy stops is written there.
+		page.on("console", (message) => {
+			if (message.type() === "error" || message.type() === "warning")
+				errors.push(`${message.type()}: ${message.text()}`);
+		});
 		const game = await openGame(page, dev.url);
 		const log = page.locator(".log");
 		await expect(page.locator(".figure")).toHaveText("10.00");
@@ -122,6 +128,12 @@ test("dev plays a game against the stand-in, logs what the site would ignore, an
 		await page.getByRole("button", { name: "Phone, 9 by 16" }).click();
 		const frame = await page.locator("iframe.frame").boundingBox();
 		expect(frame!.height).toBeGreaterThan(frame!.width);
+		// Coming back into view is when SvelteKit asks whether it has been replaced.
+		await page
+			.frameLocator("iframe.frame")
+			.locator("body")
+			.evaluate(() => window.dispatchEvent(new Event("focus")));
+		await page.waitForTimeout(300);
 		expect(errors).toEqual([]);
 	} finally {
 		await dev.stop();

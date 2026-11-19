@@ -68,7 +68,8 @@ bun run typecheck
    uses the SDK's stage, board, control bar and controls, draws for a wide frame (16 by 10)
    and a phone's (9 by 16), says what happens for a screen reader, and honours reduced
    motion. It imports the SDK (`@keros3ne/studio-sdk/...`, which is this repository
-   itself), Svelte, Pixi and your own files, and nothing else.
+   itself), Svelte, Pixi, your own files, and whatever other packages you install: you
+   build it, so what it is made of is yours to choose.
 3. **The guide** is the game's rules and paytable as words and tables, held to the rules'
    own figures by a test.
 

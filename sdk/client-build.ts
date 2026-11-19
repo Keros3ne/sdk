@@ -17,6 +17,8 @@
  *
  * - SvelteKit starts a page with a script written into it, and the policy a client is
  *   served under (./frame.ts) allows no inline script. That script is moved into a file.
+ * - SvelteKit asks its server whether a newer build has replaced the one running, and a
+ *   client can make no request. It is answered in the page, so nothing is refused.
  * - The code a game needs is asked for from the start and all at once, and a page with a
  *   loading screen is told each file's size, so that the screen's bar fills as the code
  *   arrives (./loading-first.js).
@@ -64,6 +66,33 @@ const NAMED = "_app/immutable";
  */
 const STAGE_MODULES =
 	/\/pixi\.js\/lib\/(unsafe-eval\/init|environment-browser\/browserAll|rendering\/renderers\/gl\/WebGLRenderer)\.m?js$/;
+
+/** What every client's build is named. The same every time: see `version` in `clientConfig`. */
+const BUILD_NAME = "client";
+
+/**
+ * Put before the script a page starts itself with. Whenever a page comes back into view,
+ * SvelteKit asks its server whether a newer build has replaced the one running
+ * (`_app/version.json`). A client can make no request at all (the frame's policy), so the
+ * browser would refuse it and say so in the console each time. It is answered here
+ * instead, with no request made: this build is the one it is.
+ */
+const NOT_REPLACED = `
+				{
+					const ask = window.fetch;
+					window.fetch = (what, how) => {
+						const address = typeof what === "string" ? what : what instanceof URL ? what.href : what.url;
+
+						return /\\/_app\\/version\\.json(\\?|$)/.test(address)
+							? Promise.resolve(
+									new Response(JSON.stringify({ version: "${BUILD_NAME}" }), {
+										headers: { "content-type": "application/json" }
+									})
+								)
+							: ask(what, how);
+					};
+				}
+`;
 
 /** One file of a built client's code, as far as finishing the client needs to know it. */
 interface CodeFile {
@@ -133,7 +162,7 @@ export function clientConfig(folder: string): InlineConfig {
 				// The same every time: SvelteKit would name each build by the moment it was made,
 				// for a page to find it has been replaced, and a client's files are held to the
 				// record of them (./client-pack.ts), so the same source must build the same files.
-				version: { name: "client" }
+				version: { name: BUILD_NAME }
 			}),
 			noteCode(client)
 		]
@@ -195,8 +224,9 @@ export function finishClient(folder: string): void {
 		);
 	}
 
-	// Beside the code it asks for, which it finds from its own address.
-	const script = start[1].replaceAll(`"./${NAMED}/`, `"./`);
+	// Beside the code it asks for, which it finds from its own address. And before it starts,
+	// SvelteKit's one request of its own is answered in the page (`NOT_REPLACED`).
+	const script = NOT_REPLACED + start[1].replaceAll(`"./${NAMED}/`, `"./`);
 	if (/["']\.\/_app\//.test(script)) {
 		throw new Error(
 			`${folder}'s page starts itself with an address this does not know how to move.`

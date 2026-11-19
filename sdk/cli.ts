@@ -162,12 +162,10 @@ function checkClient(
 	}
 
 	problems.push(
-		...scanClientSource(
-			folder.client,
-			root,
-			[folder.dir, ...sharedFolders(manifest).map((name) => join(root, name))],
-			Object.keys(sharedPackages(manifest))
-		)
+		...scanClientSource(folder.client, root, [
+			folder.dir,
+			...sharedFolders(manifest).map((name) => join(root, name))
+		])
 	);
 	for (const name of [
 		"vite.config.ts",
@@ -209,18 +207,10 @@ function checkStudio(root: string, manifest: StudioManifest): string[] {
 	for (const folder of shared)
 		if (!existsSync(folder))
 			problems.push(`it shares ${relative(root, folder)}/, which is not there`);
-		else
-			problems.push(
-				...scanClientSource(
-					folder,
-					root,
-					shared,
-					Object.keys(sharedPackages(manifest))
-				)
-			);
+		else problems.push(...scanClientSource(folder, root, shared));
 
-	// A package is source of the studio's own, held to a client's rules: it imports the
-	// SDK and its own files, and no other package.
+	// A package the manifest names is source of the studio's own, taken in to be read with
+	// its games: held to a client's rules.
 	for (const name of Object.keys(sharedPackages(manifest))) {
 		const folder = packageFolder(root, name);
 
