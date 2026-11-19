@@ -11,6 +11,7 @@
 import type * as v from "valibot";
 import type { GameGuide } from "./guide.ts";
 import type { Rng } from "./rng.ts";
+import type { Shape } from "./shapes.ts";
 
 export type { Rng };
 
@@ -61,6 +62,8 @@ export interface RoundGame<
 	category: "slots" | "games";
 	/** Its rules, and its paytable if it has one (./guide.ts). The site fills this in. */
 	guide?: GameGuide;
+	/** The shapes it has a view for (./shapes.ts). Left out, wide only. */
+	shapes?: readonly Shape[];
 	/** The long-run return to player, in basis points. */
 	rtpBp: number;
 	/**

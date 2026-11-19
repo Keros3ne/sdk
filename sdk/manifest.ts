@@ -5,8 +5,8 @@
  *
  *   {
  *     "sdk": "^0.14.0",
- *     "games": ["harbour-lights"],
- *     "packages": { "@tidewater/kit": "https://github.com/tidewater/kit.git#v1.2.0" }
+ *     "games": ["game-title"],
+ *     "packages": { "@studio-name/kit": "https://github.com/studio-name/kit.git#v1.2.0" }
  *   }
  *
  * - `sdk` is the version of this SDK the games were built on, as a range (`^0.14.0`).
@@ -19,7 +19,7 @@
  *   git repository of its own and named here at a tag. In the studio's repository it is
  *   an ordinary dependency, installed; the site fetches it at that tag as source, reads
  *   it as it reads a client, and builds with it. It has no `exports` of its own: a
- *   client imports its files by their paths (`@tidewater/kit/sound.ts`).
+ *   client imports its files by their paths (`@studio-name/kit/sound.ts`).
  * - `id`, `name` and `blurb`, if given, are what the studio's own tools call it. The site
  *   does not read them: a studio is known to the site by the name it was registered
  *   under and the id the site gave it then.

@@ -1,6 +1,6 @@
 <!--
-Harbour Lights, the game: its name, its reels on their stage, a line of words, and the
-SDK's control bar. It plays what the site hands it and decides nothing: a spin is one row
+Game Title, the game: what it knows (the balance, the round, the line of words), its two
+views, wide and tall, which only draw that, and the SDK's control bar. It plays what the site hands it and decides nothing: a spin is one row
 of the game's book, and the row's events are played here in order, by handlers that tell
 the reels what to do and wait for them.
 
@@ -11,16 +11,22 @@ Created: 2026-11-18
 -->
 <script lang="ts">
 	import { untrack } from "svelte";
-	import type { ControlBar as Bar } from "@keros3ne/studio-sdk/bar";
-	import { Refusal, formatKero, type GameHost } from "@keros3ne/studio-sdk/client";
+	import type { BarHandle } from "@keros3ne/studio-sdk/bar";
+	import {
+		Refusal,
+		balanceBeforePayout,
+		formatKero,
+		type GameHost
+	} from "@keros3ne/studio-sdk/client";
 	import { ControlBar } from "@keros3ne/studio-sdk/controls";
 	import { provideEmitter } from "@keros3ne/studio-sdk/emitter";
 	import { playEvents, type Handlers } from "@keros3ne/studio-sdk/events";
-	import { Stage } from "@keros3ne/studio-sdk/pixi";
-	import { LINE_ROW, REELS, ROWS, type Spin } from "../../maths/rules";
-	import Reels from "./Reels.svelte";
+	import { Views, type Shape } from "@keros3ne/studio-sdk/shape";
+	import { LINE_ROW, type Spin } from "../../maths/rules";
 	import type { RoundView, RowEvent, StageEvent } from "./round.ts";
-	import { NAMES, PICTURES } from "./symbols.ts";
+	import { NAMES } from "./symbols.ts";
+	import TallView from "./TallView.svelte";
+	import WideView from "./WideView.svelte";
 
 	interface Props {
 		host: GameHost<RoundView, null>;
@@ -28,16 +34,15 @@ Created: 2026-11-18
 		track?: <Work>(work: Promise<Work>) => Promise<Work>;
 		/** Called once the game is ready to be played. */
 		onready?: () => void;
+		/** The view to show whatever shape the page has: for a story of one view. */
+		show?: Shape;
 	}
 
-	let { host: given, track, onready }: Props = $props();
+	let { host: given, track, onready, show }: Props = $props();
 
 	// The site a game is played on does not change under it.
 	const host = untrack(() => given);
 	const { limits, reducedMotion } = host.init;
-
-	/** A cell's size on the stage, in the stage's own measure. */
-	const CELL = 200;
 
 	const emitter = provideEmitter<StageEvent>();
 
@@ -47,7 +52,7 @@ Created: 2026-11-18
 	let win = $state(0);
 	let message = $state("Choose a bet and spin.");
 	let bet = $state<number>();
-	let bar = $state<Bar>();
+	let bar = $state<BarHandle>();
 
 	const wait = (ms: number) => new Promise<void>((done) => setTimeout(done, ms));
 
@@ -69,7 +74,7 @@ Created: 2026-11-18
 			await emitter.broadcast({
 				type: "reelsSpin",
 				reels: event.reels,
-				fast: bar?.quick() ?? false
+				pace: bar?.pace() ?? 1
 			});
 			if (event.win)
 				await emitter.broadcast({
@@ -94,6 +99,8 @@ Created: 2026-11-18
 			const round = await host.open(bet, {});
 			const playing: Playing = { payout: round.payout, spin: null };
 
+			// The stake is seen to leave; the win is not, until it has been shown.
+			balance = balanceBeforePayout(round);
 			await playEvents(round.view.steps[0].events, handlers, { context: playing });
 
 			balance = round.balance;
@@ -141,29 +148,25 @@ Created: 2026-11-18
 	host.onBalance((next) => (balance = next));
 </script>
 
-<main class="harbour">
-	<h1 class="title">Harbour Lights</h1>
-
-	<!-- The reels, drawn. What they show is said in words below, for a screen reader. -->
-	<div class="room">
-		<div class="reels">
-			<Stage
-				width={REELS * CELL}
-				height={ROWS * CELL}
-				pictures={PICTURES}
-				{track}
-				onready={() => onready?.()}
-			>
-				<Reels cell={CELL} still={reducedMotion} />
-			</Stage>
-		</div>
-	</div>
-
-	<p class="message" id="message">{message}</p>
-</main>
+<!-- The game is drawn twice over, once for each shape the site may give its frame, and the
+     SDK shows the one for the shape it has. -->
+<Views {show}>
+	{#snippet wide()}<WideView
+			{message}
+			still={reducedMotion}
+			{track}
+			{onready}
+		/>{/snippet}
+	{#snippet tall()}<TallView
+			{message}
+			still={reducedMotion}
+			{track}
+			{onready}
+		/>{/snippet}
+</Views>
 
 <!-- Every game has the SDK's control bar: the bet, the spin, autoplay, the speed, the balance
-     and the last win. No bonus, so turbo would be the same as fast. -->
+     and the last win. -->
 <ControlBar
 	bets={{ steps: [{ under: 100, by: 10 }, { under: 1_000, by: 100 }, { by: 1_000 }] }}
 	startBet={100}
@@ -171,12 +174,10 @@ Created: 2026-11-18
 	play={{ label: "Spin", symbol: "spin" }}
 	onplay={() => void spin()}
 	autoplay={{
-		counts: [10, 25, 50, 100],
 		noun: ["spin", "spins"],
 		onstart: (count) => void autoplay(count),
 		onstop: () => (autoLeft = 0)
 	}}
-	speeds="fast"
 	look={{ surface: "#0f2530", accent: "#ffd56b", onAccent: "#0f2530" }}
 	{balance}
 	{win}

@@ -1,7 +1,5 @@
 {
-	"name": "Tidewater Games",
+	"name": "Studio Name",
 	"sdk": "^0.16.0",
-	"games": [
-		"harbour-lights"
-	]
+	"games": ["game-title"]
 }

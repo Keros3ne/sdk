@@ -1,5 +1,5 @@
 <!--
-Harbour Lights' reels: three of three on the SDK's board, with the line along the middle
+Game Title's reels: three of three on the SDK's board, with the line along the middle
 row marked. They know nothing of rounds. They are told what to do over the game's emitter
 (./round.ts): spin to where the reels stopped, and light the line when it wins.
 
@@ -26,6 +26,11 @@ Created: 2026-11-18
 	const emitter = getEmitter<StageEvent>();
 	let board = $state<ReturnType<typeof Board<SymbolName>>>();
 
+	// How long a reel turns and how long after the last the next one stops, in milliseconds, at
+	// the ordinary pace. The bar's speed button shortens both (`bar.pace()`).
+	const SPIN_TIME = 1040;
+	const REEL_DELAY = 1040;
+
 	/** The cells of the line: the middle row of every reel. */
 	const LINE: Cell[] = Array.from({ length: REELS }, (_, reel): Cell => [
 		reel,
@@ -35,8 +40,8 @@ Created: 2026-11-18
 	onEvent(emitter, "reelsSpin", (event) =>
 		board?.spin(event.reels, {
 			instant: still,
-			spinTime: event.fast ? 220 : 520,
-			reelDelay: event.fast ? 220 : 520
+			spinTime: SPIN_TIME * event.pace,
+			reelDelay: REEL_DELAY * event.pace
 		})
 	);
 	onEvent(emitter, "reelsWin", (event) =>

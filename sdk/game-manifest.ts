@@ -17,6 +17,9 @@
  * - `modes` are the ways of opening a round, the ordinary one first: what each costs, as
  *   a multiple of the bet in basis points, and the table its row is drawn from. A game
  *   may have more tables than modes: a row's choice names the others (./book.ts).
+ * - `shapes`, if given, are the shapes the game has a view for (./shapes.ts): `["wide",
+ *   "tall"]` for one drawn for a phone too. Left out, it is drawn wide only, and the site
+ *   shows it wide on a phone.
  * - `minStake` and `maxStake`, in cents, narrow the bets the site takes, never widen them.
  * - `counters`, if given, are meters the game keeps between bets, for each player at each
  *   size of bet: `{ "id": "bronze", "full": 55, "worthBp": 2379, "table": "pour-bronze" }`.
@@ -41,6 +44,7 @@
 
 import * as valibot from "valibot";
 import { BP, MAX_COST_BP, MAX_STAKE, MIN_STAKE } from "./bets.ts";
+import { SHAPES } from "./shapes.ts";
 import {
 	BOOK_MAX_ROWS,
 	BOOK_MAX_WEIGHT,
@@ -143,6 +147,19 @@ export const gameManifest = valibot.pipe(
 		category: valibot.picklist(["slots", "games"]),
 		minStake: valibot.optional(stake),
 		maxStake: valibot.optional(stake),
+		shapes: valibot.optional(
+			valibot.pipe(
+				valibot.array(valibot.picklist(SHAPES)),
+				valibot.check(
+					(shapes) => shapes.includes("wide"),
+					"Every game has a wide view: shapes must name it"
+				),
+				valibot.check(
+					(shapes) => new Set(shapes).size === shapes.length,
+					"shapes names a shape twice"
+				)
+			)
+		),
 		modes: valibot.pipe(
 			valibot.array(mode),
 			valibot.minLength(1, "The game has no way of being played"),

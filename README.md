@@ -7,7 +7,7 @@ things at once:
   the site, the stage, the board, the control bar and controls, Storybook, the site's own
   checks, and the command line. **Its README, [`sdk/README.md`](sdk/README.md), is the
   contract every game is held to.**
-- **A studio to start from**: Tidewater Games, with one game, **Harbour Lights**, a
+- **A studio to start from**: Studio Name, with one game, **Game Title**, a
   three-reel slot kept deliberately simple, so that what it shows is everything a studio
   sends and how, not a game's cleverness.
 
@@ -21,7 +21,7 @@ together, and each depends on the SDK at a tag. You need [Bun](https://bun.sh).
 - **For a game of your own:** a repository with a `package.json` that depends on the SDK
   (`"@keros3ne/studio-sdk": "github:Keros3ne/sdk#v0.14.0"`), a `studio.json`
   (`{ "sdk": "^0.14.0", "games": ["your-game"] }`), and the game in a folder named by its
-  slug, laid out as `harbour-lights/` is. `bun x keros3ne-studio` is the command line the
+  slug, laid out as `game-title/` is. `bun x keros3ne-studio` is the command line the
   scripts below run. What your games share goes in a package of its own (the contract's
   "Sharing between repositories").
 
@@ -31,7 +31,7 @@ together, and each depends on the SDK at a tag. You need [Bun](https://bun.sh).
 package.json                      the SDK as a package, and the scripts below
 sdk/                              the SDK itself (in your own repository, a dependency)
 studio.json                       what this repository holds: its games, and the SDK's version
-harbour-lights/
+game-title/
   game.json                       the game: its name, blurb, section and modes
   guide.json                      its rules and paytable, as words and tables
   maths/rules.ts                  its rules, as figures and as play
@@ -48,7 +48,7 @@ harbour-lights/
 
 ```sh
 bun run books        # make each game's books from its maths, and say what they hold
-bun run dev          # play Harbour Lights at http://localhost:4190/ against a stand-in for the site
+bun run dev          # play Game Title at http://localhost:4190/ against a stand-in for the site
 bun run stories      # the studio's stories, and the SDK's own, in Storybook
 bun run check        # the site's checks on each game's books, guide, maths and client
 bun run client       # build each game's client, and put what was built on record
@@ -61,7 +61,7 @@ bun run typecheck
    round, a table of rows, each with a weight, what it pays and the events that play it
    out. Your maths plays the rounds that make them, and is pure: it draws every random
    choice from the rng it is handed. Every way of playing returns exactly 96.00%: the
-   weights are made so. Harbour Lights' book is every one of the 8,000 ways its reels can
+   weights are made so. Game Title's book is every one of the 8,000 ways its reels can
    stop, so nothing the game can do is left out.
 2. **The client decides nothing.** It asks the site to place a bet through the SDK, plays
    out the events of the row it is given, and calls `settled()` once it has been shown. It
@@ -91,7 +91,7 @@ rewards once it is listed. A release may not drop a game: past bets on it must s
 verifiable.
 
 The site takes this repository's game in under a studio it keeps hidden: its tests play
-Harbour Lights, and players are not shown it.
+Game Title, and players are not shown it.
 
 ## Working on the SDK itself
 

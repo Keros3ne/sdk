@@ -17,6 +17,8 @@ interface State {
 		slug: string;
 		name: string;
 		category: string;
+		/** The shapes the game has a view for. */
+		shapes: string[];
 		rtpBp: number;
 		volatility: number;
 	};
@@ -211,6 +213,8 @@ async function start() {
 
 	function draw() {
 		stage.dataset.shape = shape;
+		// A game with no tall view is given a wide frame on a phone too, as on the site.
+		stage.toggleAttribute("data-wide-only", !state.game.shapes.includes("tall"));
 		for (const button of shapes.querySelectorAll("button"))
 			button.setAttribute(
 				"aria-pressed",
@@ -374,7 +378,7 @@ async function start() {
 			h("h1", { textContent: state.game.name }),
 			h("span", {
 				class: "eyebrow",
-				textContent: `${state.game.category} · keros3ne-studio dev`
+				textContent: `${state.game.category} - keros3ne-studio dev`
 			}),
 			shapes,
 			h("label", { class: "switch" }, motion, " Reduced motion"),

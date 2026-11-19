@@ -11,7 +11,7 @@ a player takes part in, meters that last between bets, its own controls. It is s
 to every rule of the site, below.
 
 This repository is also where a studio starts: clone it, and it is a complete small studio,
-Tidewater Games, with one slot, Harbour Lights, and everything a studio sends (the README
+Studio Name, with one slot, Game Title, and everything a studio sends (the README
 at its top says how). A studio takes the SDK's updates by merging this repository into its
 own.
 
@@ -61,8 +61,8 @@ repository is also a studio's repository, with one game, to read or to start fro
 ```json
 {
 	"sdk": "^0.14.0",
-	"games": ["harbour-lights"],
-	"packages": { "@tidewater/kit": "https://github.com/tidewater/kit.git#v1.2.0" }
+	"games": ["game-title"],
+	"packages": { "@studio-name/kit": "https://github.com/studio-name/kit.git#v1.2.0" }
 }
 ```
 
@@ -90,11 +90,11 @@ repository of its own, of source (TypeScript, Svelte, styles, art), which each g
 repository depends on at a tag.
 
 - In the game's `package.json` it is an ordinary dependency, which your package manager
-  installs: `"@tidewater/kit": "git+https://github.com/tidewater/kit.git#v1.2.0"`.
+  installs: `"@studio-name/kit": "git+https://github.com/studio-name/kit.git#v1.2.0"`.
 - In the game's `studio.json` it is named in `packages`, at the same tag. That is what the
   site reads: it fetches the package at that tag as source, with nothing installed and
   nothing run, and reads it as it reads a client.
-- A client imports its files by their paths: `import Sheet from "@tidewater/kit/Sheet.svelte"`.
+- A client imports its files by their paths: `import Sheet from "@studio-name/kit/Sheet.svelte"`.
 - The package is held to a client's rules: what it imports by a relative address is its
   own, and it loads nothing from the network. Its `package.json` has no `exports` and no build: say what
   it needs as `peerDependencies` (`@keros3ne/studio-sdk`, `svelte`), so that your package
@@ -127,6 +127,8 @@ Maths shares nothing: a game's books are made from its own folder alone.
   volatility: the weights make the return so, the site's check sums it exactly, and how
   much a game swings is read from its books (of the first mode: a bought bonus is not
   rated). Players are shown one word for it: low, medium or high.
+- `shapes` are the shapes the game has a view for: `["wide", "tall"]` for one drawn for a
+  phone too. Left out, wide only ("Draw a view for each shape", below).
 - `minStake` and `maxStake`, in cents, narrow the bets the site takes. The bet times a
   mode's cost must come to whole cents, or the site refuses the bet: a mode at a bet and a
   quarter needs a smallest bet of 0.20.
@@ -269,7 +271,7 @@ gradient.
 the loading screen comes from. So the page, and whatever it imports at its top, must be
 able to render with no browser and no site: no `window`, no `document`, no Pixi, no
 `connect()` outside `onMount`. Keep the page small, and ask for the game itself in the
-browser (`await import("../Game.svelte")` in `onMount`), as Harbour Lights' page does:
+browser (`await import("../Game.svelte")` in `onMount`), as Game Title's page does:
 the build still asks for that code from the start, with the rest.
 
 **What was built is put on record.** `keros3ne-studio client` builds each client into
@@ -362,6 +364,8 @@ and refuses a client built for another version of the protocol.
   have ended. A fall may hold a piece in place (`held`: its cells, and the picture they
   show), and the rest falls past it. A spin may hold reels back (`holds`). With `instant`,
   nothing moves: pass it when `host.init.reducedMotion` is set.
+- **The shape of the game** (`/shape`): `Views`, which shows a game's wide or tall view as
+  the site gives its frame that shape, and `createShape()`, which says which it has now.
 - **The control bar and controls** (`/controls`): `ControlBar`, and `Menu`, `Choices`,
   `Switch`, `Slider`, `Field`, `Action`, `Popup` and `Autoplay`, as components.
 - **The site in a story's place.** Have the game's root take the site as a prop (`host`),
@@ -405,27 +409,41 @@ and refuses a client built for another version of the protocol.
     `look={{ surface: "#0f2530", accent: "#ffd56b", segment: { radius: "12px" } }}`.
     `bets` is a list, or the steps the bet buttons move by
     (`{ steps: [{ under: 100, by: 10 }, { by: 100 }] }`: by 0.10 under 1.00, then by 1.00).
-    Pressing the bet lets the player type one, any amount inside the game's limits. On a game
+    The bet is always one of those on offer: a player does not type one. On a game
     600px wide or narrower the bar is always the site's two rows across the whole width,
     whatever was asked for. Draw clear of it with `bar.inset()`, or with `--sdk-bar-top` and
     `--sdk-bar-bottom` in a style sheet.
 
     What the bar shows is its props: `balance`, `win`, `busy` while a round is played or
     shown, `autoLeft` as autoplay runs. The bet comes back with `bind:bet`, and `bind:bar`
-    hands over the bar itself, for `bar.quick()`, `bar.inset()`, `bar.rect()` and
-    `bar.focusPlay()`. More for its menu is written inside it (`{#snippet menu()}`).
+    hands over the bar itself (a `BarHandle`), for `bar.pace()`, `bar.inset()`, `bar.rect()`
+    and `bar.focusPlay()`. More for its menu is written inside it (`{#snippet menu()}`).
 
-    The speed button has three settings: the ordinary pace, fast and turbo. A game with no
-    bonus passes `speeds="fast"`; one too quick for speed to matter passes `"none"`. Ask
-    `bar.quick(inBonus)` at each step of a play: fast quickens ordinary play only, so pass
-    `true` while free spins or a feature are shown, and turbo quickens everything. The speed
-    is the player's choice alone: autoplay never changes it.
+    Set `win` to 0 when a play starts and to what it won once that has been shown. The bar
+    keeps the last win of more than nothing in view: green while it is the last play's own,
+    greyed once a later play has started or won nothing, so that a player can tell at a
+    glance, at any speed, whether the play just gone won. Since the bar says what a play
+    won, a game does not write that total out again somewhere else of its own.
+
+    The balance the bar shows must not give a result away. A round's `balance` is what the
+    site holds once the round is paid, known before the game has shown anything: while the
+    result plays show `balanceBeforePayout(round)` (`/client`), which has the stake gone and
+    the win not yet come, and `round.balance` once the result has been shown.
+
+    The speed button has three settings: the ordinary pace, fast and turbo. A game too quick
+    for speed to matter passes `speeds="none"`. Ask `bar.pace(inBonus)` at each step of a
+    play and multiply every time by it: it is 1 at the ordinary pace, 0.7 when fast and 0.5
+    at turbo. Fast quickens ordinary play only, so pass `true` while free spins or a feature
+    are shown, and turbo quickens everything. Set the ordinary pace so that a player new to
+    the game can follow all of it; turbo is for one who knows it. The speed is the player's
+    choice alone: autoplay never changes it.
     - Never draw another bet control, balance or play button of your own.
     - Restyle the bar through its `look` prop and lay it out through `layout`, and nothing
       else: not through a style sheet.
     - What a game adds for itself (a button to buy a bonus) goes outside the bar: above it,
       or on its row beside a narrower bar.
-    - Autoplay is chosen in Auto's popup (Off, or a number of plays), which only readies it:
+    - Autoplay is chosen in Auto's popup (Off, or a number of plays: ten to a hundred by
+      tens unless the game gives `counts` of its own), which closes and only readies it:
       the play button then shows the number over a triangle, and pressing it calls
       `autoplay.onstart(count)`. While the plays run, it shows how many are left over a
       square, and pressing it calls `autoplay.onstop()`; Auto cannot be pressed. Escape over
@@ -469,7 +487,7 @@ and refuses a client built for another version of the protocol.
     ```svelte
     <LoadingScreen
     	{loading}
-    	title="Harbour Lights"
+    	title="Game Title"
     	logo="./loading-logo.svg"
     	look={{
     		surface: "linear-gradient(#1b2a5c, #0d1022)",
@@ -485,15 +503,34 @@ and refuses a client built for another version of the protocol.
     spacing and case (`showTitle: false` leaves the name out, where the logo says it), the
     bar's colours, size and corners, the logo's size, and the room between them
     (`LoadingLook`). Where the screen is and what it covers are not yours to change.
-    Harbour Lights' page does all of this.
+    Game Title's page does all of this.
 
 9. **Show what each win paid, over the reels.** A slot writes the amount of each win where
    it is, not only the total. The `Board` does (`showWins`), choosing a cell of each win so
    that several amounts keep apart; `placeLabels()` in `/ui` is the same choice, for a
    board of your own.
-10. **Draw for two shapes.** The site gives a game's frame a fixed shape: 16 by 10 on a
-    wider screen and 9 by 16 on a phone, as big as the screen allows, and the same in full
-    screen. Lay the game out for both, at any size.
+10. **Draw a view for each shape.** The site gives a game's frame a fixed shape, as big as
+    the screen allows and the same in full screen: `wide`, 16 by 10, which every game has,
+    and `tall`, 9 by 16, on a phone, for a game that has a view for it. Say which you have
+    in `game.json` (`"shapes": ["wide", "tall"]`; left out, wide only). A game with no tall
+    view is shown wide on a phone, across the screen's width, so a tall view is worth
+    having. The site decides which shape a frame has; a game does not measure the screen
+    with media queries of its own.
+
+    Each shape is a view, a component of its own, and `Views` (`/shape`) shows the one for
+    the shape the frame has:
+
+        <Views>
+          {#snippet wide()}<WideView {message} />{/snippet}
+          {#snippet tall()}<TallView {message} />{/snippet}
+        </Views>
+
+    Keep what the game knows (its round, its balance, the bar) above the views, in the
+    game's root: a view only draws it, and is made again if the shape changes. Give each
+    view a story of its own (`<Views show="tall">` shows one whatever the page's shape), as
+    Game Title does. Where a piece needs to know the shape itself, `createShape()` says
+    (`shape.tall`, `shape.current`, and the game's `width` and `height` on the screen), and
+    writes it on the page for a style sheet (`[data-shape="tall"]`).
 
 **The card.** Supply the picture for your game's card: `client/public/card.svg`, upright
 (three wide by four high), with nothing important in the bottom third, where the site lays
@@ -572,8 +609,8 @@ bun run stories             # your stories, and the SDK's own, in Storybook
    are sending), tag the release (`git tag v0.1.0`) and push the tag.
 4. Run `keros3ne-studio pack`, which holds each game's books and built client to their
    records and packs them into `release/`: one compressed file for each file of each
-   table (`harbour-lights.spin.index.gz`) and one for the client
-   (`harbour-lights.client.gz`). Send them with the tag as the files of its release:
+   table (`game-title.spin.index.gz`) and one for the client
+   (`game-title.client.gz`). Send them with the tag as the files of its release:
    `gh release create v0.1.0 release/*`. Neither books nor a built client are committed,
    so this is how they travel; the records you did commit are what they are held to.
 5. Send KEROS3NE the repository and the tag. (The first time, KEROS3NE registers your

@@ -33,7 +33,14 @@ export const SYMBOL_PATHS = {
 
 export type BarSymbol = keyof typeof SYMBOL_PATHS;
 
-export interface ControlBar {
+/** How long play takes at each speed, against the ordinary pace: ordinary, fast and turbo. */
+export const PACES = [1, 0.7, 0.5] as const;
+
+/**
+ * The bar as a game holds it (`bind:bar` on ./controls/ControlBar.svelte): what a game may
+ * ask of the bar and tell it.
+ */
+export interface BarHandle {
 	/** Put this in the page. It places itself along the bottom. */
 	element: HTMLElement;
 	/** The bet chosen, in cents. */
@@ -47,6 +54,13 @@ export interface ControlBar {
 	 * was playing for is still seen at its own pace. Turbo quickens everything.
 	 */
 	quick(inBonus?: boolean): boolean;
+	/**
+	 * How long what is played now should take, against the ordinary pace: 1 at the
+	 * ordinary pace, less when fast, least at turbo (`PACES`). Multiply a time by it. Ask
+	 * at every step. Pass `true` while a bonus is being shown: fast leaves a bonus at the
+	 * ordinary pace, and turbo quickens everything.
+	 */
+	pace(inBonus?: boolean): number;
 	/** The volume chosen in the menu, from 0 (off) to 1. */
 	readonly volume: number;
 	/**
@@ -61,7 +75,11 @@ export interface ControlBar {
 	 */
 	autoLeft: number;
 	setBalance(cents: number): void;
-	/** What the last play won, in cents. */
+	/**
+	 * What the last play won, in cents: nothing when a play starts, and what it won once
+	 * that is shown. The bar keeps the last win of more than nothing in view, in green
+	 * while it is the last play's and greyed once a later play has started or won nothing.
+	 */
 	setWin(cents: number): void;
 	/**
 	 * What the next play will cost, in cents, when that is not the bet itself: a
@@ -104,6 +122,11 @@ export interface ControlBar {
 	/** Moves, resizes or rearranges the bar. What is left out stays as it was. */
 	setLayout(layout: BarLayout): void;
 }
+
+/** How many plays the bar's autoplay offers, where a game does not say: ten to a hundred, by tens. */
+export const AUTOPLAY_COUNTS: readonly number[] = [
+	10, 20, 30, 40, 50, 60, 70, 80, 90, 100
+];
 
 export type Speed = 0 | 1 | 2;
 export const SPEEDS = ["normal", "fast", "turbo"] as const;

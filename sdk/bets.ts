@@ -6,7 +6,8 @@
  * plays a game against, so that a game behaves there as it will on the site.
  */
 
-export const MIN_STAKE = 10;
+/** One cent. A game that needs more says so (`minStake`): a slot whose wins are small shares of the bet, say. */
+export const MIN_STAKE = 1;
 export const MAX_STAKE = 100_00;
 /**
  * The smallest and largest bet a game takes. A game may ask for a higher

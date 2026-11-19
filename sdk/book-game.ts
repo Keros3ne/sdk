@@ -193,6 +193,7 @@ export function bookGame(
 		volatilityOf: (params) => modeOf(params.mode).checked.volatility,
 		...(game.minStake !== undefined ? { minStake: game.minStake } : {}),
 		...(game.maxStake !== undefined ? { maxStake: game.maxStake } : {}),
+		...(game.shapes !== undefined ? { shapes: game.shapes } : {}),
 
 		params: valibot.pipe(
 			valibot.optional(

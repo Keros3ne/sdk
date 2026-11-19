@@ -16,7 +16,7 @@
  *         });
  *     </script>
  *
- *     <LoadingScreen {loading} title="Harbour Lights" logo="./loading-logo.svg" look={{ ... }} />
+ *     <LoadingScreen {loading} title="Game Title" logo="./loading-logo.svg" look={{ ... }} />
  *
  * A client's page is rendered when it is built (./client-build.ts), so the screen is in
  * the page itself, as its props dress it, and is seen before any of the game's code has

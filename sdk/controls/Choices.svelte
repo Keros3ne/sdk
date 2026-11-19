@@ -20,6 +20,13 @@ Created: 2026-11-17
 		/** While a round is played: none of them can be chosen. */
 		disabled?: boolean;
 		onchange?: (value: Value) => void;
+		/**
+		 * Laid out as a grid, five to a line, for more options than a row holds: the first
+		 * takes a line of its own where that leaves the rest in whole lines (an Off over tens).
+		 */
+		grid?: boolean;
+		/** Called when an option is pressed, the one already chosen too: to close what holds this. */
+		onpick?: (value: Value) => void;
 	}
 
 	let {
@@ -28,7 +35,9 @@ Created: 2026-11-17
 		options,
 		value = $bindable(),
 		disabled = false,
-		onchange
+		onchange,
+		grid = false,
+		onpick
 	}: Props = $props();
 
 	// The same on a server and in the browser that takes its page over.
@@ -78,7 +87,13 @@ Created: 2026-11-17
 	<span class="sdk-choices-label" id="{id}-label">
 		{label}
 	</span><!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="sdk-choices-row" bind:this={row} {onkeydown}>
+	<div
+		class="sdk-choices-row"
+		data-grid={grid ? "" : undefined}
+		data-lead={grid && options.length % 5 === 1 ? "" : undefined}
+		bind:this={row}
+		{onkeydown}
+	>
 		{#each options as option, index}<button
 				type="button"
 				class="sdk-choice"
@@ -86,7 +101,10 @@ Created: 2026-11-17
 				aria-checked={String(index === selected) as "true" | "false"}
 				tabindex={index === selected ? 0 : -1}
 				{disabled}
-				onclick={() => choose(index)}
+				onclick={() => {
+					choose(index);
+					onpick?.(option.value);
+				}}
 			>
 				{option.label}
 			</button>{/each}

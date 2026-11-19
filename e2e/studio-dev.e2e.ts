@@ -22,7 +22,7 @@ async function startDev() {
 	const root = resolve(`test-results/studio-dev-${port}`);
 	rmSync(root, { recursive: true, force: true });
 	mkdirSync(root, { recursive: true });
-	cpSync("harbour-lights", join(root, "harbour-lights"), {
+	cpSync("game-title", join(root, "game-title"), {
 		recursive: true,
 		filter: (path) =>
 			!path.includes(join("client", "dist")) && !path.includes(".svelte-kit")
@@ -33,7 +33,7 @@ async function startDev() {
 		[
 			"sdk/cli.ts",
 			"dev",
-			"harbour-lights",
+			"game-title",
 			"--root",
 			root,
 			"--port",
@@ -150,14 +150,14 @@ test("dev starts the stand-in again when the maths changes, and reloads the game
 		const game = await openGame(page, dev.url);
 		const log = page.locator(".log");
 		const now = new Date();
-		utimesSync(join(dev.root, "harbour-lights", "maths", "index.ts"), now, now);
+		utimesSync(join(dev.root, "game-title", "maths", "index.ts"), now, now);
 		await expect(log).toContainText("The maths changed", { timeout: 20_000 });
 		await expect(game.locator('body[data-ready="true"]')).toBeAttached({
 			timeout: 20_000
 		});
 
 		utimesSync(
-			join(dev.root, "harbour-lights", "client", "src", "routes", "+page.svelte"),
+			join(dev.root, "game-title", "client", "src", "routes", "+page.svelte"),
 			now,
 			now
 		);

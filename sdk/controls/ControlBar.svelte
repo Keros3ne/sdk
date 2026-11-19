@@ -5,7 +5,7 @@ the last win. A game never draws its own bet, balance or play button.
 
 What the bar shows is a prop (the balance, the last win, whether a round is under way),
 what the player sets comes back (`bind:bet`), and `bind:bar` hands over the bar itself,
-for the speed of play (`bar.quick()`) and the room it takes (`bar.inset()`):
+for the speed of play (`bar.pace()`) and the room it takes (`bar.inset()`):
 
     <ControlBar
       bets={[10, 20, 50, 100]} startBet={100} limits={host.init.limits}
@@ -27,6 +27,7 @@ Created: 2026-11-17
 	import "../ui.css";
 	import "../bar.css";
 	import {
+		AUTOPLAY_COUNTS,
 		BAR_SCALE,
 		BAR_SEGMENTS,
 		BAR_WIDTH,
@@ -34,13 +35,14 @@ Created: 2026-11-17
 		CONTENT,
 		MARGIN,
 		NARROW,
+		PACES,
 		SEGMENT_SCALE,
 		SMALLEST,
 		SPEEDS,
 		checkLayout,
 		type BarLayout,
 		type BarSegment,
-		type ControlBar,
+		type BarHandle,
 		type Speed,
 		type StakeSteps
 	} from "../bar-rules.ts";
@@ -68,7 +70,8 @@ Created: 2026-11-17
 		onplay: () => void;
 		/** Left out for a game that cannot play by itself: the button is not drawn. */
 		autoplay?: {
-			counts: number[];
+			/** How many plays can be chosen. Ten to a hundred by tens, left out. */
+			counts?: number[];
 			/** What is played, singular and plural: `["spin", "spins"]`. */
 			noun: [one: string, many: string];
 			onstart: (count: number) => void;
@@ -90,8 +93,17 @@ Created: 2026-11-17
 		within?: "page" | "parent";
 		/** The player's balance, in cents. */
 		balance: number;
-		/** What the last play won, in cents. */
+		/**
+		 * What the last play won, in cents: 0 when a play starts, and what it won once that is
+		 * shown. The bar keeps the last win of more than nothing in view: green while it is the
+		 * last play's, greyed once a later play has started or won nothing.
+		 */
 		win?: number;
+		/**
+		 * Whether the bet can be typed, by pressing it. Left out, it cannot: the bet is one of
+		 * those on offer. For the site's own table games, which take any amount.
+		 */
+		typed?: boolean;
 		/** While a round is played or shown: the bet cannot be changed, nor play pressed. */
 		busy?: boolean;
 		/** How many plays of autoplay are left, as the game counts them down. */
@@ -107,10 +119,10 @@ Created: 2026-11-17
 		/** Out: the bet chosen, in cents. */
 		bet?: number;
 		/** Out: the bar itself. */
-		bar?: ControlBar;
+		bar?: BarHandle;
 		onbet?: (bet: number) => void;
 		/** Called once the bar is made and in the page. */
-		onready?: (bar: ControlBar) => void;
+		onready?: (bar: BarHandle) => void;
 		/** More for the menu, under the volume. */
 		menu?: Snippet;
 	}
@@ -131,6 +143,7 @@ Created: 2026-11-17
 		within = "page",
 		balance,
 		win,
+		typed = false,
 		busy: busyNow,
 		autoLeft,
 		cost: costNow,
@@ -185,6 +198,8 @@ Created: 2026-11-17
 	// layout awaits), and reading that before it has come stops the page being drawn at all.
 	let shownBalance = $state(0);
 	let shownWin = $state(0);
+	// Whether the win in view is the last play's own. Otherwise it is an earlier play's, greyed.
+	let winFresh = $state(false);
 	let typing = $state(false);
 	/** Which way the bar's popups open: away from the edge the bar is at. */
 	let opens = $state<"up" | "down">("up");
@@ -215,7 +230,7 @@ Created: 2026-11-17
 		shownBalance = balance;
 	});
 	$effect(() => {
-		if (win !== undefined) shownWin = win;
+		if (win !== undefined) setWin(win);
 	});
 	$effect(() => {
 		if (busyNow !== undefined) busy = busyNow;
@@ -290,6 +305,16 @@ Created: 2026-11-17
 		for (const listener of betListeners) listener(next);
 	}
 
+	/**
+	 * What the last play won. Only a win of more than nothing replaces the one in view; nothing
+	 * won, or a play starting, leaves it there and greys it.
+	 */
+	function setWin(cents: number) {
+		if (cents > 0) shownWin = cents;
+
+		winFresh = cents > 0;
+	}
+
 	/** The bet becomes a field to type one in. */
 	function startTyping() {
 		typing = true;
@@ -310,13 +335,13 @@ Created: 2026-11-17
 	function stopTyping(keep: boolean) {
 		if (!typing) return;
 
-		const typed = parseKero(betField?.value ?? "");
+		const entered = parseKero(betField?.value ?? "");
 
 		typing = false;
 		flushSync();
 		betOut?.focus();
-		if (keep && typed !== null)
-			setBet(clamp(typed, limits.minStake, limits.maxStake));
+		if (keep && entered !== null)
+			setBet(clamp(entered, limits.minStake, limits.maxStake));
 	}
 
 	/** Play: stops autoplay that is running, starts autoplay that is waiting, or plays once. */
@@ -466,7 +491,7 @@ Created: 2026-11-17
 	}
 
 	/** The bar as a game holds it: what it may ask of the bar and tell it. */
-	const api: ControlBar = {
+	const api: BarHandle = {
 		get element() {
 			return element!;
 		},
@@ -477,6 +502,7 @@ Created: 2026-11-17
 			return speed;
 		},
 		quick: (inBonus = false) => speed === 2 || (speed === 1 && !inBonus),
+		pace: (inBonus = false) => PACES[speed === 1 && inBonus ? 0 : speed],
 		get volume() {
 			return volume;
 		},
@@ -493,7 +519,7 @@ Created: 2026-11-17
 			left = Math.max(0, next);
 		},
 		setBalance: (cents) => void (shownBalance = cents),
-		setWin: (cents) => void (shownWin = cents),
+		setWin,
 		setCost: (cents) => void (cost = cents),
 		setBetLabel,
 		setFreeSpins: (spins) =>
@@ -570,6 +596,12 @@ Created: 2026-11-17
 		{" KC"}
 	</span>{/snippet}
 
+{#snippet betFace()}<span class="sdk-bar-label sdk-bar-betlabel">
+		{#each names as name}<span class={{ "sdk-bar-betlabel-on": name === betName }}>
+				{name}
+			</span>{/each}
+	</span><output>{formatKero(cost ?? stake)}</output>{/snippet}
+
 {#snippet segment(name: BarSegment)}
 	{#if name === "menu"}
 		<div
@@ -628,39 +660,37 @@ Created: 2026-11-17
 				onclick={() => setBet(lower ?? stake)}
 			>
 				<Mark name="minus" />
-			</button><button
-				type="button"
-				class="sdk-bar-readout sdk-bar-betvalue"
-				bind:this={betOut}
-				aria-label="{betName} {formatKero(cost ?? stake)}. Press to type a bet."
-				disabled={locked}
-				hidden={typing}
-				onclick={startTyping}
-			>
-				<span class="sdk-bar-label sdk-bar-betlabel">
-					{#each names as name}<span
-							class={{ "sdk-bar-betlabel-on": name === betName }}
-						>
-							{name}
-						</span>{/each}
-				</span><output>{formatKero(cost ?? stake)}</output>
-			</button><input
-				class="sdk-bar-betfield"
-				bind:this={betField}
-				inputmode="decimal"
-				autocomplete="off"
-				aria-label="Bet"
-				hidden={!typing}
-				onkeydown={(event) => {
-					if (event.key !== "Enter" && event.key !== "Escape") return;
+			</button>{#if typed}<button
+					type="button"
+					class="sdk-bar-readout sdk-bar-betvalue"
+					bind:this={betOut}
+					aria-label="{betName} {formatKero(
+						cost ?? stake
+					)}. Press to type a bet."
+					disabled={locked}
+					hidden={typing}
+					onclick={startTyping}
+				>
+					{@render betFace()}
+				</button><input
+					class="sdk-bar-betfield"
+					bind:this={betField}
+					inputmode="decimal"
+					autocomplete="off"
+					aria-label="Bet"
+					hidden={!typing}
+					onkeydown={(event) => {
+						if (event.key !== "Enter" && event.key !== "Escape") return;
 
-					// Handled here: left to the browser, the same Enter presses the bet's button,
-					// which focus has just moved back to, and opens the field again.
-					event.preventDefault();
-					stopTyping(event.key === "Enter");
-				}}
-				onblur={() => stopTyping(true)}
-			/><button
+						// Handled here: left to the browser, the same Enter presses the bet's button,
+						// which focus has just moved back to, and opens the field again.
+						event.preventDefault();
+						stopTyping(event.key === "Enter");
+					}}
+					onblur={() => stopTyping(true)}
+				/>{:else}<div class="sdk-bar-readout sdk-bar-betvalue">
+					{@render betFace()}
+				</div>{/if}<button
 				type="button"
 				class="sdk-bar-button sdk-bar-plus"
 				aria-label="Raise the bet"
@@ -678,7 +708,10 @@ Created: 2026-11-17
 			hidden={hidden("win")}
 			style:--segment-scale={sizeOf("win")}
 		>
-			<div class="sdk-bar-readout sdk-bar-win">
+			<div
+				class="sdk-bar-readout sdk-bar-win"
+				data-fresh={winFresh ? "" : undefined}
+			>
 				<span class="sdk-bar-label">Win</span><output>
 					{@render amount(shownWin)}
 				</output>
@@ -716,7 +749,7 @@ Created: 2026-11-17
 		>
 			{#if autoplay}
 				<Autoplay
-					counts={autoplay.counts}
+					counts={autoplay.counts ?? AUTOPLAY_COUNTS}
 					noun={autoplay.noun}
 					startFrom="play"
 					{left}

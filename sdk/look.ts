@@ -74,6 +74,8 @@ export interface BarLook {
 	accent?: string;
 	/** The symbol on the play button. */
 	onAccent?: string;
+	/** The last win, while it is the last play's own. */
+	win?: string;
 	/** Its typeface. */
 	font?: string;
 	/** Its small labels' typeface. */

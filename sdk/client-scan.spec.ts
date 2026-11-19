@@ -39,7 +39,7 @@ describe("a client's source", () => {
 	import { Stage } from "@keros3ne/studio-sdk/pixi";
 	import { Texture } from "pixi.js";
 	import confetti from "canvas-confetti";
-	import Sheet from "@tidewater/kit/Sheet.svelte";
+	import Sheet from "@studio-name/kit/Sheet.svelte";
 	import { LINES } from "../../maths/rules";
 </script>`,
 				"game/client/src/routes/+page.svelte": `<script lang="ts">\n\timport Game from "../Game.svelte";\n</script>\n\n<Game />`

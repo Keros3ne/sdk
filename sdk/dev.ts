@@ -180,6 +180,7 @@ export async function serve(options: Options): Promise<number> {
 			slug: game.slug,
 			name: game.name,
 			category: game.category,
+			shapes: game.shapes ?? ["wide"],
 			rtpBp: game.rtpBp,
 			volatility: game.volatility
 		},

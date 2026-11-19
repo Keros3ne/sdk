@@ -244,8 +244,8 @@
 	min-width: calc(76px * var(--s));
 	text-align: center;
 }
-/* The bet is a button: pressed, it becomes a field to type a bet in. Drawn as the readout it is. */
-.sdk-bar .sdk-bar-betvalue {
+/* Where the bet can be typed it is a button: pressed, it becomes a field to type a bet in. Drawn as the readout it is. */
+.sdk-bar button.sdk-bar-betvalue {
 	padding: 0;
 	border: 0;
 	background: none;
@@ -253,12 +253,12 @@
 	font: inherit;
 	cursor: text;
 }
-.sdk-bar .sdk-bar-betvalue:hover:not(:disabled) output {
+.sdk-bar button.sdk-bar-betvalue:hover:not(:disabled) output {
 	text-decoration: underline;
 	text-decoration-color: var(--bar-line-strong, #53474e);
 	text-underline-offset: 4px;
 }
-.sdk-bar .sdk-bar-betvalue:disabled {
+.sdk-bar button.sdk-bar-betvalue:disabled {
 	opacity: 1;
 }
 .sdk-bar-betfield {
@@ -281,6 +281,13 @@
 .sdk-bar-win {
 	padding-right: calc(6px * var(--s));
 	text-align: right;
+}
+/* The last win: green while it is the last play's own, greyed once it is an earlier play's. */
+.sdk-bar-win output {
+	color: var(--bar-dim, #c0aeb2);
+}
+.sdk-bar-win[data-fresh] output {
+	color: var(--bar-win, #8fc79a);
 }
 
 .sdk-bar-readout {

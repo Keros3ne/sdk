@@ -1,0 +1,30 @@
+/* Game Title. The game is drawn for two shapes, 16 by 10 and, on a phone, 9 by 16, at any
+   size, each as a view of its own (WideView.svelte, TallView.svelte). This is what the two
+   share: the game's colours and its ground. */
+:root {
+	--sea: #173341;
+	--deep: #0f2530;
+	--foam: #f4efe6;
+	--lamp: #ffd56b;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	height: 100%;
+	touch-action: manipulation;
+}
+
+body {
+	background: radial-gradient(circle at 50% 20%, #24546a, var(--sea) 55%, var(--deep));
+	color: var(--foam);
+	font:
+		500 15px/1.4 "Geist Variable",
+		system-ui,
+		sans-serif;
+	overflow: hidden;
+}

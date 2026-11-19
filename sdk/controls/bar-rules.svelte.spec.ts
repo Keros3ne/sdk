@@ -9,7 +9,7 @@
 
 import { flushSync, mount, unmount } from "svelte";
 import { afterEach, describe, expect, it } from "vitest";
-import type { BarLayout, ControlBar as Bar } from "../bar.ts";
+import type { BarLayout, BarHandle as Bar } from "../bar.ts";
 import { ControlBar } from "./index.ts";
 
 let game: HTMLElement;
@@ -145,7 +145,7 @@ describe("the control bar", () => {
 		bar.setBetLabel("Bonus spin");
 		await settle();
 		expect(label()).toBe("Bonus spin");
-		expect(button().getAttribute("aria-label")).toMatch(/^Bonus spin 0\.20\b/);
+		expect(button().textContent).toContain("0.20");
 		const after = box('[data-segment="bet"]');
 		expect(after.width).toBe(before.width);
 		expect(after.left).toBe(before.left);

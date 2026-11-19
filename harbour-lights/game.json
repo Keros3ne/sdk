@@ -1,7 +1,0 @@
-{
-	"slug": "harbour-lights",
-	"name": "Harbour Lights",
-	"blurb": "Three reels and one line, by the harbour.",
-	"category": "slots",
-	"modes": [{ "id": "spin", "name": "Spin", "costBp": 10000, "table": "spin" }]
-}

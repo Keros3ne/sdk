@@ -12,7 +12,7 @@
 
 import { createRawSnippet, flushSync, mount, unmount } from "svelte";
 import { afterEach, describe, expect, it } from "vitest";
-import type { ControlBar as Bar } from "../bar.ts";
+import type { BarHandle as Bar } from "../bar.ts";
 import { ControlBar, Field, Menu, Switch } from "./index.ts";
 
 let game: HTMLElement;
@@ -374,5 +374,88 @@ describe("a look", () => {
 		const control = game.querySelector<HTMLElement>(".sdk-switch")!;
 		expect(control.style.getPropertyValue("--sdk-accent")).toBe("#fc0");
 		expect(control.style.getPropertyValue("--sdk-on-accent")).toBe("#210");
+	});
+
+	it("keeps the last win in view: green while it is the last play's, greyed after", async () => {
+		const props = bar({ win: 0 });
+		await settle();
+
+		const win = () => game.querySelector<HTMLElement>(".sdk-bar-win")!;
+		expect(win().hasAttribute("data-fresh")).toBe(false);
+
+		props.win = 6_50;
+		flushSync();
+		expect(readout("win")).toContain("6.50");
+		expect(win().hasAttribute("data-fresh")).toBe(true);
+
+		// The next play starts, and wins nothing: the amount stays, greyed.
+		props.win = 0;
+		flushSync();
+		expect(readout("win")).toContain("6.50");
+		expect(win().hasAttribute("data-fresh")).toBe(false);
+		const greyed = getComputedStyle(win().querySelector("output")!).color;
+
+		props.win = 2_00;
+		flushSync();
+		expect(readout("win")).toContain("2.00");
+		expect(win().hasAttribute("data-fresh")).toBe(true);
+		expect(getComputedStyle(win().querySelector("output")!).color).not.toBe(greyed);
+	});
+
+	it("takes a typed bet only where it is asked to", async () => {
+		bar();
+		await settle();
+		expect(game.querySelector(".sdk-bar-betvalue")!.tagName).toBe("DIV");
+		expect(game.querySelector(".sdk-bar-betfield")).toBeNull();
+		expect(readout("bet")).toContain("0.20");
+
+		bar({ typed: true });
+		await settle();
+		expect(game.querySelector(".sdk-bar-betvalue")!.tagName).toBe("BUTTON");
+		expect(game.querySelector(".sdk-bar-betfield")).not.toBeNull();
+	});
+
+	it("offers autoplay ten to a hundred in a grid, which a choice closes", async () => {
+		bar({
+			autoplay: { noun: ["spin", "spins"], onstart: () => {}, onstop: () => {} }
+		});
+		await settle();
+
+		button("Auto").click();
+		flushSync();
+
+		const choices = [...game.querySelectorAll<HTMLButtonElement>(".sdk-choice")];
+		expect(choices.map((choice) => choice.textContent?.trim())).toEqual([
+			"Off",
+			...Array.from({ length: 10 }, (_, index) => String((index + 1) * 10))
+		]);
+		// Off over two lines of five.
+		const tops = new Set(
+			choices.map((choice) => Math.round(choice.getBoundingClientRect().top))
+		);
+		expect(tops.size).toBe(3);
+
+		choices[3].click();
+		flushSync();
+		expect(game.querySelector(".sdk-autoplay")!.getAttribute("aria-expanded")).toBe(
+			"false"
+		);
+		expect(button("Start autoplay, 30 spins")).not.toBeNull();
+	});
+
+	it("says how long play should take at each speed, a bonus left alone when fast", async () => {
+		let made: Bar | undefined;
+		bar({ onready: (handle: Bar) => (made = handle) });
+		await settle();
+
+		expect([made!.pace(), made!.pace(true)]).toEqual([1, 1]);
+
+		button("Speed: normal").click();
+		flushSync();
+		expect([made!.pace(), made!.pace(true)]).toEqual([0.7, 1]);
+
+		button("Speed: fast").click();
+		flushSync();
+		expect([made!.pace(), made!.pace(true)]).toEqual([0.5, 0.5]);
 	});
 });

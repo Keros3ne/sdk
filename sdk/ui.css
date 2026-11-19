@@ -335,6 +335,14 @@
 	border-radius: var(--sdk-radius, 4px);
 	background: rgb(0 0 0 / 0.12);
 }
+/* More options than a row holds: a grid of five, the first over the rest where it is the odd one. */
+.sdk-choices-row[data-grid] {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(44px, 1fr));
+}
+.sdk-choices-row[data-lead] > :first-child {
+	grid-column: 1 / -1;
+}
 .sdk-choice {
 	min-width: 44px;
 	min-height: 36px;

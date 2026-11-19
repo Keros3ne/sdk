@@ -9,7 +9,7 @@
 import { describe, expect, it } from "vitest";
 import { checkManifest, packageSource, sharedPackages } from "./manifest.ts";
 
-const least = { sdk: "^0.14.0", games: ["harbour-lights"] };
+const least = { sdk: "^0.14.0", games: ["game-title"] };
 
 describe("a repository's manifest", () => {
 	it("needs its games and its SDK, and nothing of who the studio is", () => {
@@ -18,33 +18,33 @@ describe("a repository's manifest", () => {
 		expect(
 			checkManifest("studio.json", {
 				...least,
-				id: "tidewater",
-				name: "Tidewater Games"
+				id: "studio-name",
+				name: "Studio Name"
 			}).name
-		).toBe("Tidewater Games");
+		).toBe("Studio Name");
 	});
 
 	it("names its packages as git repositories at a tag", () => {
 		const packages = {
-			"@tidewater/kit": "https://github.com/tidewater/kit.git#v1.2.0"
+			"@studio-name/kit": "https://github.com/studio-name/kit.git#v1.2.0"
 		};
 
 		expect(
 			sharedPackages(checkManifest("studio.json", { ...least, packages }))
 		).toEqual(packages);
-		expect(packageSource(packages["@tidewater/kit"])).toEqual({
-			repository: "https://github.com/tidewater/kit.git",
+		expect(packageSource(packages["@studio-name/kit"])).toEqual({
+			repository: "https://github.com/studio-name/kit.git",
 			tag: "v1.2.0"
 		});
 	});
 
 	it("refuses a package with no tag, an option for a repository, or a name that is taken", () => {
 		for (const packages of [
-			{ kit: "https://github.com/tidewater/kit.git" },
+			{ kit: "https://github.com/studio-name/kit.git" },
 			{ kit: "--upload-pack=touch#v1" },
-			{ "Kit!": "https://github.com/tidewater/kit.git#v1" },
-			{ svelte: "https://github.com/tidewater/kit.git#v1" },
-			{ "@keros3ne/studio-sdk": "https://github.com/tidewater/kit.git#v1" }
+			{ "Kit!": "https://github.com/studio-name/kit.git#v1" },
+			{ svelte: "https://github.com/studio-name/kit.git#v1" },
+			{ "@keros3ne/studio-sdk": "https://github.com/studio-name/kit.git#v1" }
 		])
 			expect(() => checkManifest("studio.json", { ...least, packages })).toThrow();
 	});

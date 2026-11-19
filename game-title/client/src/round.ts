@@ -1,5 +1,5 @@
 /**
- * Harbour Lights: a round as its client plays it. A round is one row of the game's book:
+ * Game Title: a round as its client plays it. A round is one row of the game's book:
  * a spin, and what it paid. These are the shapes of what the row holds and of what the
  * reels are told.
  *
@@ -18,5 +18,5 @@ export type RowEvent = ({ type: "spin" } & Spin) | { type: "total"; payoutBp: nu
 
 /** What the reels are told to do. */
 export type StageEvent =
-	| { type: "reelsSpin"; reels: SymbolName[][]; fast: boolean }
+	| { type: "reelsSpin"; reels: SymbolName[][]; pace: number }
 	| { type: "reelsWin"; text: string };

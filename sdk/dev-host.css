@@ -145,6 +145,12 @@ input:focus-visible {
 	aspect-ratio: 9 / 16;
 }
 
+/* A game with no tall view, on a phone: its wide frame, across the phone's width. */
+.stage[data-shape="phone"][data-wide-only] .frame {
+	width: min(100cqw, 390px);
+	aspect-ratio: 16 / 10;
+}
+
 .panel {
 	display: flex;
 	flex-direction: column;

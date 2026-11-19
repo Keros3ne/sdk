@@ -1,5 +1,5 @@
 /**
- * Harbour Lights: the rules of the game, as figures. Three reels, three rows, one line
+ * Game Title: the rules of the game, as figures. Three reels, three rows, one line
  * along the middle: three of a kind on the line pays. Its maths plays every spin there is
  * with these to make its books (./index.ts), and its client reads them to draw a spin.
  *

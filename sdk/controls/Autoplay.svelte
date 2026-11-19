@@ -8,7 +8,7 @@ The game does the playing: `onstart` is told how many were asked for, the game s
 as it goes, and `onstop` is called when the player stops.
 
 With `startFrom="play"` (the control bar's), choosing a number only readies it: the popup
-offers Off and the numbers, and no Start. Whatever has the play button starts and stops
+offers Off and the numbers in a grid, with no Start, and closes when one is chosen. Whatever has the play button starts and stops
 the plays (`ready`, `onready`), and this button cannot be pressed while they run.
 
 Author: dwclake
@@ -24,7 +24,7 @@ Created: 2026-11-17
 		/** How it looks: its colours and corners (../look.ts). Left out, as the site draws it. */
 		look?: ControlLook;
 		/** How many plays can be chosen. The first is chosen to begin with. */
-		counts: number[];
+		counts: readonly number[];
 		/** What is played, singular and plural: `["spin", "spins"]`. */
 		noun: [one: string, many: string];
 		/** `popup` (left out): the popup's Start begins the plays. `play`: a play button does. */
@@ -119,12 +119,14 @@ Created: 2026-11-17
 >
 	{#if fromPlay}<Choices
 			label={heading}
+			grid
 			options={[
 				{ value: 0, label: "Off" },
 				...counts.map((value) => ({ value, label: String(value) }))
 			]}
 			bind:value={ready}
 			onchange={(value) => onready?.(value)}
+			onpick={() => popup?.close()}
 		/>{:else}<Choices
 			label={heading}
 			options={counts.map((value) => ({ value, label: String(value) }))}

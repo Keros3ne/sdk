@@ -55,6 +55,22 @@ export interface GameHost<View, ProgressView> {
 	onBalance(listener: (balance: number) => void): void;
 }
 
+/**
+ * The balance to show while a round's result is still being played: what the site holds
+ * with the round's payout left out, so the stake is seen to leave and the win is not given
+ * away. Show `round.balance` itself once the result has been shown.
+ *
+ *     balance = balanceBeforePayout(round);
+ *     ...play the animation...
+ *     balance = round.balance;
+ *     host.settled();
+ */
+export function balanceBeforePayout(
+	round: Pick<RoundMessage, "balance" | "payout">
+): number {
+	return round.balance - round.payout;
+}
+
 const REPLY_TIMEOUT_MS = 20_000;
 
 export function connect<View = unknown, ProgressView = unknown>(): Promise<

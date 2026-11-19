@@ -1,5 +1,5 @@
 /**
- * Harbour Lights: that its rules pay as its guide says, and that its book is every way
+ * Game Title: that its rules pay as its guide says, and that its book is every way
  * the reels can stop, each once, coming to the 95.95% the weights then make 96.00%.
  *
  * Author: dwclake
