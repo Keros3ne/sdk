@@ -376,7 +376,7 @@ and refuses a client built for another version of the protocol.
 
 1. **Call `settled()` when a result has been shown.** The site learns the result before the
    animation plays, and holds back its own display of the balance, and any card pack that
-   dropped, until then. If the game never calls it, the site shows them after 15 seconds.
+   dropped, until then. If the game never calls it, the site shows them after five minutes.
 2. **Be usable without sight or a mouse.** A canvas says nothing to a screen reader and
    cannot be tabbed to. Put real buttons over or beside it, and `announce` what happens.
    The site's accessibility test runs inside the frame.
@@ -421,7 +421,8 @@ and refuses a client built for another version of the protocol.
     edge, corners, padding, shadow, blur), `size` against the rest of the bar (0.5 to 2),
     and what is its own (a readout's `label` and `unit`, the bet's `arrange`, the bet
     button's `columns`). `shared.narrow` says whether the game is 600px wide or under, for a
-    bar laid out differently there. A part says which `edge` of the game it is at: the room
+    bar laid out differently there. A part says which `edge` of the game it is at, and may
+    ask for clear room beyond itself (`gap`, for a bar afloat): the room
     it takes there is what `bar.inset()` reports, and its items' popups open away from it.
     What a bar of your own must still be:
     - Made of the SDK's items. Never draw a bet control, a balance or a play button of

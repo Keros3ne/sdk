@@ -6,8 +6,12 @@
  */
 import * as v from "valibot";
 
-/** If a game never says its result has been shown, the balance is shown anyway after this long. */
-export const SETTLE_FALLBACK_MS = 15_000;
+/**
+ * If a game never says its result has been shown, the balance is shown anyway after this
+ * long. Long enough for the longest bonus at the ordinary pace: shown any sooner, the site
+ * would give a result away while the game was still playing it.
+ */
+export const SETTLE_FALLBACK_MS = 5 * 60_000;
 /** The most of an announcement that is read out. */
 export const ANNOUNCE_MAX = 300;
 

@@ -45,7 +45,7 @@ Created: 2026-11-19
 					look={{ surface: "rgb(1, 2, 3)" }}
 				/>{/if}
 		</BarPart>
-		<BarPart class="custom-bottom">
+		<BarPart class="custom-bottom" gap={10}>
 			{#if without !== "play"}<BarPlay size={1.5} />{/if}
 			<BarSpeed /><BarAutoplay />
 			{#if without !== "bet"}<BarBet arrange="column-end" />{/if}

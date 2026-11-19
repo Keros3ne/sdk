@@ -175,12 +175,18 @@ Created: 2026-11-19
 			const box = part.getBoundingClientRect();
 			if (!box.width || !box.height) continue;
 
+			// The clear room a part asks for beyond itself, at the bar's size.
+			const gap = Number(part.dataset.gap ?? 0) * sized;
+
 			if (part.dataset.edge === "top")
-				next.top = Math.max(next.top, Math.ceil(box.bottom - origin.top - 0.01));
+				next.top = Math.max(
+					next.top,
+					Math.ceil(box.bottom - origin.top + gap - 0.01)
+				);
 			else
 				next.bottom = Math.max(
 					next.bottom,
-					Math.ceil(origin.bottom - box.top - 0.01)
+					Math.ceil(origin.bottom - box.top + gap - 0.01)
 				);
 		}
 

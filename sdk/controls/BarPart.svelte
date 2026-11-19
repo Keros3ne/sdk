@@ -17,6 +17,12 @@ Created: 2026-11-19
 	interface Props {
 		/** The edge of the game the part is at, or nearer. The bottom, left out. */
 		edge?: "bottom" | "top";
+		/**
+		 * Clear room kept between the part and the game, in pixels at the bar's usual size: it
+		 * counts in the room the bar reports (`bar.inset()`), so a game drawing clear of the bar
+		 * leaves this much between them. None, left out: for a bar afloat, which needs some.
+		 */
+		gap?: number;
 		/** What the part is, for a screen reader: "Game controls". */
 		label?: string;
 		/** Classes of the studio's own, to place and dress it. */
@@ -26,6 +32,7 @@ Created: 2026-11-19
 
 	let {
 		edge = "bottom",
+		gap = 0,
 		label = "Game controls",
 		class: partClass,
 		children
@@ -34,6 +41,12 @@ Created: 2026-11-19
 	providePart(() => edge);
 </script>
 
-<div class={["sdk-bar-part", partClass]} data-edge={edge} role="group" aria-label={label}>
+<div
+	class={["sdk-bar-part", partClass]}
+	data-edge={edge}
+	data-gap={gap || undefined}
+	role="group"
+	aria-label={label}
+>
 	{@render children()}
 </div>

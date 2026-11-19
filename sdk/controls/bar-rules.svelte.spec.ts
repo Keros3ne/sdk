@@ -327,7 +327,10 @@ describe("a studio's own bar", () => {
 
 		// It is still a bar: it plays, and says what room its parts take.
 		expect(made!.inset().top).toBe(Math.ceil(box(".custom-top").height - 0.01));
-		expect(made!.inset().bottom).toBe(Math.ceil(box(".custom-bottom").height - 0.01));
+		// A part may ask for clear room beyond itself, which counts too.
+		expect(made!.inset().bottom).toBe(
+			Math.ceil(box(".custom-bottom").height + 10 - 0.01)
+		);
 
 		game.querySelector<HTMLButtonElement>(
 			'button[aria-label="Raise the bet"]'
