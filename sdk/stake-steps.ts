@@ -16,11 +16,13 @@ export interface StakeBand {
 export type StakeSteps = readonly StakeBand[];
 
 /**
- * The site's own games: by 0.05 to 0.30, by 0.10 to 2.00, by 0.25 to 5.00, by 0.50 to
- * 10.00, by 2.50 to 25.00, by 5.00 to 50.00, and by 10.00 from there. From 0.40 no press
- * moves the bet by more than a quarter of it, so the buttons move it smoothly at any size.
+ * The site's own games, which take a bet from one cent: by 0.01 to 0.10, by 0.05 to 0.30,
+ * by 0.10 to 2.00, by 0.25 to 5.00, by 0.50 to 10.00, by 2.50 to 25.00, by 5.00 to 50.00,
+ * and by 10.00 from there. From 0.40 no press moves the bet by more than a quarter of it,
+ * so the buttons move it smoothly at any size a player is likely to bet.
  */
 export const SITE_STEPS: StakeSteps = [
+	{ under: 10, by: 1 },
 	{ under: 30, by: 5 },
 	{ under: 2_00, by: 10 },
 	{ under: 5_00, by: 25 },
