@@ -98,7 +98,9 @@ test("the control bar in a story is the bar, and can be played", async ({ page }
 
 	// On a narrow game it is one row, with the balance and the last win along the top.
 	await open(page, "sdk-control-bar--on-a-narrow-game");
-	await expect(page.locator(".sdk-bar-frame[data-narrow] .sdk-bar-strip")).toBeVisible();
+	await expect(
+		page.locator(".sdk-bar-frame[data-narrow] .sdk-bar-strip")
+	).toBeVisible();
 	await expect(page.locator(".sdk-bar-betbutton")).toBeVisible();
 	expect(errors).toEqual([]);
 });
