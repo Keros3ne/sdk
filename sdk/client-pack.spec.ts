@@ -19,6 +19,8 @@ import { dirname, join } from "node:path";
 import { Readable } from "node:stream";
 import { gzipSync } from "node:zlib";
 import { afterAll, describe, expect, it } from "vitest";
+import { BOOK_VERSION } from "./book.ts";
+import { PROTOCOL } from "./protocol.ts";
 import {
 	checkBuiltClient,
 	hasItsClient,
@@ -26,6 +28,7 @@ import {
 	packedClient,
 	readClientRecord,
 	unpackClient,
+	unsupported,
 	writeClientRecord
 } from "./client-pack.ts";
 
@@ -148,5 +151,51 @@ describe("a built client", () => {
 		expect(existsSync(join(site, "client", "dist"))).toBe(false);
 		expect(existsSync(join(scratch, "outside.js"))).toBe(false);
 		expect(packedClient("true")).toBe("true.client.gz");
+	});
+
+	it("is taken by a site that speaks its protocol and reads its books, whatever SDK built it", () => {
+		const folder = game("understood");
+		const record = writeClientRecord(folder);
+		expect(record.protocol).toBe(PROTOCOL);
+		mkdirSync(join(folder, "books"), { recursive: true });
+		const books = (version: number) =>
+			writeFileSync(
+				join(folder, "books", "books.json"),
+				JSON.stringify({ version, tables: {} })
+			);
+		books(BOOK_VERSION);
+		expect(unsupported(folder)).toEqual([]);
+
+		// Built with another SDK altogether, and it makes no difference.
+		const rewrite = (change: Record<string, unknown>) =>
+			writeFileSync(
+				join(folder, "client", "client.json"),
+				JSON.stringify({ ...record, ...change })
+			);
+		rewrite({ sdk: "9.9.9" });
+		expect(unsupported(folder)).toEqual([]);
+
+		// A record written before records said so (the SDK at 0.15) is of a client that spoke
+		// that SDK's protocol.
+		const { protocol: _said, ...before } = record;
+		writeFileSync(join(folder, "client", "client.json"), JSON.stringify(before));
+		expect(readClientRecord(folder).protocol).toBe("keros3ne-game/2");
+
+		// A client that speaks another protocol, or books in another format, is refused, and why.
+		rewrite({ protocol: "keros3ne-game/999" });
+		expect(unsupported(folder)).toEqual([
+			expect.stringMatching(
+				new RegExp(`speaks keros3ne-game/999, and this site speaks ${PROTOCOL}`)
+			)
+		]);
+		rewrite({});
+		books(BOOK_VERSION + 1);
+		expect(unsupported(folder)).toEqual([
+			expect.stringMatching(
+				new RegExp(
+					`format ${BOOK_VERSION + 1}, and this site reads format ${BOOK_VERSION}`
+				)
+			)
+		]);
 	});
 });

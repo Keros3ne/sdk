@@ -26,13 +26,26 @@ import type { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { gunzipSync, gzipSync } from "node:zlib";
 import * as v from "valibot";
+import { BOOK_VERSION } from "./book.ts";
+import { PROTOCOL } from "./protocol.ts";
 
 /** A place in a built client: letters, figures and plain marks, folders apart by `/`, never up or out. */
 const PLACE = /^(?!\/)(?!.*(^|\/)\.{1,2}(\/|$))[\w.+@-]+(\/[\w.+@-]+)*$/;
 
+/**
+ * What a client built before its record said its protocol spoke: the SDK at 0.15, which
+ * wrote no `protocol`, spoke this one.
+ */
+const PROTOCOL_BEFORE_RECORDED = "keros3ne-game/2";
+
 const recordSchema = v.strictObject({
-	/** The SDK the client was built with. */
+	/** The SDK the client was built with: said for people, and held to nothing. */
 	sdk: v.string(),
+	/**
+	 * The protocol the client speaks to the site in (./protocol.ts), as the SDK it was built
+	 * with has it. A site takes a client that speaks its own, whatever SDK either is on.
+	 */
+	protocol: v.optional(v.string(), PROTOCOL_BEFORE_RECORDED),
 	/** Every file of the built client, by its place in it, and its SHA-256 digest. */
 	files: v.record(
 		v.pipe(v.string(), v.regex(PLACE)),
@@ -88,6 +101,7 @@ export function recordClient(gameFolder: string): ClientRecord {
 
 	return {
 		sdk: version,
+		protocol: PROTOCOL,
 		files: Object.fromEntries(
 			filesIn(dist).map((file) => [file, digest(readFileSync(join(dist, file)))])
 		)
@@ -150,6 +164,44 @@ export function checkBuiltClient(gameFolder: string): string[] {
 				"build it again and record it with: keros3ne-studio client"
 			]
 		: [];
+}
+
+/**
+ * Why this SDK cannot take a game as it was built, in words: its client speaks another
+ * version of the protocol than this one, or its books are written in another format than
+ * this one reads. Empty when it can. These two are all that a site and a game must agree
+ * on: a game is built by its studio with whatever version of the SDK it was written for,
+ * and a site takes it so long as they understand each other.
+ */
+export function unsupported(gameFolder: string): string[] {
+	const problems: string[] = [];
+
+	try {
+		const { protocol } = readClientRecord(gameFolder);
+		if (protocol !== PROTOCOL) {
+			problems.push(
+				`its client speaks ${protocol}, and this site speaks ${PROTOCOL}: build it with an SDK that speaks ${PROTOCOL}`
+			);
+		}
+	} catch {
+		// No record, or not one: said by the check of the built client.
+	}
+
+	try {
+		// Read as it is written: the record's own check would refuse another format outright.
+		const { version: books } = JSON.parse(
+			readFileSync(join(gameFolder, "books", "books.json"), "utf8")
+		) as { version?: unknown };
+		if (books !== BOOK_VERSION) {
+			problems.push(
+				`its books are in format ${books}, and this site reads format ${BOOK_VERSION}: make them with an SDK that writes format ${BOOK_VERSION}`
+			);
+		}
+	} catch {
+		// No record of its books: said by the check of the books.
+	}
+
+	return problems;
 }
 
 /**

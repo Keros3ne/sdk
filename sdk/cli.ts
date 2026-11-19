@@ -13,7 +13,12 @@
  * pass `--root <folder>`. It runs on Bun, which imports a game's TypeScript as it is.
  */
 import { buildClient } from "./client-build.ts";
-import { checkBuiltClient, packClient, writeClientRecord } from "./client-pack.ts";
+import {
+	checkBuiltClient,
+	packClient,
+	unsupported,
+	writeClientRecord
+} from "./client-pack.ts";
 import { existsSync, readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { checkGuide } from "./guide.ts";
@@ -102,6 +107,8 @@ async function checkOne(
 		];
 
 	return [
+		// First, whether this SDK and the game understand each other at all.
+		...unsupported(folder.dir),
 		...(await checkBooksOf(folder)),
 		...scanMaths(folder.maths),
 		...checkClient(folder, root, manifest)
@@ -192,10 +199,6 @@ function checkClient(
 /** The problems with the studio as a whole: its manifest beyond its shape, and its shared folders. */
 function checkStudio(root: string, manifest: StudioManifest): string[] {
 	const problems: string[] = [];
-	if (!Bun.semver.satisfies(version, manifest.sdk))
-		problems.push(
-			`it says the studio built on SDK ${manifest.sdk}, but this is ${version}: build on this one, and say so`
-		);
 	const games = gameFolders(root);
 	for (const name of games)
 		if (!manifest.games.includes(name))

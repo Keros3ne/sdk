@@ -66,8 +66,12 @@ repository is also a studio's repository, with one game, to read or to start fro
 }
 ```
 
-- `sdk` is the version of this SDK you built on, as a range. `check` fails a manifest for
-  another version.
+- `sdk` is the version of this SDK you built on, as a range: said for people, and held
+  to nothing. You build your client with the SDK you wrote it for, and a site takes it
+  whatever SDK the site is on, so long as the two understand each other: your client
+  speaks the site's protocol (recorded in `client/client.json` when it is built), and
+  your books are in the format the site reads (recorded in `books/books.json`). `check`
+  fails a game on either, and says which.
 - `games` lists the games in this repository by slug. Each is a folder beside the
   manifest, laid out as above, and its section on the site (Games or Slots) is its
   `game.json`'s `category`. A folder of maths the manifest does not list fails the checks.
