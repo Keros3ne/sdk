@@ -124,7 +124,8 @@ async function hostPage(): Promise<{ script: string; style: string }> {
 			target: "esnext",
 			rollupOptions: {
 				input: join(import.meta.dir, "dev", "main.ts"),
-				output: { format: "es", inlineDynamicImports: true }
+				// One file: the page is small, and is kept in memory.
+				output: { format: "es", codeSplitting: false }
 			}
 		}
 	});
