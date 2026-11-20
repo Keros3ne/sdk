@@ -175,8 +175,9 @@
 .sdk-bar-frame .sdk-bar-button:hover:not(:disabled) {
 	border-color: var(--bar-line-strong, rgb(255 255 255 / 0.5));
 }
-/* A button whose popup is open: the menu's, autoplay's. */
-.sdk-bar-frame .sdk-bar-button[aria-expanded="true"] {
+/* A button whose popup is open, or with something chosen in it and waiting: the menu's, autoplay's. */
+.sdk-bar-frame .sdk-bar-button[aria-expanded="true"],
+.sdk-bar-frame .sdk-bar-button[data-on] {
 	border-color: var(--bar-on, #8ab4f8);
 	color: var(--bar-on, #8ab4f8);
 }

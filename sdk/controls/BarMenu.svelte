@@ -35,13 +35,7 @@ Created: 2026-11-19
 	{@attach dressItem(() => look)}
 	style:--segment-scale={itemSize(size)}
 >
-	<Popup
-		label="Menu"
-		class="sdk-bar-menu"
-		buttonClass="sdk-bar-button"
-		opens={opens()}
-		buttonProps={{ "aria-label": "Menu" }}
-	>
+	<Popup label="Menu" button="round" opens={opens()} name="Menu">
 		{#snippet face()}<Mark name="menu" />{/snippet}
 		<Slider
 			label="Volume"

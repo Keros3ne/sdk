@@ -438,9 +438,11 @@ describe("a look", () => {
 
 		choices[3].click();
 		flushSync();
-		expect(game.querySelector(".sdk-autoplay")!.getAttribute("aria-expanded")).toBe(
-			"false"
-		);
+		expect(
+			game
+				.querySelector('[data-segment="autoplay"] .sdk-popup-button')!
+				.getAttribute("aria-expanded")
+		).toBe("false");
 		expect(button("Start autoplay, 30 spins")).not.toBeNull();
 	});
 

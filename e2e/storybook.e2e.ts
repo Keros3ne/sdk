@@ -145,3 +145,47 @@ test("a story plays rounds from the studio's real books, and goes on from a choi
 	await expect(page.getByText("(chose wild)")).toBeVisible();
 	expect(errors).toEqual([]);
 });
+
+test("each control has a story by itself, and does there what it does in a game", async ({
+	page
+}) => {
+	const said = page.locator(".said");
+
+	let errors = await open(page, "sdk-controls--a-menu");
+	await page.getByRole("button", { name: /Rows/ }).click();
+	await page.getByRole("option", { name: "12" }).click();
+	await expect(said).toHaveText("Rows: 12.");
+	expect(errors).toEqual([]);
+
+	errors = await open(page, "sdk-controls--a-switch");
+	await page.getByRole("switch", { name: /Sound effects/ }).click();
+	await expect(said).toHaveText("Sound off.");
+	expect(errors).toEqual([]);
+
+	errors = await open(page, "sdk-controls--a-grid-of-figures");
+	await page.getByRole("radio", { name: "2.40" }).click();
+	await expect(said).toHaveText("Bet: 2.40.");
+	expect(errors).toEqual([]);
+
+	errors = await open(page, "sdk-controls--a-popup");
+	await page.getByRole("button", { name: "Options" }).click();
+	await page.getByRole("button", { name: /Rules/ }).click();
+	await expect(said).toHaveText("Rules pressed.");
+	expect(errors).toEqual([]);
+
+	errors = await open(page, "sdk-controls--autoplay-by-itself");
+	await page.getByRole("button", { name: "Auto" }).click();
+	await page.getByRole("radio", { name: "25" }).click();
+	await page.getByRole("button", { name: "Start" }).click();
+	await expect(said).toHaveText("Autoplay started: 25 spins.");
+	await expect(
+		page.getByRole("button", { name: /Stop autoplay, 25 spins left/ })
+	).toBeVisible();
+	expect(errors).toEqual([]);
+
+	for (const story of ["a-field", "a-slider", "a-row-of-choices", "an-action"]) {
+		errors = await open(page, `sdk-controls--${story}`);
+		await expect(page.locator(".stand > *").first()).toBeVisible();
+		expect(errors, story).toEqual([]);
+	}
+});

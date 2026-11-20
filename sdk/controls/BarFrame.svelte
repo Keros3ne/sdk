@@ -8,7 +8,7 @@ The SDK's own bar (./ControlBar.svelte) is a frame with the items laid out in it
 that wants another bar writes its own frame the same way:
 
     <BarFrame {bets} {startBet} {limits} {play} {onplay} {balance} {win} {busy} bind:bet bind:bar>
-      <BarPart class="my-bar">
+      <BarPart inset={16} look={{ surface: "#0008", radius: "44px" }}>
         <BarMenu /><BarBalance /><BarBet /><BarPlay /><BarAutoplay /><BarSpeed /><BarWin />
       </BarPart>
     </BarFrame>
@@ -59,8 +59,6 @@ Created: 2026-11-19
 		bar?: BarHandle;
 		/** Called once the bar is made and in the page. */
 		onready?: (bar: BarHandle) => void;
-		/** More classes for the frame. */
-		class?: string;
 		/** The bar's parts and items. */
 		children: Snippet;
 	}
@@ -79,7 +77,6 @@ Created: 2026-11-19
 		bet = $bindable(),
 		bar = $bindable(),
 		onready,
-		class: frameClass,
 		children,
 		...options
 	}: Props = $props();
@@ -305,7 +302,7 @@ Created: 2026-11-19
 {#if drawn}
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
-		class={["sdk-bar-frame", frameClass]}
+		class="sdk-bar-frame"
 		{@attach dress(() => barProperties(look))}
 		bind:this={root}
 		onkeydown={(event) => {

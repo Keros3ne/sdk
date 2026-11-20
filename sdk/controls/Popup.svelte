@@ -29,11 +29,18 @@ Created: 2026-11-17
 		/** Which way the panel opens. Up, left out, for controls along the foot of a game. */
 		opens?: "up" | "down";
 		disabled?: boolean;
-		/** More classes for the popup itself. */
-		class?: string;
-		/** More classes for the button, and more attributes: a name for a screen reader, say. */
-		buttonClass?: string;
-		buttonProps?: Record<string, string | undefined>;
+		/** What the button is called for a screen reader, where its face does not say. */
+		name?: string;
+		/**
+		 * How the button is drawn: a `pill` with its label (left out); or, in a control bar,
+		 * `round`, one of the bar's round glass buttons with a symbol for a face, or
+		 * `readout`, a pill of the bar's glass with a label over a figure for a face.
+		 */
+		button?: "pill" | "round" | "readout";
+		/** Drawn as switched on while it is closed too: something chosen in it is waiting. */
+		on?: boolean;
+		/** The least the button is wide, for a face that changes: `"5em"`. */
+		width?: string;
 		/**
 		 * Called when the button is pressed while the panel is closed. Returning false keeps
 		 * it closed: for a button that does something else while the game is busy.
@@ -51,9 +58,10 @@ Created: 2026-11-17
 		title,
 		opens = "up",
 		disabled = false,
-		class: popupClass,
-		buttonClass,
-		buttonProps,
+		name,
+		button: drawn = "pill",
+		on = false,
+		width,
 		onpress,
 		onopen,
 		face,
@@ -148,7 +156,7 @@ Created: 2026-11-17
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-	class={["sdk-popup", popupClass]}
+	class="sdk-popup"
 	{@attach dress(() => controlProperties(look))}
 	data-opens={opens}
 	bind:this={element}
@@ -168,12 +176,20 @@ Created: 2026-11-17
 >
 	<button
 		type="button"
-		class={["sdk-popup-button", buttonClass]}
+		class={[
+			"sdk-popup-button",
+			{
+				"sdk-bar-button": drawn === "round",
+				"sdk-bar-betbutton": drawn === "readout"
+			}
+		]}
+		style:min-width={width}
 		bind:this={button}
+		aria-label={name}
+		data-on={on ? "" : undefined}
 		aria-haspopup="dialog"
 		aria-expanded={String(open) as "true" | "false"}
 		aria-controls={id}
-		{...buttonProps}
 		{disabled}
 		onclick={() => {
 			if (open) return setOpen(false);
@@ -228,9 +244,26 @@ Created: 2026-11-17
 		cursor: default;
 	}
 
-	:where(.sdk-popup-button)[aria-expanded="true"] {
+	:where(.sdk-popup-button)[aria-expanded="true"],
+	:where(.sdk-popup-button)[data-on] {
 		border-color: var(--sdk-accent, #8ab4f8);
 		color: var(--sdk-accent, #8ab4f8);
+	}
+
+	/* In a control bar, the bet as one button: a pill of the bar's glass (../bar.css has its properties). */
+	:global(.sdk-bar-frame) .sdk-bar-betbutton {
+		min-height: calc(52px * var(--s));
+		padding: 0 calc(12px * var(--s));
+		border: 1px solid var(--bar-line, rgb(255 255 255 / 0.22));
+		border-radius: 999px;
+		background: var(--bar-button, rgb(255 255 255 / 0.1));
+		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
+		color: inherit;
+	}
+
+	:global(.sdk-bar-frame) .sdk-bar-betbutton[aria-expanded="true"] {
+		border-color: var(--bar-on, #8ab4f8);
+		color: var(--bar-on, #8ab4f8);
 	}
 
 	.sdk-popup-panel {

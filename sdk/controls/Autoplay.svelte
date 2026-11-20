@@ -38,9 +38,8 @@ Created: 2026-11-17
 		symbol?: Snippet;
 		/** Which way the popup opens. Up, left out. */
 		opens?: "up" | "down";
-		/** More classes for the popup itself, and for its button. */
-		class?: string;
-		buttonClass?: string;
+		/** How its button is drawn: a `pill` (left out), or `round`, one of a control bar's round buttons. */
+		button?: "pill" | "round";
 		/** With `startFrom="play"`: called when the number waiting changes, 0 for none. */
 		onready?: (count: number) => void;
 		onstart: (count: number) => void;
@@ -59,8 +58,7 @@ Created: 2026-11-17
 		disabled = false,
 		symbol,
 		opens,
-		class: popupClass,
-		buttonClass,
+		button = "pill",
 		onready,
 		onstart,
 		onstop,
@@ -104,9 +102,10 @@ Created: 2026-11-17
 	label="Auto"
 	title="Autoplay"
 	{opens}
-	class={popupClass}
-	buttonClass={["sdk-autoplay", buttonClass].filter(Boolean).join(" ")}
-	buttonProps={{ "aria-label": name, "data-ready": ready > 0 ? "" : undefined }}
+	{button}
+	{name}
+	on={ready > 0}
+	width={button === "pill" ? "5em" : undefined}
 	disabled={disabled || (fromPlay && left > 0)}
 	onpress={() => {
 		if (left === 0) return true;
@@ -153,11 +152,6 @@ Created: 2026-11-17
 		margin-right: 0.45em;
 		border-radius: 2px;
 		background: currentColor;
-	}
-
-	/* The autoplay button keeps its width whether it says "Auto" or counts down behind a stop sign. */
-	:global(.sdk-autoplay) {
-		min-width: 5em;
 	}
 
 	/* The button in a popup that sets something going: the one main action, solid ink. */

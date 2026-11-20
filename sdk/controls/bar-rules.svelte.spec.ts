@@ -192,7 +192,9 @@ describe("the SDK's control bar", () => {
 		flushSync();
 
 		const offers = [
-			...game.querySelectorAll<HTMLButtonElement>(".sdk-bar-bets .sdk-choice")
+			...game.querySelectorAll<HTMLButtonElement>(
+				'[data-segment="bet"] .sdk-choice'
+			)
 		];
 		expect(offers.map((offer) => offer.textContent?.trim())).toEqual([
 			"0.10",
@@ -298,9 +300,9 @@ describe("the SDK's control bar", () => {
 
 		game.querySelector<HTMLButtonElement>('button[aria-label="Auto"]')!.click();
 		flushSync();
-		expect(box(".sdk-bar-auto .sdk-popup-panel").top).toBeGreaterThanOrEqual(
-			box('button[aria-label="Auto"]').bottom
-		);
+		expect(
+			box('[data-segment="autoplay"] .sdk-popup-panel').top
+		).toBeGreaterThanOrEqual(box('button[aria-label="Auto"]').bottom);
 	});
 
 	it("is bigger or smaller as asked, within what a bar may be", async () => {

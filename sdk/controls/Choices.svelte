@@ -27,6 +27,10 @@ Created: 2026-11-17
 		grid?: boolean | number;
 		/** Called when an option is pressed, the one already chosen too: to close what holds this. */
 		onpick?: (value: Value) => void;
+		/** The most the options are tall together, in pixels: past it they scroll. As tall as they are, left out. */
+		maxHeight?: number;
+		/** The options are figures: set closer, in numerals of one width, so a grid of them lines up. */
+		figures?: boolean;
 	}
 
 	let {
@@ -37,7 +41,9 @@ Created: 2026-11-17
 		disabled = false,
 		onchange,
 		grid = false,
-		onpick
+		onpick,
+		maxHeight,
+		figures = false
 	}: Props = $props();
 
 	// The same on a server and in the browser that takes its page over.
@@ -93,13 +99,16 @@ Created: 2026-11-17
 		class="sdk-choices-row"
 		data-grid={grid ? "" : undefined}
 		data-lead={grid === true && options.length % columns === 1 ? "" : undefined}
+		data-scroll={maxHeight ? "" : undefined}
 		style:--sdk-columns={grid ? columns : undefined}
+		style:max-height={maxHeight ? `${maxHeight}px` : undefined}
 		bind:this={row}
 		{onkeydown}
 	>
 		{#each options as option, index}<button
 				type="button"
 				class="sdk-choice"
+				data-figures={figures ? "" : undefined}
 				role="radio"
 				aria-checked={String(index === selected) as "true" | "false"}
 				tabindex={index === selected ? 0 : -1}
@@ -179,5 +188,15 @@ Created: 2026-11-17
 	.sdk-choice:focus-visible {
 		outline: 2px solid var(--sdk-accent, #8ab4f8);
 		outline-offset: 2px;
+	}
+
+	/* Too many to show at once: they scroll. */
+	.sdk-choices-row[data-scroll] {
+		overflow-y: auto;
+	}
+
+	.sdk-choice[data-figures] {
+		padding: 0 6px;
+		font-variant-numeric: tabular-nums;
 	}
 </style>

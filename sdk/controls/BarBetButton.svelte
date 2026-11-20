@@ -43,13 +43,10 @@ Created: 2026-11-19
 		bind:this={popup}
 		label="Bet"
 		title="Bet"
-		class="sdk-bar-bets"
-		buttonClass="sdk-bar-betbutton"
+		button="readout"
 		opens={opens()}
 		disabled={bar.locked}
-		buttonProps={{
-			"aria-label": `${bar.betName} ${formatKero(bar.cost ?? bar.stake)}. Press to choose a bet.`
-		}}
+		name={`${bar.betName} ${formatKero(bar.cost ?? bar.stake)}. Press to choose a bet.`}
 	>
 		{#snippet face()}<span class="sdk-bar-readout sdk-bar-betvalue">
 				<span class="sdk-bar-label sdk-bar-betlabel">
@@ -67,42 +64,23 @@ Created: 2026-11-19
 			value={bar.stake}
 			onchange={(value) => bar.setBet(value)}
 			onpick={() => popup?.close()}
+			maxHeight={232}
+			figures
 		/>
 	</Popup>
 </div>
 
 <style>
-	/* The bet as one button, which opens the bets on offer: a pill of the buttons' glass. */
-	:global(.sdk-bar-frame .sdk-bar-betbutton) {
-		min-height: calc(52px * var(--s));
-		padding: 0 calc(12px * var(--s));
-		border: 1px solid var(--bar-line, rgb(255 255 255 / 0.22));
-		border-radius: 999px;
-		background: var(--bar-button, rgb(255 255 255 / 0.1));
-		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
-		color: inherit;
-	}
-	:global(.sdk-bar-frame .sdk-bar-betbutton .sdk-bar-betvalue) {
+	/* The face of the bet's button (./Popup.svelte draws the button itself): smaller than a readout in the bar. */
+	.sdk-bar-betvalue {
 		min-width: calc(36px * var(--s));
 	}
-	:global(.sdk-bar-frame .sdk-bar-betbutton .sdk-bar-label) {
+
+	.sdk-bar-label {
 		color: color-mix(in srgb, var(--bar-ink, #f2f2f2) 82%, transparent);
 	}
-	:global(.sdk-bar-frame .sdk-bar-betbutton output) {
-		font-size: calc(17px * var(--s));
-	}
-	:global(.sdk-bar-frame .sdk-bar-bets .sdk-choices-row) {
-		max-height: 232px;
-		overflow-y: auto;
-	}
-	:global(.sdk-bar-frame .sdk-bar-bets .sdk-choice) {
-		padding: 0 6px;
-		font-variant-numeric: tabular-nums;
-	}
 
-	/* Open: its edge and its figures in the colour of what is on. */
-	:global(.sdk-bar-frame .sdk-bar-betbutton[aria-expanded="true"]) {
-		border-color: var(--bar-on, #8ab4f8);
-		color: var(--bar-on, #8ab4f8);
+	.sdk-bar-betvalue output {
+		font-size: calc(17px * var(--s));
 	}
 </style>
