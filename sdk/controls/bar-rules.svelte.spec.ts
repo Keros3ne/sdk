@@ -21,6 +21,8 @@ let mounted: Record<string, unknown> | null = null;
 /** A positioned box the size of a game, for a bar to be placed in. */
 function room(width: number): HTMLElement {
 	game = document.createElement("div");
+	// A bar is placed in its game's view.
+	game.className = "sdk-view";
 	game.style.cssText = `position: relative; width: ${width}px; height: 600px;`;
 	document.body.append(game);
 
@@ -49,7 +51,6 @@ function makeBar(more: Record<string, unknown> = {}, width = 1000): Bar {
 				onstart: () => {},
 				onstop: () => {}
 			},
-			within: "parent",
 			onready: (bar: Bar) => (made = bar),
 			...more
 		}
@@ -310,7 +311,7 @@ describe("the SDK's control bar", () => {
 			[0.8, "0.8"],
 			// Past either end, the end.
 			[3, "2.5"],
-			[0.1, "0.75"]
+			[0.1, "0.8"]
 		] as const) {
 			makeBar({ scale: asked });
 			await settle();

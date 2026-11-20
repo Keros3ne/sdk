@@ -40,8 +40,6 @@ export const StainedInATallView: Story = { args: { tint: "#6a3df0", shape: "tall
 
 export const WithoutAutoplay: Story = { args: { autoplay: false, speeds: "none" } };
 
-export const ATypedBet: Story = { args: { typed: true } };
-
 export const AlongTheTopAndBigger: Story = {
 	args: { place: "top", scale: 1.25, hide: ["menu"] }
 };

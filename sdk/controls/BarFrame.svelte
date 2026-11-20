@@ -31,14 +31,8 @@ Created: 2026-11-19
 	interface Props extends BarOptions {
 		/** How the bar looks: its colours, typefaces and buttons (../look.ts). It may change. */
 		look?: BarLook;
-		/** Its size against the usual: from 0.75 to 2.5. A tall view's is about twice a wide one's. */
+		/** Its size against the usual: from 0.8 to 2.5. A tall view's is about twice a wide one's. */
 		scale?: number;
-		/**
-		 * What the bar is placed in and measured against. The whole page, as in a game's own
-		 * frame; or `parent`, the element this is written in, which must be positioned: for
-		 * a page that holds a game among other things.
-		 */
-		within?: "page" | "parent";
 		/** The player's balance, in cents. */
 		balance: number;
 		/**
@@ -74,7 +68,6 @@ Created: 2026-11-19
 	let {
 		look,
 		scale = 1,
-		within = "page",
 		balance,
 		win,
 		busy,
@@ -260,12 +253,7 @@ Created: 2026-11-19
 				);
 
 		// In a game's view, the view: the bar is placed in the picture, and scaled with it.
-		const around =
-			within === "parent"
-				? frame.parentElement
-				: frame.closest<HTMLElement>(".sdk-view");
-
-		container = around ?? document.documentElement;
+		container = frame.closest<HTMLElement>(".sdk-view") ?? document.documentElement;
 		// The bar's popups keep inside it (Popup.svelte).
 		container.dataset.sdkBounds = "";
 

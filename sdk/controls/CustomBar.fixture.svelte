@@ -28,7 +28,6 @@ Created: 2026-11-19
 </script>
 
 <BarFrame
-	within="parent"
 	bets={[10, 20, 50, 100]}
 	startBet={20}
 	limits={{ minStake: 10, maxStake: 100 }}

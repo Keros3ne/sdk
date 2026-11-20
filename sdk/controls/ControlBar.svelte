@@ -49,7 +49,7 @@ Created: 2026-11-17
 		look?: BarLook;
 		/** Along the bottom of the game (left out), or along the top. */
 		place?: "bottom" | "top";
-		/** Its size against the usual: from 0.75 to 2.5. A tall view's is about twice a wide one's. */
+		/** Its size against the usual: from 0.8 to 2.5. A tall view's is about twice a wide one's. */
 		scale?: number;
 		/**
 		 * How the bet is chosen: stepped with a minus and a plus beside its figure (left out),
@@ -65,10 +65,6 @@ Created: 2026-11-17
 		readouts?: "bar" | "strip";
 		/** What to leave out: the menu (and the volume in it) and the last win, only. */
 		hide?: Hideable[];
-		/** Whether the bet can be typed, by pressing it: for the site's own table games. */
-		typed?: boolean;
-		/** What the bar is placed in and measured against: the page, or the element it is written in. */
-		within?: "page" | "parent";
 		/** The player's balance, in cents. */
 		balance: number;
 		/** What the last play won, in cents: 0 when a play starts, and what it won once that is shown. */
@@ -101,7 +97,6 @@ Created: 2026-11-17
 		betAs = "steps",
 		readouts = "bar",
 		hide = [],
-		typed = false,
 		bet = $bindable(),
 		bar = $bindable(),
 		menu,
@@ -142,7 +137,7 @@ Created: 2026-11-17
 			{#if betAs === "menu"}
 				<BarBetButton look={of("bet")} />
 			{:else}
-				<BarBet look={of("bet")} {typed} />
+				<BarBet look={of("bet")} />
 			{/if}
 		</div>
 		<BarPlay look={of("play")} />

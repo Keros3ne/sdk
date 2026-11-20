@@ -21,6 +21,8 @@ let mounted: Record<string, unknown>[] = [];
 /** A positioned box the size of a game, for a bar to be placed in. */
 function room(): HTMLElement {
 	game = document.createElement("div");
+	// A bar is placed in its game's view.
+	game.className = "sdk-view";
 	game.style.cssText = "position: relative; width: 1000px; height: 600px;";
 	document.body.append(game);
 
@@ -55,7 +57,6 @@ const config = {
 function bar(more: Record<string, unknown> = {}) {
 	const props = $state({
 		...config,
-		within: "parent" as const,
 		balance: 25_00,
 		onplay: () => {},
 		...more
@@ -129,7 +130,6 @@ describe("the control bar as a component", () => {
 				target: room(),
 				props: {
 					...config,
-					within: "parent",
 					onplay: () => {},
 					get balance() {
 						return props.balance;
@@ -232,7 +232,6 @@ describe("the control bar as a component", () => {
 			target: room(),
 			props: {
 				...config,
-				within: "parent",
 				onplay: () => {},
 				get balance() {
 					if (!arrived)
@@ -409,17 +408,12 @@ describe("a look", () => {
 		expect(getComputedStyle(win().querySelector("output")!).color).not.toBe(greyed);
 	});
 
-	it("takes a typed bet only where it is asked to", async () => {
+	it("never takes a typed bet: the bet is one of those on offer", async () => {
 		bar();
 		await settle();
 		expect(game.querySelector(".sdk-bar-betvalue")!.tagName).toBe("DIV");
-		expect(game.querySelector(".sdk-bar-betfield")).toBeNull();
+		expect(game.querySelector("input")).toBeNull();
 		expect(readout("bet")).toContain("0.20");
-
-		bar({ typed: true });
-		await settle();
-		expect(game.querySelector(".sdk-bar-betvalue")!.tagName).toBe("BUTTON");
-		expect(game.querySelector(".sdk-bar-betfield")).not.toBeNull();
 	});
 
 	it("offers autoplay ten to a hundred in a grid, which a choice closes", async () => {

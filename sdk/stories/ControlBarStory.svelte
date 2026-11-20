@@ -26,7 +26,6 @@ Created: 2026-11-17
 		place?: "bottom" | "top";
 		scale?: number;
 		hide?: Hideable[];
-		typed?: boolean;
 		/** A colour to stain the bar's glass with. */
 		tint?: string;
 	}
@@ -42,7 +41,6 @@ Created: 2026-11-17
 		place = "bottom",
 		scale = 1,
 		hide = [],
-		typed = false,
 		tint
 	}: Props = $props();
 
@@ -92,7 +90,6 @@ Created: 2026-11-17
 			betAs={shape === "tall" ? "menu" : "steps"}
 			readouts={shape === "tall" ? "strip" : "bar"}
 			{hide}
-			{typed}
 			{balance}
 			{win}
 			{busy}

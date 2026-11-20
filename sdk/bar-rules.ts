@@ -156,7 +156,7 @@ export const BET_ARRANGEMENTS: readonly BetArrangement[] = [
  * 1600 across. A tall view is drawn 900 across and shown on a phone at well under half
  * that, so its bar is made about twice as big to be pressed with a thumb.
  */
-export const BAR_SCALE = { min: 0.75, max: 2.5 };
+export const BAR_SCALE = { min: 0.8, max: 2.5 };
 
 /**
  * The most characters a name for the bet may have (`betLabels`). The label is monospace, so

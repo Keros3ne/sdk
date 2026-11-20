@@ -85,7 +85,7 @@ export class BarState {
 	/** Whether the win in view is the last play's own. Otherwise it is an earlier play's, greyed. */
 	winFresh = $state(false);
 
-	/** The offers either side of the bet, which a typed bet may fall between. */
+	/** The offers either side of the bet. */
 	readonly lower = $derived.by(() => this.bets.findLast((offer) => offer < this.stake));
 	readonly higher = $derived.by(() => this.bets.find((offer) => offer > this.stake));
 	/** While a round is played or autoplay runs: the bet cannot be changed. */
@@ -170,13 +170,6 @@ export class BarState {
 		this.stake = next;
 		this.options.onbet?.(next);
 		for (const listener of this.#betListeners) listener(next);
-	}
-
-	/** A typed bet, brought inside what the game takes. */
-	typeBet(cents: number) {
-		const { minStake, maxStake } = this.options.limits;
-
-		this.setBet(Math.max(minStake, Math.min(maxStake, cents)));
 	}
 
 	onBet(listener: (bet: number) => void) {
