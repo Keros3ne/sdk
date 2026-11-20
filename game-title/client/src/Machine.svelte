@@ -1,6 +1,6 @@
 <!--
-Game Title's reels on their stage, in a square frame as large as the room it is given.
-Both views show it; where it goes in each is the view's.
+Game Title's reels on their stage, in a square frame. Both views show it; where it is and
+how large is each view's to say.
 
 Author: dwclake
 Created: 2026-11-19
@@ -12,6 +12,10 @@ Created: 2026-11-19
 	import { PICTURES } from "./symbols.ts";
 
 	interface Props {
+		/** Where its top left corner is in the view, and how wide and high it is, in the view's pixels. */
+		x: number;
+		y: number;
+		size: number;
 		/** With nothing moving: the player has asked their device for less motion. */
 		still: boolean;
 		/** Follows the stage as it loads: a loading screen's `track`. */
@@ -20,42 +24,31 @@ Created: 2026-11-19
 		onready?: () => void;
 	}
 
-	let { still, track, onready }: Props = $props();
+	let { x, y, size, still, track, onready }: Props = $props();
 
 	/** A cell's size on the stage, in the stage's own measure. */
 	const CELL = 200;
 </script>
 
 <!-- The reels, drawn. What they show is said in words by the view, for a screen reader. -->
-<div class="room">
-	<div class="reels">
-		<Stage
-			width={REELS * CELL}
-			height={ROWS * CELL}
-			pictures={PICTURES}
-			{track}
-			onready={() => onready?.()}
-		>
-			<Reels cell={CELL} {still} />
-		</Stage>
-	</div>
+<div class="reels" style:left="{x}px" style:top="{y}px" style:width="{size}px">
+	<Stage
+		width={REELS * CELL}
+		height={ROWS * CELL}
+		pictures={PICTURES}
+		{track}
+		onready={() => onready?.()}
+	>
+		<Reels cell={CELL} {still} />
+	</Stage>
 </div>
 
 <style>
-	/* The room the view gives, measured, so the reels can be as large a square as fits. */
-	.room {
-		container-type: size;
-		display: grid;
-		place-items: center;
-		width: 100%;
-		height: 100%;
-		min-height: 0;
-	}
-
-	/* Square, as large as fits the room either way. The stage in it is drawn by the SDK. */
+	/* Square: the stage in it is as wide as it is high. */
 	.reels {
-		width: min(100cqw, 100cqh);
-		padding: 1.5%;
+		position: absolute;
+		box-sizing: border-box;
+		padding: 12px;
 		border-radius: 12px;
 		background: rgb(15 37 48 / 0.7);
 		box-shadow: inset 0 0 0 2px #3b6577;

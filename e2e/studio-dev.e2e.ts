@@ -64,12 +64,12 @@ async function startDev() {
 
 async function openGame(page: Page, url: string) {
 	await page.goto(url);
-	const game = page.frameLocator("iframe.frame");
+	const game = page.frameLocator("iframe.game-frame");
 	await expect(game.locator('body[data-ready="true"]')).toBeAttached({
 		timeout: 20_000
 	});
 	// In sight, once its page said it had something to show.
-	await expect(page.locator("iframe.frame")).not.toHaveClass(/waiting/);
+	await expect(page.locator("iframe.game-frame")).not.toHaveClass(/waiting/);
 	return game;
 }
 
@@ -118,7 +118,7 @@ test("dev plays a game against the stand-in, logs what the site would ignore, an
 			await expect(log).toContainText('"type":"round"');
 			await expect(log).toContainText('"type":"settled"', { timeout: 10_000 });
 		}).toPass({ timeout: 40_000 });
-		await expect(page.locator(".seeds")).toContainText(/Bets on these seeds[1-9]/);
+		await expect(page.locator(".seeds")).toContainText(/Bets on these seeds\s*[1-9]/);
 
 		// The pretend balance can be set, and the game is told.
 		await page.getByRole("textbox", { name: "New balance" }).fill("50.00");
@@ -127,12 +127,22 @@ test("dev plays a game against the stand-in, logs what the site would ignore, an
 		await expect(log).toContainText('"type":"balance","balance":5000');
 
 		// The phone's shape.
+		// A phone's room: the engine chooses the tall view from it, since the game has one,
+		// makes the frame that shape and tells the game, which shows its tall view.
 		await page.getByRole("button", { name: "Phone, 9 by 16" }).click();
-		const frame = await page.locator("iframe.frame").boundingBox();
+		await expect(page.locator("iframe.game-frame")).toHaveAttribute(
+			"data-view",
+			"tall"
+		);
+		await expect(log).toContainText('"type":"view","view":"tall"');
+		await expect(
+			page.frameLocator("iframe.game-frame").locator('.sdk-view[data-view="tall"]')
+		).toBeVisible();
+		const frame = await page.locator("iframe.game-frame").boundingBox();
 		expect(frame!.height).toBeGreaterThan(frame!.width);
 		// Coming back into view is when SvelteKit asks whether it has been replaced.
 		await page
-			.frameLocator("iframe.frame")
+			.frameLocator("iframe.game-frame")
 			.locator("body")
 			.evaluate(() => window.dispatchEvent(new Event("focus")));
 		await page.waitForTimeout(300);

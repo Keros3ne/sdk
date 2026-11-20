@@ -373,8 +373,9 @@ and refuses a client built for another version of the protocol.
   have ended. A fall may hold a piece in place (`held`: its cells, and the picture they
   show), and the rest falls past it. A spin may hold reels back (`holds`). With `instant`,
   nothing moves: pass it when `host.init.reducedMotion` is set.
-- **The shape of the game** (`/shape`): `Views`, which shows a game's wide or tall view as
-  the site gives its frame that shape, and `createShape()`, which says which it has now.
+- **The game's views** (`/views`): `WideView` and `TallView`, which a studio draws its game
+  in, each a picture of one size scaled as a whole; and `Views`, which shows whichever the
+  game is told to. Which that is, is the engine's to say, never the game's.
 - **The control bar and controls** (`/controls`): `ControlBar`, and `Menu`, `Choices`,
   `Switch`, `Slider`, `Field`, `Action`, `Popup` and `Autoplay`, as components.
 - **The site in a story's place.** Have the game's root take the site as a prop (`host`),
@@ -402,11 +403,14 @@ and refuses a client built for another version of the protocol.
     **The SDK's bar** (`ControlBar` in `/controls`) is what a game has unless its studio
     makes another: a dock of frosted glass along the bottom of the game, with round buttons.
     The menu and the balance, the bet with buttons to lower and raise it, play in the bar's
-    dead centre, autoplay and the speed of play after it, and the last win. Where that
-    would not fit with play in the middle, the bet is one button and the amounts lose their
-    unit (`createBarFit()` in `/controls` is how, for a bar of your own). On a game 600px
-    wide or narrower it is one row (the menu, the bet as one button that opens the bets on
-    offer, play, autoplay, speed), with the balance and the last win in a strip along the
+    dead centre, autoplay and the speed of play after it, and the last win. It is laid
+    out one way, whatever size the game is shown at: nothing in it measures the screen.
+    What suits a view is said by the view, through three props: `betAs="menu"` makes the
+    bet one button that opens the bets on offer; `readouts="strip"` puts the balance and
+    the last win in a strip along the game's other edge; and `scale` makes it bigger. A
+    tall view passes all three (`scale={2}`: it is drawn 900 across and shown on a phone at
+    under half that, so its buttons must be twice the size to be pressed with a thumb); a
+    wide view none.
     top. What a studio sets on it is simple:
     - `look` (`BarLook` in `/controls`): its colours and typefaces, how round its buttons
       are, and `tint`, a colour its glass is stained with, as stained glass is:
@@ -437,8 +441,8 @@ and refuses a client built for another version of the protocol.
     button's ground and edge, play's colours, the colour of what is switched on, the win's),
     `size` against the rest of the bar (0.5 to 2),
     and what is its own (a readout's `label` and `unit`, the bet's `arrange`, the bet
-    button's `columns`). `shared.narrow` says whether the game is 600px wide or under, for a
-    bar laid out differently there. A part says which `edge` of the game it is at, and may
+    button's `columns`). A bar of your own is laid out by what each of your views passes it,
+    as the SDK's is, never by the size of the screen. A part says which `edge` of the game it is at, and may
     ask for clear room beyond itself (`gap`, for a bar afloat): the room
     it takes there is what `bar.inset()` reports, and its items' popups open away from it.
     What a bar of your own must still be:
@@ -549,28 +553,55 @@ and refuses a client built for another version of the protocol.
    it is, not only the total. The `Board` does (`showWins`), choosing a cell of each win so
    that several amounts keep apart; `placeLabels()` in `/ui` is the same choice, for a
    board of your own.
-10. **Draw a view for each shape.** The site gives a game's frame a fixed shape, as big as
-    the screen allows and the same in full screen: `wide`, 16 by 10, which every game has,
-    and `tall`, 9 by 16, on a phone, for a game that has a view for it. Say which you have
-    in `game.json` (`"shapes": ["wide", "tall"]`; left out, wide only). A game with no tall
-    view is shown wide on a phone, across the screen's width, so a tall view is worth
-    having. The site decides which shape a frame has; a game does not measure the screen
-    with media queries of its own.
+10. **Draw a view for each shape.** A game is drawn twice: `wide`, 16 by 10, which every
+    game must have, and `tall`, 9 by 16, for a phone held upright, which is optional. Say
+    which you have in `game.json` (`"shapes": ["wide", "tall"]`; left out, wide only). A
+    game with no tall view is shown wide everywhere.
 
-    Each shape is a view, a component of its own, and `Views` (`/shape`) shows the one for
-    the shape the frame has:
+    A view is one picture of a fixed size, scaled as a whole to the room the game has:
+    **1600 by 1000** for wide, **900 by 1600** for tall. The sizes are not yours to choose.
+    You write a view file for each, use the SDK's view component in it, and place your
+    game's components inside in the view's own pixels:
 
-        <Views>
-          {#snippet wide()}<WideView {message} />{/snippet}
-          {#snippet tall()}<TallView {message} />{/snippet}
-        </Views>
+        <!-- your WideView.svelte -->
+        <script lang="ts">
+          import { WideView } from "@keros3ne/sdk/views";
+          let { game } = $props();
+        </script>
 
-    Keep what the game knows (its round, its balance, the bar) above the views, in the
-    game's root: a view only draws it, and is made again if the shape changes. Give each
-    view a story of its own (`<Views show="tall">` shows one whatever the page's shape), as
-    Game Title does. Where a piece needs to know the shape itself, `createShape()` says
-    (`shape.tall`, `shape.current`, and the game's `width` and `height` on the screen), and
-    writes it on the page for a style sheet (`[data-shape="tall"]`).
+        <WideView>
+          <Reels x={700} y={64} size={760} {game} />
+          <Bar {game} />
+        </WideView>
+
+        <!-- your TallView.svelte -->
+        <TallView>
+          <Reels x={50} y={330} size={800} {game} />
+          <Bar {game} betAs="menu" readouts="strip" scale={2} />
+        </TallView>
+
+    The rules that make this work:
+    - **Nothing in a game is laid out by the size of the screen.** No media queries, no
+      container queries, no `vw` or `vmin`, no measuring the window. A view is the same
+      picture at any size.
+    - **A shared component never asks which view it is in.** No `tall` flag passed down and
+      branched on. What differs between your two views (where a thing is, how large, which
+      arrangement of the bar) is passed by each view as props, as above.
+    - **A view may still change with the game.** A panel shown only during a bonus, reels
+      that slide over to make room for it, a figure that grows with its digits: all fine.
+      What does not change is where things are from one screen to another.
+    - **You do not switch views.** Keep what the game knows (its round, its balance) in one
+      place above them, hand both to `Views`, and it shows the one the game is told:
+
+          <Views {host} wide={WideView} tall={TallView} props={{ game }} />
+
+        The engine chooses, from the room the page gives the game, and a view is made again
+        when the other was showing, so nothing of the game may live in a view.
+
+    A canvas in a view must be drawn with as many dots as it is shown with: the SDK's
+    `Stage` does this itself, and `getView()` (`/views`) gives the scale to anything else
+    that needs it. Give each view a story (`<Views show="tall" ...>` shows one whatever the
+    game is told), as Game Title does.
 
 **The card.** Supply the picture for your game's card: `client/public/card.svg`, upright
 (three wide by four high), with nothing important in the bottom third, where the site lays
@@ -613,7 +644,7 @@ rules; stories are for one piece, one event or one kind of round at a time.
 ```sh
 bun run books [slug...]     # make a game's books from its maths, and say what they hold
 bun run check [slug...]     # the site's checks: books, guide, maths, client
-bun sdk/cli.ts dev <slug>   # play it in a browser against a stand-in for the site
+bun sdk/cli.ts dev <slug>   # play it in a browser, run by the engine as a site runs it
 bun run stories             # your stories, and the SDK's own, in Storybook
 ```
 

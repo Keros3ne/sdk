@@ -17,6 +17,8 @@ import { createEmitter, type Emitter, type Listener, type Typed } from "./events
 
 const KEY = Symbol("keros3ne-emitter");
 
+export type { Emitter };
+
 /** Makes the game's emitter and gives it to every component inside this one. */
 export function provideEmitter<Events extends Typed>(
 	emitter: Emitter<Events> = createEmitter<Events>()

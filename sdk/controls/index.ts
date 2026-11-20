@@ -27,6 +27,5 @@ export { default as Menu } from "./Menu.svelte";
 export { default as Popup } from "./Popup.svelte";
 export { default as Slider } from "./Slider.svelte";
 export { default as Switch } from "./Switch.svelte";
-export { createBarFit, type BarFit } from "./bar-fit.svelte.ts";
 export { BarState, getBar, type BarOptions } from "./bar-state.svelte.ts";
 export type { BarLook, ControlLook, SegmentLook } from "../look.ts";

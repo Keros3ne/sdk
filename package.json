@@ -1,6 +1,6 @@
 {
 	"name": "@keros3ne/sdk",
-	"version": "0.19.1",
+	"version": "0.20.0",
 	"description": "Build games for KEROS3NE: how a game's outcomes are made into books, the client's bridge to the site, the stage, the control bar and controls, Storybook, the site's own checks, and keros3ne-studio, the command line to make a game's books, check it and play it. Clone it to start a studio.",
 	"license": "MIT",
 	"type": "module",
@@ -39,7 +39,7 @@
 		"./pixi": "./sdk/pixi/index.ts",
 		"./slot": "./sdk/slot/index.ts",
 		"./emitter": "./sdk/emitter.svelte.ts",
-		"./shape": "./sdk/shape.svelte.ts",
+		"./views": "./sdk/views.ts",
 		"./shapes": "./sdk/shapes.ts",
 		"./protocol": "./sdk/protocol.ts",
 		"./host": "./sdk/host.ts",
@@ -65,6 +65,14 @@
 		"#engine/*": {
 			"local": "./local/engine/src/*.ts",
 			"default": "@keros3ne/engine/*"
+		},
+		"#engine/Views.svelte": {
+			"local": "./local/engine/src/Views.svelte",
+			"default": "@keros3ne/engine/Views.svelte"
+		},
+		"#engine/GameFrame.svelte": {
+			"local": "./local/engine/src/GameFrame.svelte",
+			"default": "@keros3ne/engine/GameFrame.svelte"
 		}
 	},
 	"scripts": {
@@ -83,7 +91,7 @@
 		"local": "LOCAL_PACKAGES=1 BUN_OPTIONS=--conditions=local NODE_OPTIONS=--conditions=local bun run"
 	},
 	"dependencies": {
-		"@keros3ne/engine": "github:Keros3ne/engine#v0.7.0",
+		"@keros3ne/engine": "github:Keros3ne/engine#v0.8.0",
 		"@fontsource-variable/geist": "^5.3.0",
 		"@fontsource-variable/geist-mono": "^5.3.0",
 		"@noble/hashes": "^2.4.0",

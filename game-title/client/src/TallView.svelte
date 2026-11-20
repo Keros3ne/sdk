@@ -1,54 +1,53 @@
 <!--
-Game Title at 9 by 16, a phone's shape: its name over the reels, which take the frame's
-width, and its line of words under them. A game has this view only if it says so
-(`"shapes": ["wide", "tall"]` in game.json); without one it is shown wide on a phone.
+Game Title at 9 by 16, for a phone held upright, drawn at 900 by 1600: its name, the reels
+across the game, its line of words under them. The bar is left to its buttons: the bet is
+one button that opens the bets on offer, and the balance and the win are in a strip along
+the top. A game need not have this view; without it, it is shown wide everywhere.
 
 Author: dwclake
 Created: 2026-11-19
 -->
 <script lang="ts">
+	import { TallView } from "@keros3ne/sdk/views";
+	import Bar from "./Bar.svelte";
 	import Machine from "./Machine.svelte";
+	import type { ViewProps } from "./view-props.ts";
 
-	interface Props {
-		/** The line of words: what just happened. */
-		message: string;
-		still: boolean;
-		track?: <Work>(work: Promise<Work>) => Promise<Work>;
-		onready?: () => void;
-	}
-
-	let { message, still, track, onready }: Props = $props();
+	let { game, track, onready }: ViewProps = $props();
 </script>
 
-<main class="tall">
-	<h1 class="title">Game Title</h1>
-	<Machine {still} {track} {onready} />
-	<p class="message" id="message">{message}</p>
-</main>
+<TallView>
+	<main>
+		<h1 class="title">Game Title</h1>
+		<Machine x={50} y={330} size={800} still={game.still} {track} {onready} />
+		<p class="message" id="message">{game.message}</p>
+	</main>
+	<!-- Twice the size: a tall view is shown on a phone at under half the size it is drawn. -->
+	<Bar {game} betAs="menu" readouts="strip" scale={2} />
+</TallView>
 
 <style>
-	.tall {
-		display: grid;
-		grid-template-rows: auto 1fr auto;
-		justify-items: center;
-		align-items: center;
-		gap: 5vmin;
-		height: calc(100% - var(--sdk-bar-bottom, 72px));
-		padding: 8vmin 4vmin 3vmin;
-	}
-
 	.title {
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 170px;
 		margin: 0;
-		font-size: clamp(18px, 8vmin, 36px);
+		text-align: center;
+		font-size: 72px;
 		font-weight: 600;
 		letter-spacing: 0.04em;
 		color: var(--lamp);
 	}
 
 	.message {
+		position: absolute;
+		left: 60px;
+		right: 60px;
+		top: 1180px;
 		margin: 0;
 		min-height: 2.8em;
 		text-align: center;
-		font-size: clamp(14px, 4vmin, 20px);
+		font-size: 34px;
 	}
 </style>

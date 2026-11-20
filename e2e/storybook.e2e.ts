@@ -78,7 +78,7 @@ test("it shows the SDK's own stories and the studio's", async () => {
 	expect(ids).toEqual(
 		expect.arrayContaining([
 			"sdk-control-bar--left-alone",
-			"sdk-control-bar--on-a-narrow-game",
+			"sdk-control-bar--in-a-tall-view",
 			"sdk-board-of-reels--five-by-three",
 			"sdk-books--a-round-from-the-books",
 			"gem-drop-gem-meter--part-full"
@@ -96,11 +96,9 @@ test("the control bar in a story is the bar, and can be played", async ({ page }
 	await bar.getByRole("button", { name: "Spin", exact: true }).click();
 	await expect(page.getByText(/^Played/)).toBeVisible();
 
-	// On a narrow game it is one row, with the balance and the last win along the top.
-	await open(page, "sdk-control-bar--on-a-narrow-game");
-	await expect(
-		page.locator(".sdk-bar-frame[data-narrow] .sdk-bar-strip")
-	).toBeVisible();
+	// In a tall view it is left to its buttons, with the balance and the last win along the top.
+	await open(page, "sdk-control-bar--in-a-tall-view");
+	await expect(page.locator(".sdk-bar-frame .sdk-bar-strip")).toBeVisible();
 	await expect(page.locator(".sdk-bar-betbutton")).toBeVisible();
 	expect(errors).toEqual([]);
 });

@@ -1,12 +1,13 @@
 /// <reference types="bun" />
 /**
- * `keros3ne-studio dev <slug>`: a game played in a browser against a stand-in for the site.
+ * `keros3ne-studio dev <slug>`: a game played in a browser, run by the engine as a site runs it,
+ * against the engine's stand-in for a site.
  *
  * Two processes. This one, the supervisor, keeps the client built (./client-build.ts) and runs
  * the server, starting it again whenever the maths or the guide changes, since a module once
  * imported cannot be imported afresh. The server serves:
  *
- *   /                          the page around the game (./dev-host.ts), in place of the site's
+ *   /                          the page around the game (./dev/DevPage.svelte), in place of the site's
  *   /studio-frame/<slug>/...   the built client, with the site's own policy (./frame.ts)
  *   /api/...                   the stand-in for the site (./stand-in.ts), which plays the maths
  *   /events                    word to the page that the client was rebuilt, or the server started
@@ -16,12 +17,10 @@
  */
 import { existsSync, watch, type FSWatcher } from "node:fs";
 import { extname, join, normalize, resolve, sep } from "node:path";
-import * as v from "valibot";
 import { checkGuide } from "./guide.ts";
 import { clientHeaders, CLIENT_FILE_TYPES } from "./frame.ts";
-import { fromGame } from "./host.ts";
 import { watchClient } from "./client-build.ts";
-import { LOCAL_CONDITIONS } from "./local-packages.ts";
+import { localResolve } from "./local-packages.ts";
 import { createStandIn } from "./stand-in.ts";
 import { loadGame, loadGuide, type GameFolder } from "./studio-folder.ts";
 
@@ -102,21 +101,49 @@ export async function supervise(options: Options & { cli: string }): Promise<num
 	return -1;
 }
 
-/** The host page, built from ./dev-host.ts (or the .js it was built into, in the published package). */
-async function hostScript(): Promise<string> {
-	const source = ["dev-host.ts", "dev-host.js"]
-		.map((name) => join(import.meta.dir, name))
-		.find((path) => existsSync(path));
-	if (!source) throw new Error("The SDK's dev-host script is missing.");
-	const built = await Bun.build({
-		entrypoints: [source],
-		target: "browser",
-		conditions: LOCAL_CONDITIONS,
-		minify: false
+/**
+ * The page round the game (./dev/DevPage.svelte), built: its script and its styles. It is
+ * a small Svelte page on the engine's `GameFrame`, so it is built as a game's client is,
+ * with Vite, and kept in memory.
+ */
+async function hostPage(): Promise<{ script: string; style: string }> {
+	const { build } = await import("vite");
+	const { svelte } = await import("@sveltejs/vite-plugin-svelte");
+
+	const built = await build({
+		configFile: false,
+		envDir: false,
+		logLevel: "error",
+		root: join(import.meta.dir, "dev"),
+		...localResolve(),
+		plugins: [svelte({ configFile: false, compilerOptions: { runes: true } })],
+		build: {
+			write: false,
+			minify: false,
+			cssCodeSplit: false,
+			target: "esnext",
+			rollupOptions: {
+				input: join(import.meta.dir, "dev", "main.ts"),
+				output: { format: "es", inlineDynamicImports: true }
+			}
+		}
 	});
-	if (!built.success)
-		throw new AggregateError(built.logs, "The page around the game did not build.");
-	return built.outputs[0].text();
+
+	const { output } = Array.isArray(built) ? built[0] : (built as { output: unknown[] });
+	let script = "";
+	let style = "";
+	for (const file of output as {
+		type: string;
+		code?: string;
+		source?: unknown;
+		fileName: string;
+	}[]) {
+		if (file.type === "chunk") script += file.code ?? "";
+		else if (file.fileName.endsWith(".css")) style += String(file.source ?? "");
+	}
+	if (!script) throw new Error("The page around the game did not build.");
+
+	return { script, style };
 }
 
 const page = (name: string) => `<!doctype html>
@@ -151,8 +178,7 @@ export async function serve(options: Options): Promise<number> {
 		guideProblem = error instanceof Error ? error.message : String(error);
 	}
 	const standIn = createStandIn(game, { balance: options.balance });
-	const script = await hostScript();
-	const style = await Bun.file(join(import.meta.dir, "dev-host.css")).text();
+	const { script, style } = await hostPage();
 	const boot = crypto.randomUUID();
 	const dist = resolve(folder.client, "dist");
 
@@ -177,12 +203,14 @@ export async function serve(options: Options): Promise<number> {
 		process.exit(0);
 	});
 
-	const state = () => ({
+	const state = async () => ({
 		game: {
 			slug: game.slug,
 			name: game.name,
 			category: game.category,
 			shapes: game.shapes ?? ["wide"],
+			...(game.minStake !== undefined ? { minStake: game.minStake } : {}),
+			...(game.maxStake !== undefined ? { maxStake: game.maxStake } : {}),
 			rtpBp: game.rtpBp,
 			volatility: game.volatility
 		},
@@ -190,7 +218,9 @@ export async function serve(options: Options): Promise<number> {
 		balance: standIn.balance,
 		limits: standIn.limits,
 		fairness: standIn.fairness,
-		guideProblem
+		guideProblem,
+		// A round left open, for the game to pick back up.
+		round: await standIn.round()
 	});
 
 	const server = Bun.serve({
@@ -260,59 +290,34 @@ export async function serve(options: Options): Promise<number> {
 				});
 			}
 
-			if (path === "/api/state") return json(state());
+			if (path === "/api/state") return json(await state());
 
-			if (request.method === "POST" && path === "/api/message") {
-				const body = (await request.json()) as {
-					message: unknown;
-					reducedMotion?: boolean;
+			// What the engine's bridge asks of whoever keeps the bets: here, the stand-in.
+			if (request.method === "POST" && path === "/api/open") {
+				const { bet, params } = (await request.json()) as {
+					bet: number;
+					params: unknown;
 				};
-				const parsed = v.safeParse(fromGame, body.message);
-				if (!parsed.success)
-					return json({ error: "not a message the site understands" }, 400);
-				const message = parsed.output;
-				let reply: unknown = null;
-				switch (message.type) {
-					case "ready":
-						reply = {
-							type: "init",
-							...(await standIn.init(body.reducedMotion === true))
-						};
-						break;
-					case "open":
-					case "act": {
-						const result =
-							message.type === "open"
-								? await standIn.open(message.bet, message.params)
-								: await standIn.act(message.action);
-						reply = result.ok
-							? { type: "round", id: message.id, round: result.round }
-							: {
-									type: "refused",
-									id: message.id,
-									reason: result.reason,
-									message: result.message
-								};
-						break;
-					}
-					case "progress":
-						reply = {
-							type: "progress",
-							id: message.id,
-							bet: message.bet,
-							progress: await standIn.progress(message.bet)
-						};
-						break;
-					case "history":
-						reply = {
-							type: "history",
-							id: message.id,
-							bets: standIn.history()
-						};
-						break;
-				}
-				return json({ reply, state: state() });
+
+				return json({
+					reply: await standIn.open(bet, params),
+					state: await state()
+				});
 			}
+
+			if (request.method === "POST" && path === "/api/act") {
+				const { action } = (await request.json()) as { action: unknown };
+
+				return json({ reply: await standIn.act(action), state: await state() });
+			}
+
+			if (request.method === "POST" && path === "/api/progress") {
+				const { bet } = (await request.json()) as { bet: number };
+
+				return json({ progress: await standIn.progress(bet) });
+			}
+
+			if (path === "/api/history") return json({ bets: standIn.history() });
 
 			if (request.method === "POST" && path === "/api/balance") {
 				const { balance } = (await request.json()) as { balance: number };
@@ -324,7 +329,7 @@ export async function serve(options: Options): Promise<number> {
 						400
 					);
 				}
-				return json({ state: state() });
+				return json({ state: await state() });
 			}
 
 			if (request.method === "POST" && path === "/api/seeds") {
@@ -334,7 +339,7 @@ export async function serve(options: Options): Promise<number> {
 						{ error: "Finish the round first: its seeds are still in use." },
 						409
 					);
-				return json({ revealed, state: state() });
+				return json({ revealed, state: await state() });
 			}
 
 			return new Response("Not found", { status: 404 });

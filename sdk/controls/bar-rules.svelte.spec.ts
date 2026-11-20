@@ -124,69 +124,35 @@ describe("the SDK's control bar", () => {
 		expect(bar.rect().width).toBe(1000);
 	});
 
-	it("keeps play in its dead centre at any width and any balance, the bet one button where the whole would not fit", async () => {
-		for (const [width, balance] of [
-			[640, 25_00],
-			[760, 25_00],
-			[900, 25_00],
-			[900, 9_999_999_99],
-			[1200, 9_999_999_99],
-			[1600, 9_999_999_99]
-		]) {
-			makeBar({ balance }, width);
+	it("is laid out one way whatever the room is, and never by its width", async () => {
+		// A bar is drawn at the size of its view and scaled with it: nothing in it measures the
+		// screen. At the width of either view it is the whole bar, not another layout.
+		for (const width of [1600, 900]) {
+			makeBar({}, width);
 			await document.fonts.ready;
-			// It gives up a level at a time, each a layout of its own.
-			for (let frames = 0; frames < 6; frames++) await settle();
-			flushSync();
+			await settle();
 
-			const where = `at ${width} with ${balance}`;
-			expect(
-				Math.abs(middle(".sdk-bar-play") - middle(".sdk-bar")),
-				where
-			).toBeLessThan(1);
-			// Nothing runs out of the bar.
-			const dock = box(".sdk-bar");
-			for (const item of game.querySelectorAll(".sdk-bar .sdk-bar-segment")) {
-				const at = item.getBoundingClientRect();
-				if (at.width === 0) continue;
-
-				expect(at.left, where).toBeGreaterThanOrEqual(dock.left);
-				expect(at.right, where).toBeLessThanOrEqual(dock.right);
-			}
+			expect(itemsIn(".sdk-bar"), `at ${width}`).toEqual([
+				"menu",
+				"balance",
+				"bet",
+				"play",
+				"autoplay",
+				"speed",
+				"win"
+			]);
+			expect(game.querySelector(".sdk-bar-betbutton"), `at ${width}`).toBeNull();
+			expect(game.querySelector(".sdk-bar-strip"), `at ${width}`).toBeNull();
 
 			void unmount(mounted!);
 			mounted = null;
 			game.remove();
 		}
-
-		// With room for all of it the bet has its minus and plus; without, it is one button.
-		makeBar({ balance: 25_00 }, 1200);
-		await settle();
-		expect(game.querySelector(".sdk-bar-betbutton")).toBeNull();
-		expect(game.querySelector(".sdk-bar-minus")).not.toBeNull();
-		void unmount(mounted!);
-		mounted = null;
-		game.remove();
-
-		// A little short, it gives up the amounts' unit and some of its gaps, and keeps the bet whole.
-		makeBar({ balance: 25_00 }, 800);
-		for (let frames = 0; frames < 4; frames++) await settle();
-		flushSync();
-		expect(game.querySelector<HTMLElement>(".sdk-bar")!.dataset.fit).toBe("1");
-		expect(game.querySelector(".sdk-bar .sdk-bar-unit")).toBeNull();
-		expect(game.querySelector(".sdk-bar-minus")).not.toBeNull();
-		void unmount(mounted!);
-		mounted = null;
-		game.remove();
-
-		makeBar({ balance: 25_00 }, 660);
-		for (let frames = 0; frames < 6; frames++) await settle();
-		flushSync();
-		expect(game.querySelector(".sdk-bar-betbutton")).not.toBeNull();
 	});
 
-	it("is one row on a narrow game, with the balance and the last win along the top", async () => {
-		const bar = makeBar({}, 390);
+	it("is left to its buttons where a view asks, with the balance and the last win along the top", async () => {
+		// What a tall view passes: the size of one, in the view's own pixels.
+		const bar = makeBar({ betAs: "menu", readouts: "strip" }, 900);
 		await document.fonts.ready;
 		await settle();
 
@@ -216,8 +182,8 @@ describe("the SDK's control bar", () => {
 		expect(inset.bottom).toBe(Math.ceil(box(".sdk-bar").height - 0.01));
 	});
 
-	it("chooses a bet from its button on a narrow game, which closes when one is chosen", async () => {
-		const bar = makeBar({}, 390);
+	it("chooses a bet from one button where a view asks, which closes when one is chosen", async () => {
+		const bar = makeBar({ betAs: "menu" }, 900);
 		await settle();
 
 		const opener = game.querySelector<HTMLButtonElement>(".sdk-bar-betbutton")!;
@@ -336,19 +302,24 @@ describe("the SDK's control bar", () => {
 		);
 	});
 
-	it("is bigger or smaller as asked, but never too big to fit across the game", async () => {
-		makeBar({ scale: 1.25 });
-		await settle();
+	it("is bigger or smaller as asked, within what a bar may be", async () => {
 		const frame = () => game.querySelector<HTMLElement>(".sdk-bar-frame")!;
-		expect(frame().style.getPropertyValue("--bar-s")).toBe("1.25");
 
-		void unmount(mounted!);
-		mounted = null;
-		game.remove();
-		makeBar({ scale: 1.5 }, 800);
-		await settle();
-		expect(Number(frame().style.getPropertyValue("--bar-s"))).toBeLessThan(1.5);
-		expect(box(".sdk-bar").width).toBe(800);
+		for (const [asked, sized] of [
+			[1.25, "1.25"],
+			[0.8, "0.8"],
+			// Past either end, the end.
+			[3, "2.5"],
+			[0.1, "0.8"]
+		] as const) {
+			makeBar({ scale: asked });
+			await settle();
+			expect(frame().style.getPropertyValue("--bar-s"), `${asked}`).toBe(sized);
+
+			void unmount(mounted!);
+			mounted = null;
+			game.remove();
+		}
 	});
 });
 

@@ -151,15 +151,6 @@
 .sdk-bar-right > :first-child:not(:last-child) {
 	margin-right: auto;
 }
-/* A bar short of room brings its items closer (./controls/bar-fit.svelte.ts). */
-.sdk-bar[data-fit="1"],
-.sdk-bar[data-fit="2"],
-.sdk-bar[data-fit="1"] .sdk-bar-left,
-.sdk-bar[data-fit="2"] .sdk-bar-left,
-.sdk-bar[data-fit="1"] .sdk-bar-right,
-.sdk-bar[data-fit="2"] .sdk-bar-right {
-	gap: calc(8px * var(--s));
-}
 /* Autoplay and speed, after play. */
 .sdk-bar-pace {
 	display: flex;
@@ -186,24 +177,24 @@
 }
 
 /*
- * A narrow game's one row: the menu and the bet, play, autoplay and speed. Each side
- * shares out what room it has left, so play stays in the middle.
+ * A bar left to its buttons (`readouts="strip"`): the menu and the bet, play, autoplay and
+ * speed. Each side shares out what room it has left, so play stays in the middle.
  */
-.sdk-bar-frame[data-narrow] .sdk-bar {
+.sdk-bar-frame .sdk-bar.sdk-bar-alone {
 	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 	gap: 0;
 	padding: 0 calc(6px * var(--s));
 }
-.sdk-bar-frame[data-narrow] .sdk-bar-left,
-.sdk-bar-frame[data-narrow] .sdk-bar-right {
+.sdk-bar-frame .sdk-bar-alone .sdk-bar-left,
+.sdk-bar-frame .sdk-bar-alone .sdk-bar-right {
 	justify-content: space-evenly;
 	gap: 0;
 }
-.sdk-bar-frame[data-narrow] .sdk-bar-left > *,
-.sdk-bar-frame[data-narrow] .sdk-bar-right > * {
+.sdk-bar-frame .sdk-bar-alone .sdk-bar-left > *,
+.sdk-bar-frame .sdk-bar-alone .sdk-bar-right > * {
 	margin: 0;
 }
-.sdk-bar-frame[data-narrow] .sdk-bar-readout output {
+.sdk-bar-frame .sdk-bar-strip .sdk-bar-readout output {
 	font-size: calc(17px * var(--s));
 }
 

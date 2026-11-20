@@ -23,21 +23,15 @@ Created: 2026-11-19
 	import { untrack, type Snippet } from "svelte";
 	import "../ui.css";
 	import "../bar.css";
-	import {
-		BAR_SCALE,
-		CONTENT,
-		NARROW,
-		REQUIRED_ITEMS,
-		SMALLEST,
-		type BarHandle
-	} from "../bar-rules.ts";
+	import { BAR_SCALE, REQUIRED_ITEMS, type BarHandle } from "../bar-rules.ts";
 	import { barProperties, dress, type BarLook } from "../look.ts";
+	import { getView } from "../view.svelte.ts";
 	import { BarState, provideBar, type BarOptions } from "./bar-state.svelte.ts";
 
 	interface Props extends BarOptions {
 		/** How the bar looks: its colours, typefaces and buttons (../look.ts). It may change. */
 		look?: BarLook;
-		/** Its size against the usual: from 0.8 to 1.5. Never so big that it does not fit across the game. */
+		/** Its size against the usual: from 0.8 to 2.5. A tall view's is about twice a wide one's. */
 		scale?: number;
 		/**
 		 * What the bar is placed in and measured against. The whole page, as in a game's own
@@ -73,8 +67,8 @@ Created: 2026-11-19
 		onready?: (bar: BarHandle) => void;
 		/** More classes for the frame. */
 		class?: string;
-		/** The bar's parts and items. Given the bar's state, for a layout that follows it (`narrow`). */
-		children: Snippet<[BarState]>;
+		/** The bar's parts and items. */
+		children: Snippet;
 	}
 
 	let {
@@ -98,6 +92,8 @@ Created: 2026-11-19
 	}: Props = $props();
 
 	const shared = provideBar(new BarState(() => options));
+	/** The view the bar is in, if it is in one: it is measured on the screen and said in the view's pixels. */
+	const view = getView();
 
 	let root = $state<HTMLElement>();
 	let container: HTMLElement | undefined;
@@ -141,8 +137,7 @@ Created: 2026-11-19
 		parts().find((part) => part.dataset.edge === "bottom") ?? parts()[0];
 
 	/**
-	 * Measures the game: whether it is narrow, how big the bar may be in it, and what room
-	 * the bar's parts take at its top and bottom.
+	 * Sizes the bar, and measures what room its parts take at the game's top and bottom.
 	 */
 	function place() {
 		if (!root || !container) return;
@@ -151,25 +146,17 @@ Created: 2026-11-19
 		const height = container.clientHeight;
 		if (!root.isConnected || !width || !height) return;
 
-		const narrow = width <= NARROW;
-
-		shared.narrow = narrow;
-		shared.width = width;
-		root.toggleAttribute("data-narrow", narrow);
-
-		// A bigger bar still has to fit across the game; at its usual size or under it is left as
-		// asked. A narrow bar that does not fit at its usual size is made smaller, to three quarters.
-		const room = width / (narrow ? CONTENT.narrow : CONTENT.wide);
-		const fits = narrow ? Math.max(SMALLEST, Math.min(1, room)) : Math.max(1, room);
-		const sized = Math.min(
-			Math.max(BAR_SCALE.min, Math.min(BAR_SCALE.max, scale)),
-			fits
-		);
+		// As big as asked, within what a bar may be: it is drawn at the size of the game's
+		// view, and scaled with it, so there is nothing to fit it to.
+		const sized = Math.max(BAR_SCALE.min, Math.min(BAR_SCALE.max, scale));
 
 		root.style.setProperty("--bar-s", String(Math.round(sized * 1000) / 1000));
 
 		// Rounded up, from the game's exact height (`clientHeight` is rounded to a whole pixel):
 		// a game drawing clear of the bar must never be a fraction of a pixel under it.
+		// Measured on the screen, and said in the view's own pixels: a view is scaled as a
+		// whole, and what draws clear of the bar is laid out in the view's measure.
+		const shrunk = view?.scale || 1;
 		const origin = container.getBoundingClientRect();
 		const next = { top: 0, bottom: 0 };
 		for (const part of parts()) {
@@ -182,12 +169,12 @@ Created: 2026-11-19
 			if (part.dataset.edge === "top")
 				next.top = Math.max(
 					next.top,
-					Math.ceil(box.bottom - origin.top + gap - 0.01)
+					Math.ceil((box.bottom - origin.top) / shrunk + gap - 0.01)
 				);
 			else
 				next.bottom = Math.max(
 					next.bottom,
-					Math.ceil(origin.bottom - box.top + gap - 0.01)
+					Math.ceil((origin.bottom - box.top) / shrunk + gap - 0.01)
 				);
 		}
 
@@ -202,11 +189,13 @@ Created: 2026-11-19
 		const origin = container?.getBoundingClientRect();
 		if (!box || !origin) return { left: 0, top: 0, width: 0, height: 0 };
 
+		const shrunk = view?.scale || 1;
+
 		return {
-			left: box.left - origin.left,
-			top: box.top - origin.top,
-			width: box.width,
-			height: box.height
+			left: (box.left - origin.left) / shrunk,
+			top: (box.top - origin.top) / shrunk,
+			width: box.width / shrunk,
+			height: box.height / shrunk
 		};
 	}
 
@@ -270,7 +259,11 @@ Created: 2026-11-19
 					`A bar must show the balance, the bet and play: this one has no ${item}.`
 				);
 
-		const around = within === "parent" ? frame.parentElement : null;
+		// In a game's view, the view: the bar is placed in the picture, and scaled with it.
+		const around =
+			within === "parent"
+				? frame.parentElement
+				: frame.closest<HTMLElement>(".sdk-view");
 
 		container = around ?? document.documentElement;
 		// The bar's popups keep inside it (Popup.svelte).
@@ -313,9 +306,10 @@ Created: 2026-11-19
 	// server must not have what it draws change under it part way.
 	const drawn = typeof document !== "undefined";
 
-	// A bar made bigger or smaller is measured anew.
+	// A bar made bigger or smaller is measured anew, and so is one whose view is scaled another way.
 	$effect(() => {
 		void scale;
+		void view?.scale;
 		place();
 	});
 </script>
@@ -334,6 +328,6 @@ Created: 2026-11-19
 		}}
 		{@attach mount}
 	>
-		{@render children(shared)}
+		{@render children()}
 	</div>
 {/if}

@@ -151,14 +151,12 @@ export const BET_ARRANGEMENTS: readonly BetArrangement[] = [
 	"column-start",
 	"column-end"
 ];
-/** How big a bar may be made against its usual size. Never so big that it does not fit across the game. */
-export const BAR_SCALE = { min: 0.8, max: 1.5 };
-/** At or under this width a game is narrow: the SDK's bar is one row, with what is read along the other edge. */
-export const NARROW = 600;
-/** How wide the SDK's bar's contents are at its usual size, wide and narrow: what a bigger bar must still fit in. */
-export const CONTENT = { wide: 720, narrow: 366 };
-/** How small a narrow bar may be made, to fit a game too narrow for it at its usual size. */
-export const SMALLEST = 0.75;
+/**
+ * How big a bar may be made against its usual size. Its usual size suits a wide view, drawn
+ * 1600 across. A tall view is drawn 900 across and shown on a phone at well under half
+ * that, so its bar is made about twice as big to be pressed with a thumb.
+ */
+export const BAR_SCALE = { min: 0.8, max: 2.5 };
 
 /**
  * The most characters a name for the bet may have (`betLabels`). The label is monospace, so

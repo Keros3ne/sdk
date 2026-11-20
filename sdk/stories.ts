@@ -151,7 +151,9 @@ export function createStoryHost<View = BookView, Progress = null>(
 			balance,
 			limits: options.limits ?? { minStake: 1, maxStake: 100_00 },
 			reducedMotion: false,
-			round: null
+			round: null,
+			// A story shows the view it asks for (`Views`' `show`), whatever this says.
+			view: "wide"
 		},
 
 		async open(stake, params) {
@@ -185,6 +187,7 @@ export function createStoryHost<View = BookView, Progress = null>(
 		announce: (text) => options.onannounce?.(text),
 		progress: async () => progressNow(),
 		history: async () => [],
-		onBalance() {}
+		onBalance() {},
+		onView() {}
 	};
 }

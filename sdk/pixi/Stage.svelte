@@ -13,6 +13,7 @@ Created: 2026-11-17
 	import { untrack, type Snippet } from "svelte";
 	import { loadPictures, makeApplication } from "./prepare.ts";
 	import { setStage } from "./stage.svelte.ts";
+	import { getView } from "../view.svelte.ts";
 
 	interface Props {
 		/** The game's own measure: what is inside is placed in these, not in screen pixels. */
@@ -55,6 +56,18 @@ Created: 2026-11-17
 		parent: () => app!.stage
 	});
 
+	/** The view the stage is drawn in, if it is in one: for how much it is scaled. */
+	const view = getView();
+	/** Draws the stage again at its size on the screen, once it is made. */
+	let refit: (() => void) | undefined;
+
+	// The view scaled another way (the game's frame changed size): the canvas is the same
+	// size in the view's own pixels, so nothing else says to draw it again.
+	$effect(() => {
+		void view?.scale;
+		refit?.();
+	});
+
 	/** Makes the application on the canvas, and keeps it the size of the room it has. */
 	function mount(canvas: HTMLCanvasElement) {
 		let gone = false;
@@ -81,14 +94,22 @@ Created: 2026-11-17
 				return;
 			}
 
-			/** Draws at the canvas's size on the screen, the stage scaled to fill it. */
+			/**
+			 * Draws at the canvas's size on the screen, the stage scaled to fill it. The canvas's
+			 * own size is in the pixels of the game's view, which is scaled as a whole to the
+			 * room it has: it is drawn with as many dots as that comes to on the screen.
+			 */
 			const fit = () => {
 				const room = canvas.clientWidth;
 				if (room === 0) return;
 
+				application.renderer.resolution =
+					(window.devicePixelRatio || 1) * (view?.scale ?? 1);
 				application.renderer.resize(room, (room * height) / width);
 				application.stage.scale.set(room / width);
 			};
+
+			refit = fit;
 
 			watcher = new ResizeObserver(fit);
 			watcher.observe(canvas);
@@ -104,6 +125,7 @@ Created: 2026-11-17
 		return () => {
 			gone = true;
 			watcher?.disconnect();
+			refit = undefined;
 			app = null;
 			made?.destroy(false, { children: true });
 		};

@@ -1,14 +1,14 @@
 <!--
-The SDK's control bar: what a game is played with, where its studio has not made a bar of
-its own. A dock of frosted glass along the bottom of the game, with round buttons: the
-menu and the balance, the bet with minus and plus, play in the bar's middle, autoplay and
-the speed of play after it, and the last win. Where that would not fit with play in the
-middle (a game not wide enough, a very long balance) it gives up a little at a time: first
-the unit after its amounts and some of the room between its items, then the bet's minus
-and plus, for one button.
-On a narrow game (600px or under) it is one
-row (the menu, the bet as a button that opens the bets on offer, play, autoplay, speed),
-and the balance and the last win are in a strip along the top.
+The SDK's control bar: a dock along the foot of the game, of the SDK's own items. The menu,
+the balance and the bet at one side, play in its dead centre, autoplay and the speed of
+play after it, and the last win.
+
+It is laid out one way, whatever size the game is shown at: a game is drawn at the size of
+its view (../WideView.svelte, ../TallView.svelte) and scaled as a whole, so nothing here
+measures the screen. What suits a view is said by the view, through props: `betAs="menu"`
+makes the bet one button that opens the bets on offer, and `readouts="strip"` puts the
+balance and the last win in a strip along the game's other edge. A tall view passes both;
+a wide one neither.
 
 What the bar shows is a prop (the balance, the last win, whether a round is under way),
 what the player sets comes back (`bind:bet`), and `bind:bar` hands over the bar itself,
@@ -32,7 +32,6 @@ Created: 2026-11-17
 	import type { Snippet } from "svelte";
 	import type { BarHandle, BarItem, Hideable } from "../bar-rules.ts";
 	import type { BarLook } from "../look.ts";
-	import { createBarFit } from "./bar-fit.svelte.ts";
 	import type { BarOptions } from "./bar-state.svelte.ts";
 	import BarAutoplay from "./BarAutoplay.svelte";
 	import BarBalance from "./BarBalance.svelte";
@@ -50,8 +49,20 @@ Created: 2026-11-17
 		look?: BarLook;
 		/** Along the bottom of the game (left out), or along the top. */
 		place?: "bottom" | "top";
-		/** Its size against the usual: from 0.8 to 1.5. Never so big that it does not fit across the game. */
+		/** Its size against the usual: from 0.8 to 2.5. A tall view's is about twice a wide one's. */
 		scale?: number;
+		/**
+		 * How the bet is chosen: stepped with a minus and a plus beside its figure (left out),
+		 * or as one button that opens the bets on offer, which takes less room. A game's view
+		 * says which suits it.
+		 */
+		betAs?: "steps" | "menu";
+		/**
+		 * Where the balance and the last win are read: in the bar (left out), or in a strip of
+		 * their own along the game's other edge, which leaves the bar to its buttons. A game's
+		 * view says which suits it.
+		 */
+		readouts?: "bar" | "strip";
 		/** What to leave out: the menu (and the volume in it) and the last win, only. */
 		hide?: Hideable[];
 		/** Whether the bet can be typed, by pressing it: for the site's own table games. */
@@ -87,6 +98,8 @@ Created: 2026-11-17
 	let {
 		look,
 		place = "bottom",
+		betAs = "steps",
+		readouts = "bar",
 		hide = [],
 		typed = false,
 		bet = $bindable(),
@@ -103,62 +116,42 @@ Created: 2026-11-17
 
 	/** One item's look, where the bar's look says one for it. */
 	const of = (item: BarItem) => look?.segments?.[item];
-	/** Whether the full layout fits with play in the bar's middle. */
-	const fit = createBarFit();
-
 	const shows = (item: Hideable) => !hide.includes(item);
 	/** The edge across from the bar, where a narrow game's balance and win are. */
 	const across = $derived(place === "top" ? "bottom" : "top");
 </script>
 
 <BarFrame {...rest} {look} bind:bet bind:bar>
-	{#snippet children(shared)}
-		{#if shared.narrow}
-			<!-- What the player reads, along the other edge of a narrow game. -->
-			<BarPart edge={across} class="sdk-bar-strip" label="Balance and last win">
-				<BarBalance look={of("balance")} />{#if shows("win")}<BarWin
-						look={of("win")}
-					/>{/if}
-			</BarPart>
-			<BarPart edge={place} class="sdk-bar">
-				<div class="sdk-bar-left">
-					{#if shows("menu")}<BarMenu look={of("menu")}>
-							{@render menu?.()}
-						</BarMenu>{/if}
-					<BarBetButton look={of("bet")} />
-				</div>
-				<BarPlay look={of("play")} />
-				<div class="sdk-bar-right">
-					<BarAutoplay look={of("autoplay")} /><BarSpeed look={of("speed")} />
-				</div>
-			</BarPart>
-		{:else}
-			<BarPart edge={place} class="sdk-bar">
-				<div class="sdk-bar-left" {@attach fit.watch}>
-					{#if shows("menu")}<BarMenu look={of("menu")}>
-							{@render menu?.()}
-						</BarMenu>{/if}
-					<!-- With room, the bet has its minus and plus and the amounts their unit. With
-					     less, the bet is one button, so that the two sides still fit and play is
-					     in the middle. -->
-					<BarBalance look={of("balance")} unit={!fit.tight} />
-					{#if fit.cramped}
-						<BarBetButton look={of("bet")} />
-					{:else}
-						<BarBet look={of("bet")} {typed} />
-					{/if}
-				</div>
-				<BarPlay look={of("play")} />
-				<div class="sdk-bar-right">
-					<!-- Autoplay and speed after play, together, so play alone is the bar's middle. -->
-					<div class="sdk-bar-pace">
-						<BarAutoplay look={of("autoplay")} /><BarSpeed
-							look={of("speed")}
-						/>
-					</div>
-					{#if shows("win")}<BarWin look={of("win")} unit={!fit.tight} />{/if}
-				</div>
-			</BarPart>
-		{/if}
-	{/snippet}
+	{#if readouts === "strip"}
+		<!-- What the player reads, along the other edge of the game. -->
+		<BarPart edge={across} class="sdk-bar-strip" label="Balance and last win">
+			<BarBalance look={of("balance")} />{#if shows("win")}<BarWin
+					look={of("win")}
+				/>{/if}
+		</BarPart>
+	{/if}
+	<BarPart
+		edge={place}
+		class={readouts === "strip" ? "sdk-bar sdk-bar-alone" : "sdk-bar"}
+	>
+		<div class="sdk-bar-left">
+			{#if shows("menu")}<BarMenu look={of("menu")}>
+					{@render menu?.()}
+				</BarMenu>{/if}
+			{#if readouts === "bar"}<BarBalance look={of("balance")} />{/if}
+			{#if betAs === "menu"}
+				<BarBetButton look={of("bet")} />
+			{:else}
+				<BarBet look={of("bet")} {typed} />
+			{/if}
+		</div>
+		<BarPlay look={of("play")} />
+		<div class="sdk-bar-right">
+			<!-- Autoplay and speed after play, together, so play alone is the bar's middle. -->
+			<div class="sdk-bar-pace">
+				<BarAutoplay look={of("autoplay")} /><BarSpeed look={of("speed")} />
+			</div>
+			{#if readouts === "bar" && shows("win")}<BarWin look={of("win")} />{/if}
+		</div>
+	</BarPart>
 </BarFrame>
