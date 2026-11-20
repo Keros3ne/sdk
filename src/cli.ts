@@ -6,8 +6,7 @@
  *   keros3ne-studio books [slug...]   make a game's books from its maths, and say what they hold
  *   keros3ne-studio client [slug...]  build a game's client, and put what was built on record
  *   keros3ne-studio check [slug...]   the site's checks: books, guide, maths, client
- *   keros3ne-studio pack [slug...]    pack each game into the one file a release sends for it
- *   keros3ne-studio unreleased        the games whose version has no release yet
+ *   keros3ne-studio pack [slug...]    pack each game into the one file a studio sends of it
  *   keros3ne-studio dev <slug>        play the game against a stand-in for the site
  *   keros3ne-studio stories           the studio's stories, and the SDK's own, in Storybook
  *
@@ -16,7 +15,7 @@
  */
 import { buildClient } from "./client-build.ts";
 import { checkBuiltClient, unsupported, writeClientRecord } from "./client-record.ts";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { checkGuide } from "./guide.ts";
 import { sharedFolders, sharedPackages, type StudioManifest } from "./manifest.ts";
@@ -45,14 +44,10 @@ Usage:
   keros3ne-studio check [slug...]   the site's checks on each game: its books, its
                                     guide, its maths, and its client as it was built
                                     and put on record
-  keros3ne-studio pack [slug...]    pack each game's built client and books, checked,
-                                    into the one file a release of it sends:
-                                    <slug>.tar.gz, a client folder and a maths folder
-  keros3ne-studio unreleased        say which games are due a release: each whose
-                                    version (game.json) has no tag <slug>-v<version>
-                                    in this repository. --json for a workflow to read.
-                                    It reads this machine's repository and nothing
-                                    else
+  keros3ne-studio pack [slug...]    pack each game, checked, into the one file a studio
+                                    sends of it: <slug>-<version>.tar.gz, with its
+                                    game.json, guide.json and card, its client as
+                                    built, its books and any assets
   keros3ne-studio dev <slug>        build the client as it changes, and play the game in a
                                     browser against a stand-in for the site
 
@@ -64,12 +59,15 @@ Options:
   --root <folder>    the studio's folder, with its studio.json (default: here)
   --workers <number> books: how many workers to play on (default: one for each core)
   --trial            pack: pack a client built on packages from their clones too, for
-                     taking a game in on trial. A release is never packed with it
+                     trying a game. A game to publish is never packed with it
+  --follows <file>   check: the game.json of the version this one is to follow on a
+                     site. Says whether it may: its version comes after, it keeps
+                     every size of bet, and nobody is left holding less in its counters
   --own-names        check: allow the SDK under #sdk/... in maths. For the SDK's own test
                      game only: a release is never checked with it
   --build            check: build each client again first, and hold what the source
                      builds now to the record
-  --out <folder>     pack: where the files go (default: release)
+  --out <folder>     pack: where the file goes (default: release)
   --port <number>    dev: where to serve it (default: 4280); stories: (default: 6006)
   --build <folder>   stories: build them as a site into this folder, and stop
   --balance <amount> dev: the pretend balance to start with (default: 25.00)
@@ -93,7 +91,7 @@ function parse(argv: string[]) {
 		const [name, inline] = arg.slice(2).split("=", 2);
 		if (inline !== undefined) options[name] = inline;
 		else if (
-			["root", "port", "balance", "workers", "out"].includes(name) ||
+			["root", "port", "balance", "workers", "out", "follows"].includes(name) ||
 			// Only `stories --build <folder>` names something: `check --build` is a switch,
 			// and must not take the game named after it for its value.
 			(name === "build" &&
@@ -344,9 +342,9 @@ async function makeAllBooks(
 }
 
 /**
- * Packs each game asked for, or every game the studio has, into the one file a release
- * sends for it with its tag: its built client and its books. Fails if any game's books or
- * client are missing or are not the ones on record.
+ * Packs each game asked for, or every game the studio has, into the one file a studio
+ * sends of it. Fails if any game's books or client are missing or are not the ones on
+ * record.
  */
 async function packAllGames(
 	root: string,
@@ -355,14 +353,15 @@ async function packAllGames(
 	trial = false
 ): Promise<number> {
 	const { packGame } = await import("./release-pack.ts");
-	const packed: string[] = [];
 	let failed = false;
 
 	for (const folder of pickGames(root, slugs).filter(isBookGame))
 		try {
-			packed.push(await packGame(folder.dir, folder.slug, out, { trial }));
+			const packed = await packGame(folder.dir, folder.slug, out, { trial });
 
-			console.log(`${folder.slug}: ${packed.at(-1)}`);
+			console.log(
+				`${folder.slug} at ${packed.version}: ${packed.name}, ${(packed.size / 1e6).toFixed(1)} MB, sha256 ${packed.sha256}`
+			);
 		} catch (error) {
 			failed = true;
 			console.error(
@@ -374,17 +373,48 @@ async function packAllGames(
 
 	/** The folder as a command would name it from here. */
 	const from = relative(process.cwd(), out);
-	const shown = from.startsWith("..") ? out : from || ".";
-
-	// What else is in the folder would be sent with the release too, by `<folder>/*`.
-	const others = readdirSync(out).filter((name) => !packed.includes(name));
-	if (others.length > 0)
-		console.error(
-			`\n${out} also holds ${others.slice(0, 5).join(", ")}${others.length > 5 ? `, and ${others.length - 5} more` : ""}: no part of what was packed now. Take them out before sending the release.`
-		);
 
 	console.log(
-		`\nPacked into ${shown}: one file for each game, a client folder and a maths folder in it. A game's file is what a release of it sends, and the repository's own workflow makes that release.`
+		`\nPacked into ${from.startsWith("..") ? out : from || "."}. Each file is all of a game that leaves here: its manifest, guide and card, its client as built, its books and any assets.`
+	);
+
+	return 0;
+}
+
+/**
+ * Says whether a game, as it stands, may follow another version of itself on a site
+ * (the engine's `checkUpdate`): `before` is that version's `game.json`.
+ */
+async function checkFollows(root: string, slugs: string[], before: string) {
+	if (slugs.length !== 1) {
+		console.error(
+			"Name the one game: keros3ne-studio check <slug> --follows <game.json>"
+		);
+
+		return 1;
+	}
+
+	const { checkGameManifest } = await import("./game-manifest.ts");
+	const { readGameManifest } = await import("./book-files.ts");
+	const { checkUpdate } = await import("./counter-conversion.ts");
+	const [folder] = pickGames(root, slugs);
+	const was = checkGameManifest(before, JSON.parse(readFileSync(before, "utf8")));
+	const next = readGameManifest(folder.dir);
+	const { problems, excessBp } = checkUpdate(was, next);
+
+	if (problems.length > 0) {
+		console.error(`${next.slug} at ${next.version} may not follow ${was.version}:`);
+		for (const problem of problems) console.error(`  - ${problem}`);
+
+		return 1;
+	}
+
+	console.log(
+		`${next.slug} at ${next.version} may follow ${was.version}.${
+			next.counters && was.counters
+				? ` What players hold in its counters is carried over, and nobody holds less; rounding gives away at most ${(excessBp / 10_000).toFixed(4)} of a bet.`
+				: ""
+		}`
 	);
 
 	return 0;
@@ -439,6 +469,9 @@ async function main(argv: string[]): Promise<number> {
 	}
 	switch (command) {
 		case "check":
+			if (typeof options.follows === "string")
+				return checkFollows(root, slugs, resolve(options.follows));
+
 			return check(
 				root,
 				slugs,
@@ -484,19 +517,6 @@ async function main(argv: string[]): Promise<number> {
 			return new Promise<number>((done) =>
 				running.on("exit", (code) => done(code ?? 0))
 			);
-		}
-		case "unreleased": {
-			const { unreleased } = await import("./releases.ts");
-			const due = unreleased(root);
-
-			if ("json" in options) console.log(JSON.stringify(due));
-			else if (due.length === 0)
-				console.log("Every game's version has its release's tag.");
-			else
-				for (const { slug, version, tag } of due)
-					console.log(`${slug} is at ${version}, and there is no tag ${tag}.`);
-
-			return 0;
 		}
 		case "client":
 			return buildAllClients(root, slugs);

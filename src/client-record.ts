@@ -4,7 +4,7 @@
  * studio's code to make one. What was built is not committed. Its record is:
  * `client/client.json`, the digest of every file of it, written when it is built
  * (`keros3ne-studio client`) and committed, so that a tag says exactly which client it
- * sends. The built files travel in the game's file of its release (./release-pack.ts),
+ * sends. The built files travel in the game's package (./release-pack.ts),
  * and the site unpacks them beside the record and holds every file to it.
  *
  * Author: dwclake

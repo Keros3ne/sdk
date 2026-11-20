@@ -1,8 +1,7 @@
 /**
- * A game as the one file of a release (./release-pack.ts): that it is one archive of a
- * client folder and a maths folder, that what a studio packs is what the site unpacks,
- * held to the game's records, and that what is not the release on record is refused and
- * not left behind.
+ * Packing a game (./release-pack.ts): that what a studio packs is one file holding all of
+ * the game that leaves it, which a site installs as the engine installs any package, and
+ * that a game whose books or built client are not the ones on record is not packed.
  *
  * Author: dwclake
  * Created: 2026-11-20
@@ -22,22 +21,21 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
-import { gzipSync } from "node:zlib";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { makeBooks } from "./book-maker.ts";
-import { hasItsClient, writeClientRecord } from "./client-record.ts";
-import { bookFiles, packGame, packedGame, unpackGame } from "./release-pack.ts";
-import { tarBytes, type TarFile } from "./tar.ts";
+import { writeClientRecord } from "./client-record.ts";
+import { fileDigest, installPackage } from "./game-package.ts";
+import { bookFiles, packGame, packedName } from "./release-pack.ts";
 
 const game = fileURLToPath(new URL("./test/book-studio/gem-drop", import.meta.url));
 const scratch = mkdtempSync(join(tmpdir(), "keros3ne-pack-"));
 const studio = join(scratch, "studio", "gem-drop");
-const release = join(scratch, "release");
+const out = join(scratch, "release");
 afterAll(() => rmSync(scratch, { recursive: true, force: true }));
 
 const TABLES = ["spin", "bought", "bonus-steady", "bonus-wild", "gem-pour"];
+const NAME = "gem-drop-1.0.0.tar.gz";
 
 const BUILT: Record<string, string> = {
 	"index.html": "<!doctype html><p>the game</p>",
@@ -45,158 +43,103 @@ const BUILT: Record<string, string> = {
 	"_app/immutable/chunks/abc.js": "export const game = 1;"
 };
 
-/** The game as the site has it from a repository: its manifest and its two records. */
-function received(name: string): string {
-	const folder = join(scratch, name, "gem-drop");
-
-	for (const file of ["game.json", "books/books.json", "client/client.json"])
-		cpSync(join(studio, file), join(folder, file));
-
-	return folder;
-}
-
-/** A release's files, from a folder of them. */
-const from = (folder: string) => (packed: string) =>
-	createReadStream(join(folder, packed));
-
-/** The places of the files in an archive, as the system's `tar` lists them. */
-const listed = (archive: string) =>
-	execFileSync("tar", ["-tzf", archive], { encoding: "utf8" }).trim().split("\n");
-
-/** A release whose archive of the game is these files: as one from outside might be. */
-function sending(files: Record<string, string | Buffer>) {
-	return async () => {
-		const parts: Buffer[] = [];
-		const each: TarFile[] = Object.entries(files).map(([name, bytes]) => ({
-			name,
-			size: Buffer.byteLength(bytes),
-			bytes: () => [Buffer.from(bytes)]
-		}));
-		for await (const part of tarBytes(each)) parts.push(part);
-
-		return Readable.from([gzipSync(Buffer.concat(parts))]);
-	};
-}
-
-/** The game's own archive with some of its files changed, added or (`null`) left out. */
-function changed(changes: Record<string, string | null>) {
-	const files: Record<string, string | Buffer> = {};
-
-	for (const [file, text] of Object.entries(BUILT)) files[`client/${file}`] = text;
-	for (const file of ["books.json", ...bookFiles(TABLES)])
-		files[`maths/${file}`] = readFileSync(join(studio, "books", file));
-	for (const [name, text] of Object.entries(changes))
-		if (text === null) delete files[name];
-		else files[name] = text;
-
-	return sending(files);
-}
-
 beforeAll(async () => {
 	// The maths plays where it is, in the SDK; its books are made into a folder of the test's.
-	cpSync(join(game, "game.json"), join(studio, "game.json"));
+	for (const file of ["game.json", "guide.json"])
+		cpSync(join(game, file), join(studio, file));
 	await makeBooks(game, { books: join(studio, "books"), workers: 0 });
 
 	for (const [file, text] of Object.entries(BUILT)) {
 		mkdirSync(dirname(join(studio, "client", "dist", file)), { recursive: true });
 		writeFileSync(join(studio, "client", "dist", file), text);
 	}
+	mkdirSync(join(studio, "client", "public"), { recursive: true });
+	writeFileSync(join(studio, "client", "public", "card.svg"), "<svg />");
 	writeClientRecord(studio, []);
 
-	await packGame(studio, "gem-drop", release);
+	await packGame(studio, "gem-drop", out);
 });
 
-describe("a game, packed for a release", () => {
-	it("is one file, named for the game: a client folder and a maths folder", () => {
-		expect(packedGame("gem-drop")).toBe("gem-drop.tar.gz");
-		expect(readdirSync(release)).toEqual(["gem-drop.tar.gz"]);
+describe("a game, packed by its studio", () => {
+	it("is one file named for the game and its version, with all of the game in it", async () => {
+		expect(packedName("gem-drop", "1.0.0")).toBe(NAME);
+		expect(readdirSync(out)).toEqual([NAME]);
 
-		expect(listed(join(release, "gem-drop.tar.gz")).sort()).toEqual(
+		const listed = execFileSync("tar", ["-tzf", join(out, NAME)], {
+			encoding: "utf8"
+		})
+			.trim()
+			.split("\n");
+		expect([...listed].sort()).toEqual(
 			[
+				"release.json",
+				"game.json",
+				"guide.json",
+				"card.svg",
 				...Object.keys(BUILT).map((file) => `client/${file}`),
 				"maths/books.json",
 				...bookFiles(TABLES).map((file) => `maths/${file}`)
 			].sort()
 		);
+		// The books, which are most of a game, come last: what is small is read first.
+		expect(listed.at(-1)).toMatch(/^maths\//);
 		expect(bookFiles(["spin"])).toEqual(["spin.index", "spin.rows"]);
 	});
 
-	it("is the same file whenever the same game is packed", async () => {
+	it("says what was packed: the version, and the file's own size and digest", async () => {
 		const again = join(scratch, "again");
-		await packGame(studio, "gem-drop", again);
+		const packed = await packGame(studio, "gem-drop", again);
 
-		expect(readFileSync(join(again, "gem-drop.tar.gz"))).toEqual(
-			readFileSync(join(release, "gem-drop.tar.gz"))
-		);
+		expect(packed).toEqual({
+			name: NAME,
+			version: "1.0.0",
+			...(await fileDigest(join(out, NAME)))
+		});
+		// The same game is the same file, wherever and whenever it is packed.
+		expect(readFileSync(join(again, NAME))).toEqual(readFileSync(join(out, NAME)));
 	});
 
-	it("is opened by hand into the client that was built and the books that were made", () => {
-		const into = join(scratch, "by-hand");
-		mkdirSync(into);
-		execFileSync("tar", ["-xzf", join(release, "gem-drop.tar.gz"), "-C", into]);
-
-		expect(readdirSync(into).sort()).toEqual(["client", "maths"]);
-		expect(readFileSync(join(into, "client", "index.html"), "utf8")).toBe(
-			BUILT["index.html"]
+	it("is installed by a site as it was packed, its books checked", async () => {
+		const into = join(scratch, "site", "gem-drop", "1.0.0");
+		const installed = await installPackage(
+			() => createReadStream(join(out, NAME)),
+			into,
+			{ expect: { slug: "gem-drop", version: "1.0.0" } }
 		);
-		for (const file of ["books.json", "spin.rows"])
+
+		expect(installed.checked.check.problems).toEqual([]);
+		expect(installed.record.protocol).toMatch(/^keros3ne-game\//);
+		for (const [file, text] of Object.entries(BUILT))
+			expect(readFileSync(join(into, "client", file), "utf8")).toBe(text);
+		for (const file of ["books.json", "spin.rows", "gem-pour.index"])
 			expect(readFileSync(join(into, "maths", file))).toEqual(
 				readFileSync(join(studio, "books", file))
 			);
-	});
-
-	it("unpacks into the books and the client that were packed, held to their records", async () => {
-		const folder = received("site");
-		const unpacked = await unpackGame(folder, "gem-drop", from(release));
-
-		expect(unpacked.books?.check.problems).toEqual([]);
-		for (const file of ["spin.index", "spin.rows", "gem-pour.rows"])
-			expect(readFileSync(join(folder, "books", file))).toEqual(
-				readFileSync(join(studio, "books", file))
-			);
-
-		expect(Object.keys(unpacked.client?.files ?? {})).toHaveLength(3);
-		for (const [file, text] of Object.entries(BUILT))
-			expect(readFileSync(join(folder, "client", "dist", file), "utf8")).toBe(text);
-		expect(hasItsClient(folder)).toBe(true);
-	});
-
-	it("gives its books alone, or its client alone, where only one is wanted", async () => {
-		const books = received("books-alone");
-		const had = await unpackGame(books, "gem-drop", from(release), { books: true });
-
-		expect(had.books?.check.problems).toEqual([]);
-		expect(had.client).toBeUndefined();
-		expect(existsSync(join(books, "client", "dist"))).toBe(false);
-
-		const client = received("client-alone");
-		const got = await unpackGame(client, "gem-drop", from(release), { client: true });
-
-		expect(got.books).toBeUndefined();
-		expect(hasItsClient(client)).toBe(true);
-		expect(readdirSync(join(client, "books"))).toEqual(["books.json"]);
-
-		// A client is at the front of its archive: the books behind it need not arrive at all.
-		const whole = readFileSync(join(release, "gem-drop.tar.gz"));
-		const front = join(scratch, "front");
-		mkdirSync(front);
-		writeFileSync(
-			join(front, "gem-drop.tar.gz"),
-			whole.subarray(0, whole.length / 2)
+		expect(readFileSync(join(into, "guide.json"))).toEqual(
+			readFileSync(join(studio, "guide.json"))
 		);
+	});
 
-		const early = received("client-early");
-		await unpackGame(early, "gem-drop", from(front), { client: true });
-		expect(hasItsClient(early)).toBe(true);
+	it("takes its assets with it, where it has any", async () => {
+		const folder = join(scratch, "sounding", "gem-drop");
+		cpSync(studio, folder, { recursive: true });
+		mkdirSync(join(folder, "assets", "sound"), { recursive: true });
+		writeFileSync(join(folder, "assets", "sound", "theme.ogg"), "sound");
+
+		const into = join(scratch, "sounding-out");
+		await packGame(folder, "gem-drop", into);
+		expect(
+			execFileSync("tar", ["-tzf", join(into, NAME)], { encoding: "utf8" })
+		).toMatch(/^assets\/sound\/theme\.ogg$/m);
 	});
 
 	it("is not packed when its books or its client are not the ones on record", async () => {
 		const folder = join(scratch, "unsound", "gem-drop");
 		cpSync(studio, folder, { recursive: true });
-		const out = join(scratch, "unsound-out");
+		const into = join(scratch, "unsound-out");
 
 		writeFileSync(join(folder, "client", "dist", "extra.js"), "more");
-		await expect(packGame(folder, "gem-drop", out)).rejects.toThrow(
+		await expect(packGame(folder, "gem-drop", into)).rejects.toThrow(
 			/extra\.js, which is not on its record/
 		);
 		rmSync(join(folder, "client", "dist", "extra.js"));
@@ -209,88 +152,23 @@ describe("a game, packed for a release", () => {
 			join(folder, "client", "client.json"),
 			JSON.stringify({ ...record, conditions: ["local"] })
 		);
-		await expect(packGame(folder, "gem-drop", out)).rejects.toThrow(
+		await expect(packGame(folder, "gem-drop", into)).rejects.toThrow(
 			/built on packages taken from their clones/
 		);
-		await expect(packGame(folder, "gem-drop", out, { trial: true })).resolves.toBe(
-			"gem-drop.tar.gz"
+		expect((await packGame(folder, "gem-drop", into, { trial: true })).name).toBe(
+			NAME
 		);
-		rmSync(out, { recursive: true });
+		rmSync(into, { recursive: true });
 		writeFileSync(join(folder, "client", "client.json"), JSON.stringify(record));
 
+		rmSync(join(folder, "client", "public", "card.svg"));
+		await expect(packGame(folder, "gem-drop", into)).rejects.toThrow(
+			/has no client\/public\/card\.svg/
+		);
+		writeFileSync(join(folder, "client", "public", "card.svg"), "<svg />");
+
 		rmSync(join(folder, "books", "spin.rows"));
-		await expect(packGame(folder, "gem-drop", out)).rejects.toThrow();
-		expect(existsSync(out) ? readdirSync(out) : []).toEqual([]);
-	});
-
-	it("is refused, and nothing kept, when its books are not the books recorded", async () => {
-		const folder = received("swapped");
-		// Another table's rows under this one's name: well formed, and not what was recorded.
-		const open = changed({
-			"maths/spin.rows": readFileSync(
-				join(studio, "books", "bought.rows"),
-				"latin1"
-			)
-		});
-
-		await expect(unpackGame(folder, "gem-drop", open)).rejects.toThrow();
-		expect(readdirSync(join(folder, "books"))).toEqual(["books.json"]);
-		expect(existsSync(join(folder, "client", "dist"))).toBe(false);
-	});
-
-	it("is refused when a file is missing, or the release has no such file, with nothing kept", async () => {
-		const missing = received("missing");
-
-		await expect(
-			unpackGame(missing, "gem-drop", changed({ "maths/gem-pour.rows": null }))
-		).rejects.toThrow(/has no maths\/gem-pour\.rows/);
-		await expect(
-			unpackGame(missing, "gem-drop", changed({ "client/card.svg": null }))
-		).rejects.toThrow(/has no client\/card\.svg/);
-		await expect(
-			unpackGame(missing, "gem-drop", (packed) => {
-				throw new Error(`The release has no ${packed}.`);
-			})
-		).rejects.toThrow(/has no gem-drop\.tar\.gz/);
-		await expect(
-			unpackGame(missing, "gem-drop", () => Readable.from([gzipSync("not a game")]))
-		).rejects.toThrow();
-		await expect(
-			unpackGame(missing, "gem-drop", () =>
-				Readable.from([Buffer.from("not gzip")])
-			)
-		).rejects.toThrow();
-
-		expect(readdirSync(join(missing, "books"))).toEqual(["books.json"]);
-		expect(existsSync(join(missing, "client", "dist"))).toBe(false);
-	});
-
-	it("is refused where its client is not the one on record, or it holds anything else", async () => {
-		const folder = received("wary");
-
-		// A file changed, a file more, a file twice, and files that are no part of a release.
-		await expect(
-			unpackGame(
-				folder,
-				"gem-drop",
-				changed({ "client/index.html": "<script>alert(1)</script>" })
-			)
-		).rejects.toThrow(/index\.html is not the file recorded/);
-		await expect(
-			unpackGame(folder, "gem-drop", changed({ "client/more.js": "more" }))
-		).rejects.toThrow(/not the ones recorded/);
-		await expect(
-			unpackGame(folder, "gem-drop", changed({ "maths/more.rows": "more" }))
-		).rejects.toThrow(/no more\.rows on record/);
-		await expect(
-			unpackGame(folder, "gem-drop", changed({ "outside.js": "out" }))
-		).rejects.toThrow(/a client folder and a maths folder/);
-		await expect(
-			unpackGame(folder, "gem-drop", changed({ "maths/index.ts": "export {}" }))
-		).rejects.toThrow(/no index\.ts on record/);
-
-		expect(readdirSync(join(folder, "books"))).toEqual(["books.json"]);
-		expect(existsSync(join(folder, "client", "dist"))).toBe(false);
-		expect(readdirSync(join(scratch, "wary")).sort()).toEqual(["gem-drop"]);
+		await expect(packGame(folder, "gem-drop", into)).rejects.toThrow();
+		expect(existsSync(into) ? readdirSync(into) : []).toEqual([]);
 	});
 });

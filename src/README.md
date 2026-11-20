@@ -36,9 +36,9 @@ it, which checks the request and plays the round through the same pipeline as ev
 
 A studio is known to the site by the name it was registered under and an id the site gave
 it then. Its games are in as many repositories as it likes: one game to a repository, or
-a few together. A release of a repository is what the site takes in, so a studio with a
-hundred games updates one of them by releasing one repository, and nothing else is
-fetched, built or checked again.
+hundreds together. A site is sent a game, never a repository: each game is packed and
+sent by itself, at its own version, so a studio with a hundred games updates one of them
+by sending that one, and nothing else is fetched, built or checked again.
 
 ```
 package.json                the SDK as a dependency, at a tag; your shared packages too
@@ -67,6 +67,9 @@ repository is also a studio's repository, with one game, to read or to start fro
 }
 ```
 
+- `studio.json` is for your own tools: it says what this repository holds, so that
+  `keros3ne-studio` knows where your games are. No site reads it, or anything else of
+  your repository: a site is sent a game's package and nothing more.
 - `sdk` is the version of this SDK you built on, as a range: said for people, and held
   to nothing. You build your client with the SDK you wrote it for, and a site takes it
   whatever SDK the site is on, so long as the two understand each other: your client
@@ -76,7 +79,7 @@ repository is also a studio's repository, with one game, to read or to start fro
 - `games` lists the games in this repository by slug. Each is a folder beside the
   manifest, laid out as above, and its section on the site (Games or Slots) is its
   `game.json`'s `category`. A folder of maths the manifest does not list fails the checks.
-  The order says nothing: the site orders what it lists.
+  The order says nothing.
 - `shared`, if given, names folders beside the games that their clients share: code, art,
   sound.
 - `packages`, if given, names what the clients share with your other repositories: see
@@ -92,16 +95,15 @@ repository depends on at a tag.
 
 - In the game's `package.json` it is an ordinary dependency, which your package manager
   installs: `"@studio-name/kit": "git+https://github.com/studio-name/kit.git#v1.2.0"`.
-- In the game's `studio.json` it is named in `packages`, at the same tag. That is what the
-  site reads: it fetches the package at that tag as source, with nothing installed and
-  nothing run, and reads it as it reads a client.
+- In the game's `studio.json` it is named in `packages`, at the same tag, so that `check`
+  holds it to the rules a client's source is held to.
 - A client imports its files by their paths: `import Sheet from "@studio-name/kit/Sheet.svelte"`.
 - The package is held to a client's rules: what it imports by a relative address is its
   own, and it loads nothing from the network. Its `package.json` has no `exports` and no build: say what
   it needs as `peerDependencies` (`@keros3ne/sdk`, `svelte`), so that your package
   manager lets it find them.
 - A game is pinned to the tag it names. Releasing the package changes no game until that
-  game's repository names the new tag and is released itself.
+  game's repository names the new tag, and the game is built, packed and sent again.
 
 Maths shares nothing: a game's books are made from its own folder alone.
 
@@ -123,8 +125,8 @@ Maths shares nothing: a game's books are made from its own folder alone.
 ```
 
 - **`version`** is the game's own, three numbers with points between (`1.0.0`). A game is
-  released by itself at its version, whatever else its repository holds: raise it to
-  release the game again. It is no part of how the game plays.
+  sent by itself at its version, whatever else you make: raise it to send the game again.
+  It is no part of how the game plays.
 - **Modes** are the ways of opening a round, the ordinary one first: what each costs, as a
   multiple of the bet in basis points (`10000` is one bet; always a whole number of bets,
   so that a cost comes to whole cents at any bet), and the table its row is drawn
@@ -290,8 +292,8 @@ asks for that code from the start, with the rest), and hands the game `host`, `t
 
 **What was built is put on record.** `keros3ne-studio client` builds each client into
 `client/dist` (not committed) and writes `client/client.json` (committed): the digest of
-every file it built. `check` holds the built client to that record, a release sends
-exactly that client, and the site keeps it only if every file is the one recorded. The
+every file it built. `check` holds the built client to that record, and `pack` packs
+exactly that client, with every file's digest in the package for a site to hold it to. The
 same source builds the same files, so `check --build` (which builds again first, leaving
 the record alone) is how CI holds the record to the source.
 
@@ -300,8 +302,8 @@ by a player's browser for good; the page itself and what `public` brought are as
 each time. You build your client, so what it imports by name is yours to choose: the
 SDK, Svelte and Pixi (which the SDK brings), and any other package you install. Two
 things are held (`check`): a file imported by a relative address is in the game's own
-folder or one of your repository's shared folders, which are what the site takes in to
-be read, and nothing is loaded from the network, which the frame would refuse anyway.
+folder or one of your repository's shared folders, and nothing is loaded from the
+network, which the frame would refuse anyway.
 **Nothing is refused or complained of in the console**: a client that runs cleanly says
 nothing there, and SvelteKit's one request of its own (whether a newer build has
 replaced it) is answered in the page by the build, since a client can make none.
@@ -703,66 +705,72 @@ bun run stories             # your stories, and the SDK's own, in Storybook
   it starts with. It does not do the site's rewards, rate limits, or History and Fairness
   panels.
 
-## Sending a release
+## Sending a game
 
-**A game is released by itself.** Its `game.json` says its `version`, and a release of it
-is the tag `<slug>-v<version>` (`game-title-v1.2.0`) with one file, `<slug>.tar.gz`. A
-repository may hold one game or hundreds: each has its own version and its own releases,
-and releasing one says nothing of the others.
+**A game is sent as one file, and nothing else of yours goes with it.** No site sees the
+repository a game was made in: `keros3ne-studio pack` writes everything a site needs of
+a version of a game into `release/<slug>-<version>.tar.gz`, and that file is what you
+send.
 
-**Your repository's own workflow makes the release**, on GitHub Actions, where you can
-read every step of it. Nothing in this package asks GitHub anything or changes anything
-there, from your machine or anywhere else: `keros3ne-studio` reads and writes the files
-of your repository and no more. The template has the workflow
-(`.github/workflows/release.yml`); it is yours to change.
+```
+game-title-1.2.0.tar.gz
+  release.json   what the package holds: every file by its place, size and digest
+  game.json      the game's manifest
+  guide.json     its rules and paytable
+  card.svg       the picture a site lists it under (client/public/card.svg)
+  client/        the client as you built it: every file of client/dist
+  assets/        what else the game is made of, where its folder has an assets/
+  maths/         what your maths made: books.json, and each table's .index and .rows
+```
 
-1. Change the game, and raise `version` in its `game.json`.
-2. Run `books`, `client`, `check` and your tests. Commit, with `books/books.json` and
-   `client/client.json` among it: the records of what the release will send.
-3. Push to `main`. The workflow finds each game whose version has no tag yet
-   (`keros3ne-studio unreleased --json`, which reads the tags of the checkout), and for
-   each: makes its books, builds its client again and holds both to the records you
-   committed (`check --build`), packs it (`pack`), and creates the release
-   `<slug>-v<version>` at that commit with the packed file.
-4. Send Keros3ne the repository and the tag. (The first time, Keros3ne registers your
-   studio and gives it its id; after that a release of any game of yours is taken in
-   under it.)
+It is an ordinary archive, which `tar -xzf` opens, so you can see exactly what you are
+sending. The same game packs to the same bytes wherever it is packed, and `pack` says
+the file's digest. Nothing in this package reaches GitHub or anywhere else from your
+machine: `keros3ne-studio` reads and writes the files of your repository and no more.
 
-What is packed is one file, `game-title.tar.gz`, with two folders in it and nothing else:
-`client/` is the client as it was built, and `maths/` is what your maths made
-(`books.json` and each table's `.index` and `.rows`). Neither books nor a built client
-are committed, so this is how they travel; the records you did commit are what they are
-held to. It is an ordinary archive, which `tar -xzf` opens, so anyone given a release can
-see exactly what it sends.
+1. Change the game, and raise `version` in its `game.json`: a site publishes a version
+   once, and the next must come after it.
+2. Run `books`, `client`, `check` and your tests. `pack` holds the books to the whole
+   check and the built client to its record (`client/client.json`) before it packs
+   anything, so commit that record and `books/books.json` with the change.
+3. Run `keros3ne-studio pack <slug>`, and send Keros3ne the file.
 
-Change the workflow as suits you: your own tests, another runner, a cache, an approval
-before the release, releasing on a tag you push yourself. What a site goes by must stay:
+**Each game is sent by itself**, at its own version, however many games you make.
 
-- the release's tag is `<slug>-v<version>`, the version being the one `game.json` says
-  at the commit tagged;
-- its file is `<slug>.tar.gz`, as `keros3ne-studio pack` wrote it, unchanged;
-- it is a published release, not a draft;
-- a tag, once a release has been taken in, is never moved, and its file never replaced:
-  a changed game is a raised version and a new release.
+**An update to a game with counters** must say what becomes of what players hold in
+them, if the counters changed. `converts`, in `game.json`, names each counter of the
+version before and the one of this version it goes into:
 
-The site takes in, at the release's tag, your manifest, readme and licence, the game
-released, your shared folders, and the packages the manifest names, each fetched at its
-tag; nothing else of your repository: no other game, no build configuration, installed
-packages or lockfile. What it took in is pinned: the site
-records the commit and a digest of every file. It checks each
-game's `game.json` and `guide.json`, which are data, and reads the source of its maths and
-client, with none of it run. A person reads your maths in full, and your clients for the
-rules. Then the site fetches each game's books and built client from the release, holds them
-to the records you committed, runs the whole check on the books and checks what the
-client is made of, and lists the game. **The site never runs your maths**: the books are
-the game, and the maths is how you made them, there to be read. **Nor does it build or
-run your client's code**: it serves the files you built, sandboxed. A game earns players rewards (xp, rakeback, card packs)
-once it is listed: its books are what hold it to its return.
+```json
+"converts": {
+	"from": "1.1.0",
+	"counters": { "bronze": { "to": "bronze", "times": 11, "over": 10 } }
+}
+```
 
-A release replaces your last one, and may not drop a game: past bets on it must stay
-verifiable. A change to a game's maths, its manifest or its books changes what past bets on
-it are checked against, so once the site has launched, a changed slot is a new game with a
-new slug.
+A player holding `u` units of the old `bronze` then holds `u` times 11 over 10, rounded
+up, of the new. A unit of a counter is worth its `worthBp` of the bet, and a site takes
+the update only if nobody, whatever they held, is left holding less than they held, no
+counter is filled by the conversion, and every size of bet the old version offered is
+still offered (counters are kept at each). Counters that did not change need nothing
+said. `keros3ne-studio check <slug> --follows <the old game.json>` says whether an
+update passes, and the most rounding up gives away.
+
+A site installs a package only whole and only as it says it is: every file the one
+`release.json` names, and no other. It checks your `game.json` and `guide.json`, which
+are data, runs the whole check on your books, and holds your client to the kinds of file
+a client may be made of and to the protocol it speaks. People review what you sent, as
+it was built: your books, by what they come to (each mode's return, how much it swings,
+the most it pays), your guide, and your game, played. Nobody reads your source, because
+nobody is sent it. **The site never runs your maths**: the books are the game. **Nor does
+it build or run your client's code**: it serves the files you built, sandboxed. A game
+earns players rewards (xp, rakeback, card packs) once it is published: its books are what
+hold it to its return.
+
+A site keeps every version of a game it has published. A bet records the version it was
+played on and is checked against that version's books, so an update leaves past bets as
+verifiable as they were. A round a player has open when a game is updated is finished on
+the version it was opened on; their next round is on the new one.
 
 ## The main entries
 
