@@ -618,8 +618,10 @@ in each game's `imports`, with a `local` condition that names its clone beside t
 Import it as `#kit/Bar.svelte` in the game, and link the clone once (`mkdir -p local && ln -s
 ../../kit local/kit`; keep `local/` out of git). Then `bun run local dev` plays the game on
 the kit as it stands in its clone, and `bun run dev`, `bun run client` and a release are on
-the kit at its tag, as before. Never release a client built with `local`: `client.json`
-would record files no tag of the kit made.
+the kit at its tag, as before. A client built with `local` says so in its `client.json`
+(`conditions`), since no tag of the kit made its files: `keros3ne-studio pack` refuses to
+pack one, and a site refuses to accept one. Build it again without `local` before a
+release.
 
 **The card.** Supply the picture for your game's card: `client/public/card.svg`, upright
 (three wide by four high), with nothing important in the bottom third, where the site lays
