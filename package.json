@@ -1,6 +1,6 @@
 {
 	"name": "@keros3ne/sdk",
-	"version": "0.24.0",
+	"version": "0.25.0",
 	"description": "Build games for Keros3ne: how a game's outcomes are made into books, the client's bridge to the site, the stage, the control bar and controls, Storybook, the site's own checks, and keros3ne-studio, the command line to make a game's books, check it and play it. Clone it to start a studio.",
 	"license": "MIT",
 	"type": "module",
@@ -52,6 +52,7 @@
 		"./client-build": "./src/client-build.ts",
 		"./client-record": "./src/client-record.ts",
 		"./release-pack": "./src/release-pack.ts",
+		"./tar": "./src/tar.ts",
 		"./cli-path": "./src/cli-path.ts",
 		"./controls": "./src/controls/index.ts",
 		"./testing": "./src/testing.ts",
