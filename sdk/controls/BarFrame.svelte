@@ -31,7 +31,7 @@ Created: 2026-11-19
 	interface Props extends BarOptions {
 		/** How the bar looks: its colours, typefaces and buttons (../look.ts). It may change. */
 		look?: BarLook;
-		/** Its size against the usual: from 0.8 to 2.5. A tall view's is about twice a wide one's. */
+		/** Its size against the usual: from 0.75 to 2.5. A tall view's is about twice a wide one's. */
 		scale?: number;
 		/**
 		 * What the bar is placed in and measured against. The whole page, as in a game's own

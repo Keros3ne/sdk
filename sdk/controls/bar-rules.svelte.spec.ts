@@ -310,7 +310,7 @@ describe("the SDK's control bar", () => {
 			[0.8, "0.8"],
 			// Past either end, the end.
 			[3, "2.5"],
-			[0.1, "0.8"]
+			[0.1, "0.75"]
 		] as const) {
 			makeBar({ scale: asked });
 			await settle();

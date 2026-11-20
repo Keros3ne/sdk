@@ -417,7 +417,7 @@ and refuses a client built for another version of the protocol.
       `look={{ tint: "#6a3df0", accent: "#ffd56b", onAccent: "#0f2530" }}`. One item's own
       ground, edge, corners and padding are `look.segments.play`, and every item's
       `look.segment`.
-    - `place`, `bottom` or `top`; `scale`, from 0.8 to 1.5; and `hide`, the menu and the win
+    - `place`, `bottom` or `top`; `scale`, from 0.75 to 2.5; and `hide`, the menu and the win
       only.
 
     **A bar of your own** is the same items, placed where you like. Each is a component

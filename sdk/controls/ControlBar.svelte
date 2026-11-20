@@ -49,7 +49,7 @@ Created: 2026-11-17
 		look?: BarLook;
 		/** Along the bottom of the game (left out), or along the top. */
 		place?: "bottom" | "top";
-		/** Its size against the usual: from 0.8 to 2.5. A tall view's is about twice a wide one's. */
+		/** Its size against the usual: from 0.75 to 2.5. A tall view's is about twice a wide one's. */
 		scale?: number;
 		/**
 		 * How the bet is chosen: stepped with a minus and a plus beside its figure (left out),

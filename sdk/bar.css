@@ -194,6 +194,10 @@
 .sdk-bar-frame .sdk-bar-alone .sdk-bar-right > * {
 	margin: 0;
 }
+/* Autoplay and speed stand each on its own there, not as a pair, so the five keep apart. */
+.sdk-bar-frame .sdk-bar-alone .sdk-bar-pace {
+	display: contents;
+}
 .sdk-bar-frame .sdk-bar-strip .sdk-bar-readout output {
 	font-size: calc(17px * var(--s));
 }
