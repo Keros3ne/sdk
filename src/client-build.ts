@@ -198,7 +198,7 @@ export function clientConfig(folder: string): InlineConfig {
 				paths: { relative: true },
 				// The same every time: SvelteKit would name each build by the moment it was made,
 				// for a page to find it has been replaced, and a client's files are held to the
-				// record of them (./client-pack.ts), so the same source must build the same files.
+				// record of them (./client-record.ts), so the same source must build the same files.
 				version: { name: BUILD_NAME }
 			}),
 			noteCode(client)

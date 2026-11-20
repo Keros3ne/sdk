@@ -4,34 +4,22 @@
  * studio's code to make one. What was built is not committed. Its record is:
  * `client/client.json`, the digest of every file of it, written when it is built
  * (`keros3ne-studio client`) and committed, so that a tag says exactly which client it
- * sends. The studio packs the built files into one file of its release, and the site
- * unpacks that beside the record and holds every file to it.
+ * sends. The built files travel in the game's file of its release (./release-pack.ts),
+ * and the site unpacks them beside the record and holds every file to it.
  *
  * Author: dwclake
  * Created: 2026-11-19
  */
 
 import { createHash } from "node:crypto";
-import {
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	readdirSync,
-	renameSync,
-	rmSync,
-	writeFileSync
-} from "node:fs";
-import { dirname, join, relative, sep } from "node:path";
-import type { Readable } from "node:stream";
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { gunzipSync, gzipSync } from "node:zlib";
 import * as v from "valibot";
 import { BOOK_VERSION } from "./book.ts";
 import { LOCAL_CONDITIONS } from "./local-packages.ts";
 import { PROTOCOL } from "./protocol.ts";
-
-/** A place in a built client: letters, figures and plain marks, folders apart by `/`, never up or out. */
-const PLACE = /^(?!\/)(?!.*(^|\/)\.{1,2}(\/|$))[\w.+@-]+(\/[\w.+@-]+)*$/;
+import { isPlace } from "./tar.ts";
 
 /**
  * What a client built before its record said its protocol spoke: the SDK at 0.15, which
@@ -55,23 +43,13 @@ const recordSchema = v.strictObject({
 	 */
 	conditions: v.optional(v.array(v.string())),
 	files: v.record(
-		v.pipe(v.string(), v.regex(PLACE)),
+		v.pipe(v.string(), v.check(isPlace)),
 		v.pipe(v.string(), v.regex(/^[0-9a-f]{64}$/))
 	)
 });
 
 /** The record of a built client: what a tag says it sends. */
 export type ClientRecord = v.InferOutput<typeof recordSchema>;
-
-/** What a packed client holds: each file by its place, as base64. */
-const packedSchema = v.strictObject({
-	files: v.record(v.pipe(v.string(), v.regex(PLACE)), v.string())
-});
-
-/** The name of a game's packed client among a release's files. */
-export function packedClient(slug: string): string {
-	return `${slug}.client.gz`;
-}
 
 /** Where a game's record of its built client is kept. */
 export function clientRecordFile(gameFolder: string): string {
@@ -83,10 +61,12 @@ const { version } = JSON.parse(
 	readFileSync(fileURLToPath(new URL("../package.json", import.meta.url)), "utf8")
 ) as { version: string };
 
-const digest = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
+/** The SHA-256 digest of some bytes, as a record writes it. */
+export const digest = (bytes: Uint8Array) =>
+	createHash("sha256").update(bytes).digest("hex");
 
 /** Every file under a folder, by its place in it, written with `/`. */
-function filesIn(folder: string): string[] {
+export function filesIn(folder: string): string[] {
 	const walk = (within: string): string[] =>
 		readdirSync(within, { withFileTypes: true }).flatMap((entry) =>
 			entry.isDirectory()
@@ -237,100 +217,6 @@ export function unsupported(gameFolder: string): string[] {
 	}
 
 	return problems;
-}
-
-/**
- * Packs a game's built client, held to its record first, into `into`: one file to send
- * with a release. Returns its name. Throws if the client is not the one recorded.
- */
-export function packClient(
-	gameFolder: string,
-	slug: string,
-	into: string,
-	options: {
-		/** Pack a client built on clones too: for taking a game in on trial, never for a release. */
-		trial?: boolean;
-	} = {}
-): string {
-	const problems = checkBuiltClient(gameFolder);
-	if (problems.length > 0) throw new Error(`${slug}: ${problems.join("; ")}`);
-
-	const clones = builtOnClones(gameFolder);
-	if (clones && !options.trial) throw new Error(`${slug}: ${clones}`);
-
-	const dist = join(gameFolder, "client", "dist");
-	const files = Object.fromEntries(
-		filesIn(dist).map((file) => [
-			file,
-			readFileSync(join(dist, file)).toString("base64")
-		])
-	);
-
-	mkdirSync(into, { recursive: true });
-	writeFileSync(join(into, packedClient(slug)), gzipSync(JSON.stringify({ files })));
-
-	return packedClient(slug);
-}
-
-/** All of a stream, as bytes. */
-async function bytesOf(stream: Readable): Promise<Buffer> {
-	const parts: Buffer[] = [];
-	for await (const part of stream) parts.push(Buffer.from(part as Uint8Array));
-
-	return Buffer.concat(parts);
-}
-
-/**
- * Unpacks a game's built client from a release into its `client/dist`, held to the record
- * the game's folder has of it (`client/client.json`): exactly the files recorded, each
- * with the digest recorded. `open` gives a packed file's bytes by its name. Nothing is
- * put in place unless all of it is as recorded; a client already there is replaced.
- */
-export async function unpackClient(
-	gameFolder: string,
-	slug: string,
-	open: (packed: string) => Promise<Readable> | Readable
-): Promise<ClientRecord> {
-	const record = readClientRecord(gameFolder);
-	const packed = v.parse(
-		packedSchema,
-		JSON.parse(
-			gunzipSync(await bytesOf(await open(packedClient(slug)))).toString("utf8")
-		)
-	);
-
-	const sent = Object.keys(packed.files).sort();
-	const recorded = Object.keys(record.files).sort();
-	if (sent.join("\n") !== recorded.join("\n")) {
-		throw new Error(
-			`${slug}'s client is not the one its record names: its files are not the ones recorded.`
-		);
-	}
-
-	const files = new Map<string, Buffer>();
-	for (const file of sent) {
-		const bytes = Buffer.from(packed.files[file], "base64");
-		if (digest(bytes) !== record.files[file]) {
-			throw new Error(
-				`${slug}'s client is not the one its record names: ${file} is not the file recorded.`
-			);
-		}
-
-		files.set(file, bytes);
-	}
-
-	// Written beside its place, and put there only once all of it has been.
-	const dist = join(gameFolder, "client", "dist");
-	const coming = `${dist}.coming`;
-	rmSync(coming, { recursive: true, force: true });
-	for (const [file, bytes] of files) {
-		mkdirSync(dirname(join(coming, file)), { recursive: true });
-		writeFileSync(join(coming, file), bytes);
-	}
-	rmSync(dist, { recursive: true, force: true });
-	renameSync(coming, dist);
-
-	return record;
 }
 
 /** Whether a game's built client is on disk and is the one its record names. */

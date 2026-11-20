@@ -706,11 +706,14 @@ bun run stories             # your stories, and the SDK's own, in Storybook
 3. Commit (`books/books.json` and `client/client.json` among it: the records of what you
    are sending), tag the release (`git tag v0.1.0`) and push the tag.
 4. Run `keros3ne-studio pack`, which holds each game's books and built client to their
-   records and packs them into `release/`: one compressed file for each file of each
-   table (`game-title.spin.index.gz`) and one for the client
-   (`game-title.client.gz`). Send them with the tag as the files of its release:
-   `gh release create v0.1.0 release/*`. Neither books nor a built client are committed,
-   so this is how they travel; the records you did commit are what they are held to.
+   records and packs them into `release/`: one file for each game, `game-title.tar.gz`,
+   with two folders in it and nothing else. `client/` is the client as you built it, and
+   `maths/` is what your maths made: `books.json` and each table's `.index` and `.rows`.
+   Send it with the tag as the file of its release:
+   `gh release create v0.1.0 release/game-title.tar.gz`. Neither books nor a built
+   client are committed, so this is how they travel; the records you did commit are what
+   they are held to. It is an ordinary archive, which `tar -xzf` opens, so anyone given a
+   release can see exactly what it sends.
 5. Send Keros3ne the repository and the tag. (The first time, Keros3ne registers your
    studio and gives it its id; after that a release of any of your repositories is
    taken in under it.)

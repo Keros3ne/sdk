@@ -6,6 +6,7 @@
  *   keros3ne-studio books [slug...]   make a game's books from its maths, and say what they hold
  *   keros3ne-studio client [slug...]  build a game's client, and put what was built on record
  *   keros3ne-studio check [slug...]   the site's checks: books, guide, maths, client
+ *   keros3ne-studio pack [slug...]    pack each game into the one file a release sends for it
  *   keros3ne-studio dev <slug>        play the game against a stand-in for the site
  *   keros3ne-studio stories           the studio's stories, and the SDK's own, in Storybook
  *
@@ -13,13 +14,8 @@
  * pass `--root <folder>`. It runs on Bun, which imports a game's TypeScript as it is.
  */
 import { buildClient } from "./client-build.ts";
-import {
-	checkBuiltClient,
-	packClient,
-	unsupported,
-	writeClientRecord
-} from "./client-pack.ts";
-import { existsSync, readFileSync } from "node:fs";
+import { checkBuiltClient, unsupported, writeClientRecord } from "./client-record.ts";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { checkGuide } from "./guide.ts";
 import { sharedFolders, sharedPackages, type StudioManifest } from "./manifest.ts";
@@ -48,8 +44,10 @@ Usage:
   keros3ne-studio check [slug...]   the site's checks on each game: its books, its
                                     guide, its maths, and its client as it was built
                                     and put on record
-  keros3ne-studio pack [slug...]    pack each game's books and built client, checked,
-                                    into the files a release sends with its tag
+  keros3ne-studio pack [slug...]    pack each game's built client and books, checked,
+                                    into the one file a release sends for it with its
+                                    tag: <slug>.tar.gz, a client folder and a maths
+                                    folder
   keros3ne-studio dev <slug>        build the client as it changes, and play the game in a
                                     browser against a stand-in for the site
 
@@ -335,27 +333,25 @@ async function makeAllBooks(
 }
 
 /**
- * Packs the books of each game asked for, or of every game the studio has, into the
- * files a release sends with its tag. Fails if any game's books are missing or do not
- * pass the check.
+ * Packs each game asked for, or every game the studio has, into the one file a release
+ * sends for it with its tag: its built client and its books. Fails if any game's books or
+ * client are missing or are not the ones on record.
  */
-async function packAllBooks(
+async function packAllGames(
 	root: string,
 	slugs: string[],
 	out: string,
 	trial = false
 ): Promise<number> {
-	const { packBooks } = await import("./book-pack.ts");
+	const { packGame } = await import("./release-pack.ts");
+	const packed: string[] = [];
 	let failed = false;
 
 	for (const folder of pickGames(root, slugs).filter(isBookGame))
 		try {
-			const files = [
-				...(await packBooks(folder.dir, out)),
-				packClient(folder.dir, folder.slug, out, { trial })
-			];
+			packed.push(await packGame(folder.dir, folder.slug, out, { trial }));
 
-			console.log(`${folder.slug}: ${files.length} files.`);
+			console.log(`${folder.slug}: ${packed.at(-1)}`);
 		} catch (error) {
 			failed = true;
 			console.error(
@@ -363,12 +359,24 @@ async function packAllBooks(
 			);
 		}
 
-	if (!failed)
-		console.log(
-			`\nPacked into ${out}. Send them with the tag, as the files of its release: gh release create <tag> ${out}/*`
+	if (failed) return 1;
+
+	/** The folder as a command would name it from here. */
+	const from = relative(process.cwd(), out);
+	const shown = from.startsWith("..") ? out : from || ".";
+
+	// What else is in the folder would be sent with the release too, by `<folder>/*`.
+	const others = readdirSync(out).filter((name) => !packed.includes(name));
+	if (others.length > 0)
+		console.error(
+			`\n${out} also holds ${others.slice(0, 5).join(", ")}${others.length > 5 ? `, and ${others.length - 5} more` : ""}: no part of what was packed now. Take them out before sending the release.`
 		);
 
-	return failed ? 1 : 0;
+	console.log(
+		`\nPacked into ${out}: one file for each game, a client folder and a maths folder in it. Send them with the tag, as the files of its release: gh release create <tag> ${packed.map((name) => join(shown, name)).join(" ")}`
+	);
+
+	return 0;
 }
 
 /** Where `dev` serves a game unless told otherwise. */
@@ -469,7 +477,7 @@ async function main(argv: string[]): Promise<number> {
 		case "client":
 			return buildAllClients(root, slugs);
 		case "pack":
-			return packAllBooks(
+			return packAllGames(
 				root,
 				slugs,
 				resolve(

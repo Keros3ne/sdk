@@ -1,23 +1,15 @@
 /**
- * A built client as a file of a release (./client-pack.ts): that what is packed is the
- * client on record, and that what is unpacked is held to the record, file for file.
+ * The record of a built client (./client-record.ts): that what is built is put on record
+ * file by file and held to it, and what a site makes of a record from another SDK. How a
+ * client travels with a release is ./release-pack.spec.ts.
  *
  * Author: dwclake
  * Created: 2026-11-19
  */
 
-import {
-	existsSync,
-	mkdirSync,
-	mkdtempSync,
-	readFileSync,
-	rmSync,
-	writeFileSync
-} from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { Readable } from "node:stream";
-import { gzipSync } from "node:zlib";
 import { afterAll, describe, expect, it } from "vitest";
 import { BOOK_VERSION } from "./book.ts";
 import { PROTOCOL } from "./protocol.ts";
@@ -25,15 +17,12 @@ import {
 	builtOnClones,
 	checkBuiltClient,
 	hasItsClient,
-	packClient,
-	packedClient,
 	readClientRecord,
-	unpackClient,
 	unsupported,
 	writeClientRecord
-} from "./client-pack.ts";
+} from "./client-record.ts";
 
-const scratch = mkdtempSync(join(tmpdir(), "client-pack-"));
+const scratch = mkdtempSync(join(tmpdir(), "client-record-"));
 afterAll(() => rmSync(scratch, { recursive: true, force: true }));
 
 const BUILT = {
@@ -52,10 +41,6 @@ function game(name: string, files: Record<string, string> = BUILT): string {
 
 	return folder;
 }
-
-/** A release's files, from a folder of them. */
-const from = (folder: string) => (name: string) =>
-	Readable.from([readFileSync(join(folder, name))]);
 
 describe("a built client", () => {
 	it("is put on record file by file, and held to the record", () => {
@@ -84,74 +69,6 @@ describe("a built client", () => {
 		);
 		expect(problems.join("\n")).toMatch(/has extra\.js, which is not on its record/);
 		expect(hasItsClient(folder)).toBe(false);
-		expect(() => packClient(folder, "recorded", join(scratch, "nowhere"))).toThrow(
-			/not the one its record names/
-		);
-	});
-
-	it("travels as one file of a release, and is unpacked as it was built", async () => {
-		const studio = game("sent");
-		writeClientRecord(studio, []);
-		const release = join(scratch, "release");
-		expect(packClient(studio, "sent", release)).toBe("sent.client.gz");
-
-		// The site has the game's record, from its repository, and nothing built.
-		const site = join(scratch, "held");
-		mkdirSync(join(site, "client"), { recursive: true });
-		writeFileSync(
-			join(site, "client", "client.json"),
-			readFileSync(join(studio, "client", "client.json"))
-		);
-
-		await unpackClient(site, "sent", from(release));
-		for (const [file, text] of Object.entries(BUILT))
-			expect(readFileSync(join(site, "client", "dist", file), "utf8")).toBe(text);
-		expect(hasItsClient(site)).toBe(true);
-	});
-
-	it("is refused, and nothing put in place, where what a release sends is not what is on record", async () => {
-		const studio = game("true");
-		writeClientRecord(studio, []);
-		const site = join(scratch, "wary");
-		mkdirSync(join(site, "client"), { recursive: true });
-		writeFileSync(
-			join(site, "client", "client.json"),
-			readFileSync(join(studio, "client", "client.json"))
-		);
-
-		/** A release whose packed client holds these files. */
-		const sending = (files: Record<string, string>) => () =>
-			Readable.from([
-				gzipSync(
-					JSON.stringify({
-						files: Object.fromEntries(
-							Object.entries(files).map(([file, text]) => [
-								file,
-								Buffer.from(text).toString("base64")
-							])
-						)
-					})
-				)
-			]);
-
-		// A file changed, a file more, and a file that would be written outside the client.
-		await expect(
-			unpackClient(
-				site,
-				"true",
-				sending({ ...BUILT, "index.html": "<script>alert(1)</script>" })
-			)
-		).rejects.toThrow(/index\.html is not the file recorded/);
-		await expect(
-			unpackClient(site, "true", sending({ ...BUILT, "more.js": "more" }))
-		).rejects.toThrow(/not the ones recorded/);
-		await expect(
-			unpackClient(site, "true", sending({ ...BUILT, "../../outside.js": "out" }))
-		).rejects.toThrow();
-
-		expect(existsSync(join(site, "client", "dist"))).toBe(false);
-		expect(existsSync(join(scratch, "outside.js"))).toBe(false);
-		expect(packedClient("true")).toBe("true.client.gz");
 	});
 
 	it("is taken by a site that speaks its protocol and reads its books, whatever SDK built it", () => {
@@ -200,15 +117,13 @@ describe("a built client", () => {
 		]);
 	});
 
-	it("is never packed for a release when it was built on packages taken from their clones", () => {
+	it("says when it was built on packages taken from their clones, which is no release", () => {
 		const folder = game("on-clones");
 		const record = writeClientRecord(folder, []);
-		const out = join(scratch, "on-clones-out");
 
-		// Built on every package at its tag, the record says nothing of it, and it packs.
+		// Built on every package at its tag, the record says nothing of it.
 		expect(record.conditions).toBeUndefined();
 		expect(builtOnClones(folder)).toBeNull();
-		expect(() => packClient(folder, "on-clones", out)).not.toThrow();
 
 		// As `bun run local client` records it: its files are of no tag's making.
 		writeFileSync(
@@ -216,10 +131,5 @@ describe("a built client", () => {
 			JSON.stringify({ ...record, conditions: ["local"] })
 		);
 		expect(builtOnClones(folder)).toMatch(/taken from their clones \(local\)/);
-		expect(() => packClient(folder, "on-clones", out)).toThrow(
-			/built on packages taken from their clones/
-		);
-		// For a trial, and only when asked.
-		expect(() => packClient(folder, "on-clones", out, { trial: true })).not.toThrow();
 	});
 });
