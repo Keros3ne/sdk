@@ -37,11 +37,12 @@ import {
 	existsSync,
 	mkdirSync,
 	readFileSync,
+	realpathSync,
 	watch,
 	writeFileSync,
 	type FSWatcher
 } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import adapter from "@sveltejs/adapter-static";
 import { sveltekit } from "@sveltejs/kit/vite";
@@ -143,6 +144,25 @@ function noteCode(client: string): Plugin {
 	};
 }
 
+/** Where the SDK is, as it is found on disk. */
+const SDK_FOLDER = realpathSync(dirname(fileURLToPath(import.meta.url)));
+
+/**
+ * The folder two folders are both in: the nearest one. A client and the SDK it is built
+ * with are both under the studio's repository, wherever that is on a machine, so a file
+ * named from here is named the same on every machine.
+ */
+export function sharedFolder(one: string, other: string): string {
+	const first = realpathSync(one).split(sep);
+	const second = realpathSync(other).split(sep);
+	let same = 0;
+
+	while (same < first.length && same < second.length && first[same] === second[same])
+		same += 1;
+
+	return first.slice(0, same).join(sep) || sep;
+}
+
 /** Every setting of a client's build. `folder` is the client's own. */
 export function clientConfig(folder: string): InlineConfig {
 	const client = resolve(folder);
@@ -164,7 +184,11 @@ export function clientConfig(folder: string): InlineConfig {
 					// from where its file is: Svelte's own is made from the file's whole path, for
 					// a file outside the client's folder (the SDK's), so the same source built
 					// another client on another machine, and no record of it held anywhere else.
-					cssHash: ({ hash, css }) => `svelte-${hash(css)}`
+					cssHash: ({ hash, css }) => `svelte-${hash(css)}`,
+					// The same for a component's name, which Svelte writes into what it builds
+					// (a page's `<svelte:head>` is marked with it): told where the client and the
+					// SDK both are, it names each file from there, and not from the machine's root.
+					rootDir: sharedFolder(client, SDK_FOLDER)
 				},
 				adapter: adapter({ pages: "dist", assets: "dist", strict: true }),
 				outDir: WORK_FOLDER,

@@ -18,7 +18,7 @@ import {
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
-import { buildClient } from "./client-build.ts";
+import { buildClient, sharedFolder } from "./client-build.ts";
 
 // Inside the repository, so that Svelte and SvelteKit are found from it as from a studio's folder.
 const scratch = fileURLToPath(new URL("../test-results", import.meta.url));
@@ -156,5 +156,14 @@ describe("a client's build", () => {
 				"src/routes/+page.svelte": `<p>Only in a browser.</p>`
 			})
 		).rejects.toThrow(/did not build|built no index\.html/);
+	});
+
+	it("names a component from the folder the client and the SDK are both in, wherever that is", () => {
+		const here = dirname(fileURLToPath(import.meta.url));
+
+		// A game beside the SDK's own files, and one deeper: from the nearest folder that holds both.
+		expect(sharedFolder(here, here)).toBe(here);
+		expect(sharedFolder(join(here, "test"), join(here, "controls"))).toBe(here);
+		expect(sharedFolder(join(here, "test", "book-studio"), here)).toBe(here);
 	});
 });
