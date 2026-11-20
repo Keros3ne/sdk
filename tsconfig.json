@@ -12,13 +12,6 @@
 		"skipLibCheck": true,
 		"noUncheckedSideEffectImports": false
 	},
-	"include": [
-		"sdk/**/*.ts",
-		"sdk/**/*.svelte",
-		"*/maths/**/*.ts",
-		"*/client/src/**/*.ts",
-		"*/client/src/**/*.svelte",
-		"*.ts"
-	],
+	"include": ["sdk/**/*.ts", "sdk/**/*.svelte", "*.ts"],
 	"exclude": ["**/dist/**", "**/node_modules/**"]
 }

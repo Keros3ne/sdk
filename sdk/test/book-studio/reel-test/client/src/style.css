@@ -1,4 +1,4 @@
-/* Game Title. The game is drawn for two shapes, 16 by 10 and, on a phone, 9 by 16, at any
+/* Reel Test. The game is drawn for two shapes, 16 by 10 and, on a phone, 9 by 16, at any
    size, each as a view of its own (WideView.svelte, TallView.svelte). This is what the two
    share: the game's colours and its ground. */
 :root {

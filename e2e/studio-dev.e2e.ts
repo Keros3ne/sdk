@@ -10,9 +10,13 @@ import {
 } from "node:fs";
 import { join, resolve } from "node:path";
 
+/** The SDK's test studio, and the game of it that has a client. */
+const STUDIO = "sdk/test/book-studio";
+const GAME = "reel-test";
+
 /**
  * `keros3ne-studio dev`, the SDK's stand-in for the site (sdk/dev.ts), on a copy of the
- * example game and its books: a copy, so that its rebuilds never touch the game itself.
+ * test studio's game and its books: a copy, so that its rebuilds never touch the game itself.
  * Under test-results, so that it finds the SDK in this repository. Each test starts its
  * own, on a port of its parallel slot (4200 and up), so that tests running at once never
  * share one.
@@ -22,18 +26,22 @@ async function startDev() {
 	const root = resolve(`test-results/studio-dev-${port}`);
 	rmSync(root, { recursive: true, force: true });
 	mkdirSync(root, { recursive: true });
-	cpSync("game-title", join(root, "game-title"), {
+	cpSync(join(STUDIO, GAME), join(root, GAME), {
 		recursive: true,
 		filter: (path) =>
 			!path.includes(join("client", "dist")) && !path.includes(".svelte-kit")
 	});
-	cpSync("studio.json", join(root, "studio.json"));
+	// A studio of that one game: the test studio's other has no client to play.
+	writeFileSync(
+		join(root, "studio.json"),
+		JSON.stringify({ name: "Book Studio", sdk: "^0.21.0", games: [GAME] })
+	);
 	const dev: ChildProcess = spawn(
 		"bun",
 		[
 			"sdk/cli.ts",
 			"dev",
-			"game-title",
+			GAME,
 			"--root",
 			root,
 			"--port",
@@ -160,14 +168,14 @@ test("dev starts the stand-in again when the maths changes, and reloads the game
 		const game = await openGame(page, dev.url);
 		const log = page.locator(".log");
 		const now = new Date();
-		utimesSync(join(dev.root, "game-title", "maths", "index.ts"), now, now);
+		utimesSync(join(dev.root, GAME, "maths", "index.ts"), now, now);
 		await expect(log).toContainText("The maths changed", { timeout: 20_000 });
 		await expect(game.locator('body[data-ready="true"]')).toBeAttached({
 			timeout: 20_000
 		});
 
 		utimesSync(
-			join(dev.root, "game-title", "client", "src", "routes", "+page.svelte"),
+			join(dev.root, GAME, "client", "src", "routes", "+page.svelte"),
 			now,
 			now
 		);

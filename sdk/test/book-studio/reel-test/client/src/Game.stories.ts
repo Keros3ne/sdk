@@ -1,5 +1,5 @@
 /**
- * Game Title's stories: the whole game played from its real book, in each of its two
+ * Reel Test's stories: the whole game played from its real book, in each of its two
  * views, a spin of any kind and one that pays.
  *
  * Author: dwclake
@@ -10,7 +10,7 @@ import type { Meta, StoryObj } from "@keros3ne/sdk/stories";
 import GameStory from "./GameStory.svelte";
 
 const meta = {
-	title: "Game Title/The game",
+	title: "Reel Test/The game",
 	component: GameStory
 } satisfies Meta<typeof GameStory>;
 

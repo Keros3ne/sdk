@@ -1,5 +1,5 @@
 <!--
-Game Title's control bar: the SDK's, on what the game knows. Both views show it; what
+Reel Test's control bar: the SDK's, on what the game knows. Both views show it; what
 differs between them (how the bet is chosen, where the balance and the win are read) is
 each view's to say, through the props.
 
@@ -8,10 +8,10 @@ Created: 2026-11-19
 -->
 <script lang="ts">
 	import { ControlBar } from "@keros3ne/sdk/controls";
-	import type { GameTitle } from "./game.svelte.ts";
+	import type { ReelTest } from "./game.svelte.ts";
 
 	interface Props {
-		game: GameTitle;
+		game: ReelTest;
 		/** How the bet is chosen: stepped (left out), or as one button that opens the bets on offer. */
 		betAs?: "steps" | "menu";
 		/** Where the balance and the win are read: in the bar (left out), or in a strip along the top. */

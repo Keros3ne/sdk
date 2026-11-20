@@ -1,5 +1,5 @@
 /**
- * Game Title: the maths its book is made from. A deliberately simple slot, kept so
+ * Reel Test: the maths its book is made from. A deliberately simple slot, kept so
  * that a studio can see the whole of what a game played from books is in one place.
  *
  * The reels can stop 8,000 ways, and the book is all of them: one row for each, played in

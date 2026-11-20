@@ -1,5 +1,5 @@
 <!--
-Game Title: the client's page. It decides nothing. A spin is a row the site drew from
+Reel Test: the client's page. It decides nothing. A spin is a row the site drew from
 the game's book, and comes back through the SDK already settled; the game only plays it
 out (../Game.svelte), then tells the site it has been shown.
 
@@ -19,7 +19,7 @@ Created: 2026-11-18
 <!-- On the evening the game opens on (style.css's ground), so that when the loading screen
      leaves only what is in front changes, with the studio's logo over the name. -->
 <GamePage
-	title="Game Title"
+	title="Reel Test"
 	logo="./loading-logo.svg"
 	look={{
 		surface: "radial-gradient(circle at 50% 20%, #24546a, #173341 55%, #0f2530)",

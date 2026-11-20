@@ -1,5 +1,5 @@
 <!--
-Game Title's reels on their stage, in a square frame. Both views show it; where it is and
+Reel Test's reels on their stage, in a square frame. Both views show it; where it is and
 how large is each view's to say.
 
 Author: dwclake

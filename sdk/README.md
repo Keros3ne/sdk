@@ -1,6 +1,6 @@
 # @keros3ne/sdk
 
-Build games for KEROS3NE, a social casino played with play money. This is the contract every
+Build games for Keros3ne, a social casino played with play money. This is the contract every
 studio game is held to, and the tools to build one: how a game's outcomes are made into
 books, the client's bridge to the site, the stage, the control bar and controls, Storybook,
 the site's own checks, and `keros3ne-studio`, the command line to make a game's books, check
@@ -10,10 +10,11 @@ A studio's game can be far richer than the site's own: its own graphics and soun
 a player takes part in, meters that last between bets, its own controls. It is still held
 to every rule of the site, below.
 
-This repository is also where a studio starts: clone it, and it is a complete small studio,
-Studio Name, with one slot, Game Title, and everything a studio sends (the README
-at its top says how). A studio takes the SDK's updates by merging this repository into its
-own.
+A studio starts from the template repository,
+[Keros3ne/game-template](https://github.com/Keros3ne/game-template): a complete small
+studio, Studio Name, with one slot, Game Title, and everything a studio sends. Press "Use
+this template" there, and the SDK is a dependency of the repository it makes, at a tag. A
+studio takes the SDK's updates by naming a newer tag.
 
 ## The shape of it
 
@@ -547,7 +548,7 @@ and refuses a client built for another version of the protocol.
     spacing and case (`showTitle: false` leaves the name out, where the logo says it), the
     bar's colours, size and corners, the logo's size, and the room between them
     (`LoadingLook`). Where the screen is and what it covers are not yours to change.
-    Game Title's page does all of this.
+    Game Title's page, in the template, does all of this.
 
 9. **Show what each win paid, over the reels.** A slot writes the amount of each win where
    it is, not only the total. The `Board` does (`showWins`), choosing a cell of each win so

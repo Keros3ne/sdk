@@ -1,5 +1,5 @@
 <!--
-Game Title's reels: three of three on the SDK's board, with the line along the middle
+Reel Test's reels: three of three on the SDK's board, with the line along the middle
 row marked. They know nothing of rounds. They are told what to do over the game's emitter
 (./round.ts): spin to where the reels stopped, and light the line when it wins.
 

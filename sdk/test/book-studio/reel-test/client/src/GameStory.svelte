@@ -1,5 +1,5 @@
 <!--
-The whole of Game Title in a story, in one of its two views, played from its real book
+The whole of Reel Test in a story, in one of its two views, played from its real book
 with nothing of the site behind it (./story-host.ts).
 
 Author: dwclake

@@ -1,9 +1,0 @@
-{
-	"slug": "game-title",
-	"name": "Game Title",
-	"blurb": "Three reels and one line: the example to start a game from.",
-	"category": "slots",
-	"shapes": ["wide", "tall"],
-	"minStake": 10,
-	"modes": [{ "id": "spin", "name": "Spin", "costBp": 10000, "table": "spin" }]
-}

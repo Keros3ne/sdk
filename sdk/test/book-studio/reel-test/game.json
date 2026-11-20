@@ -1,0 +1,16 @@
+{
+	"slug": "reel-test",
+	"name": "Reel Test",
+	"blurb": "Three reels and one line: the game the SDK's own tests build a client for.",
+	"category": "slots",
+	"shapes": ["wide", "tall"],
+	"minStake": 10,
+	"modes": [
+		{
+			"id": "spin",
+			"name": "Spin",
+			"costBp": 10000,
+			"table": "spin"
+		}
+	]
+}

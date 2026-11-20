@@ -38,11 +38,7 @@ export default defineConfig({
 					name: "node",
 					environment: "node",
 					testTimeout: 60_000,
-					include: [
-						"sdk/**/*.spec.ts",
-						"*/maths/**/*.spec.ts",
-						"*/client/src/**/*.spec.ts"
-					],
+					include: ["sdk/**/*.spec.ts"],
 					exclude: [
 						"sdk/**/*.svelte.spec.ts",
 						"**/node_modules/**",

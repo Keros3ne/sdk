@@ -1,5 +1,5 @@
 /**
- * Game Title: a round as its client plays it. A round is one row of the game's book:
+ * Reel Test: a round as its client plays it. A round is one row of the game's book:
  * a spin, and what it paid. These are the shapes of what the row holds and of what the
  * reels are told.
  *

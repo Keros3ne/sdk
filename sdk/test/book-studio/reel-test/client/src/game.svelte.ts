@@ -1,5 +1,5 @@
 /**
- * Game Title, as the game knows it: the balance, the round, the line of words, and how a
+ * Reel Test, as the game knows it: the balance, the round, the line of words, and how a
  * spin is played. It is kept here, above the game's two views, which only draw it: a view
  * is made again when the other was showing, and nothing of the game may be lost with it.
  *
@@ -32,7 +32,7 @@ interface Playing {
 }
 
 /** The game: what its views draw, and what its bar does. */
-export class GameTitle {
+export class ReelTest {
 	balance = $state(0);
 	busy = $state(false);
 	autoLeft = $state(0);

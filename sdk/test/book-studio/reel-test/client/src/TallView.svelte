@@ -1,5 +1,5 @@
 <!--
-Game Title at 9 by 16, for a phone held upright, drawn at 900 by 1600: its name, the reels
+Reel Test at 9 by 16, for a phone held upright, drawn at 900 by 1600: its name, the reels
 across the game, its line of words under them. The bar is left to its buttons: the bet is
 one button that opens the bets on offer, and the balance and the win are in a strip along
 the top. A game need not have this view; without it, it is shown wide everywhere.
@@ -18,7 +18,7 @@ Created: 2026-11-19
 
 <TallView>
 	<main>
-		<h1 class="title">Game Title</h1>
+		<h1 class="title">Reel Test</h1>
 		<Machine x={50} y={330} size={800} still={game.still} {track} {onready} />
 		<p class="message" id="message">{game.message}</p>
 	</main>

@@ -1,6 +1,6 @@
 {
 	"name": "@keros3ne/sdk",
-	"version": "0.20.6",
+	"version": "0.21.0",
 	"description": "Build games for KEROS3NE: how a game's outcomes are made into books, the client's bridge to the site, the stage, the control bar and controls, Storybook, the site's own checks, and keros3ne-studio, the command line to make a game's books, check it and play it. Clone it to start a studio.",
 	"license": "MIT",
 	"type": "module",
@@ -76,18 +76,17 @@
 		}
 	},
 	"scripts": {
-		"books": "bun sdk/cli.ts books",
-		"client": "bun sdk/cli.ts client",
-		"check": "bun sdk/cli.ts check",
-		"dev": "bun sdk/cli.ts dev game-title",
-		"stories": "bun sdk/cli.ts stories",
+		"books": "bun sdk/cli.ts books --root sdk/test/book-studio",
+		"client": "bun sdk/cli.ts client reel-test --root sdk/test/book-studio",
+		"check": "bun sdk/cli.ts check reel-test --root sdk/test/book-studio",
+		"dev": "bun sdk/cli.ts dev reel-test --root sdk/test/book-studio",
+		"stories": "bun sdk/cli.ts stories --root sdk/test/book-studio",
 		"test": "bun node_modules/vitest/vitest.mjs --run",
 		"typecheck": "svelte-check --tsconfig ./tsconfig.json",
 		"typecheck:local": "svelte-check --tsconfig ./tsconfig.local.json",
 		"format": "prettier --write .",
 		"lint": "prettier --check .",
 		"test:browser": "bun node_modules/@playwright/test/cli.js install chromium && bun node_modules/@playwright/test/cli.js test",
-		"pack": "bun sdk/cli.ts pack",
 		"local": "KEROS3NE_DEV=1 BUN_OPTIONS=--conditions=keros3ne-dev NODE_OPTIONS=--conditions=keros3ne-dev bun run"
 	},
 	"dependencies": {

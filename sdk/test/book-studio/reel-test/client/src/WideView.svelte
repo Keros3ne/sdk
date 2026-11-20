@@ -1,5 +1,5 @@
 <!--
-Game Title at 16 by 10, the view every game has, drawn at 1600 by 1000: its name and its
+Reel Test at 16 by 10, the view every game has, drawn at 1600 by 1000: its name and its
 line of words in a column at the left, where a wide game has room to spare, the reels
 beside them, and the bar along the foot with everything in it. It draws what the game
 hands it and keeps nothing of its own.
@@ -19,7 +19,7 @@ Created: 2026-11-19
 <WideView>
 	<main>
 		<div class="words">
-			<h1 class="title">Game Title</h1>
+			<h1 class="title">Reel Test</h1>
 			<p class="message" id="message">{game.message}</p>
 		</div>
 		<Machine x={700} y={64} size={760} still={game.still} {track} {onready} />

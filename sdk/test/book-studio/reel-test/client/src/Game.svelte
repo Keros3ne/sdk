@@ -1,5 +1,5 @@
 <!--
-Game Title, the game: what it knows (./game.svelte.ts), and its two views, wide and tall,
+Reel Test, the game: what it knows (./game.svelte.ts), and its two views, wide and tall,
 which only draw that. Which view is shown is not the game's to say: `Views` shows the one
 it is told to by whoever hosts it.
 
@@ -13,7 +13,7 @@ Created: 2026-11-18
 	import type { GameHost } from "@keros3ne/sdk/client";
 	import { provideEmitter } from "@keros3ne/sdk/emitter";
 	import { Views, type Shape } from "@keros3ne/sdk/views";
-	import { GameTitle } from "./game.svelte.ts";
+	import { ReelTest } from "./game.svelte.ts";
 	import type { RoundView, StageEvent } from "./round.ts";
 	import TallView from "./TallView.svelte";
 	import WideView from "./WideView.svelte";
@@ -32,7 +32,7 @@ Created: 2026-11-18
 
 	// The site a game is played on does not change under it.
 	const host = untrack(() => given);
-	const game = new GameTitle(host, provideEmitter<StageEvent>());
+	const game = new ReelTest(host, provideEmitter<StageEvent>());
 </script>
 
 <Views {host} wide={WideView} tall={TallView} props={{ game, track, onready }} {show} />
