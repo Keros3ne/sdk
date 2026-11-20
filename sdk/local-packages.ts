@@ -1,8 +1,8 @@
 /**
  * Whether the SDK is being run on the engine as it stands in the clone beside this
- * repository, and not the release installed: `LOCAL_PACKAGES=1`, which `bun run local ...`
+ * repository, and not the release installed: `KEROS3NE_DEV=1`, which `bun run local ...`
  * sets. The SDK imports the engine through `imports` in package.json (`#engine/...`), and
- * the `local` condition there names the file in the clone (`local/engine`, a link that is
+ * the `keros3ne-dev` condition there names the file in the clone (`local/engine`, a link that is
  * not committed). Bun and Node are told the condition on their command lines; Vite resolves
  * imports itself, so every Vite the SDK starts is told here.
  *
@@ -17,22 +17,40 @@
  */
 import type { UserConfig } from "vite";
 
-/** Whether the engine is the clone beside this repository. */
+/**
+ * Whether the SDK itself is being developed, on the engine as it stands in the clone beside
+ * this repository: `KEROS3NE_DEV=1`. Its condition is `keros3ne-dev`, a name of its own, so
+ * that nothing a studio sets ever turns it on in an installed SDK, where there is no clone.
+ */
+export const DEV = process.env.KEROS3NE_DEV === "1";
+
+/**
+ * Whether a studio is trying packages of its own from their clones: `LOCAL_PACKAGES=1`,
+ * whose condition is `local`.
+ */
 export const LOCAL = process.env.LOCAL_PACKAGES === "1";
 
-/** The condition that names the clone's files, when it is in use. */
-export const LOCAL_CONDITIONS: string[] = LOCAL ? ["local"] : [];
+/** The conditions in use, for whatever resolves an import itself. */
+export const LOCAL_CONDITIONS: string[] = [
+	...(DEV ? ["keros3ne-dev"] : []),
+	...(LOCAL ? ["local"] : [])
+];
 
 /**
  * What a Vite configuration needs to resolve the engine as this run does: nothing, unless
  * the clone is in use. Spread into the configuration.
  */
 export function localResolve(): Pick<UserConfig, "resolve" | "ssr"> {
-	if (!LOCAL) return {};
+	if (LOCAL_CONDITIONS.length === 0) return {};
 
 	return {
 		resolve: {
-			conditions: ["local", "module", "browser", "development|production"],
+			conditions: [
+				...LOCAL_CONDITIONS,
+				"module",
+				"browser",
+				"development|production"
+			],
 			// A clone has packages of its own installed: one copy of each is used, the SDK and
 			// the engine among them, or a studio's kit would be on another SDK than its game.
 			dedupe: [
@@ -45,7 +63,14 @@ export function localResolve(): Pick<UserConfig, "resolve" | "ssr"> {
 			]
 		},
 		ssr: {
-			resolve: { conditions: ["local", "module", "node", "development|production"] }
+			resolve: {
+				conditions: [
+					...LOCAL_CONDITIONS,
+					"module",
+					"node",
+					"development|production"
+				]
+			}
 		}
 	};
 }

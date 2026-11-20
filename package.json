@@ -1,6 +1,6 @@
 {
 	"name": "@keros3ne/sdk",
-	"version": "0.20.4",
+	"version": "0.20.5",
 	"description": "Build games for KEROS3NE: how a game's outcomes are made into books, the client's bridge to the site, the stage, the control bar and controls, Storybook, the site's own checks, and keros3ne-studio, the command line to make a game's books, check it and play it. Clone it to start a studio.",
 	"license": "MIT",
 	"type": "module",
@@ -63,15 +63,15 @@
 	},
 	"imports": {
 		"#engine/*": {
-			"local": "./local/engine/src/*.ts",
+			"keros3ne-dev": "./local/engine/src/*.ts",
 			"default": "@keros3ne/engine/*"
 		},
 		"#engine/Views.svelte": {
-			"local": "./local/engine/src/Views.svelte",
+			"keros3ne-dev": "./local/engine/src/Views.svelte",
 			"default": "@keros3ne/engine/Views.svelte"
 		},
 		"#engine/GameFrame.svelte": {
-			"local": "./local/engine/src/GameFrame.svelte",
+			"keros3ne-dev": "./local/engine/src/GameFrame.svelte",
 			"default": "@keros3ne/engine/GameFrame.svelte"
 		}
 	},
@@ -88,7 +88,7 @@
 		"lint": "prettier --check .",
 		"test:browser": "bun node_modules/@playwright/test/cli.js install chromium && bun node_modules/@playwright/test/cli.js test",
 		"pack": "bun sdk/cli.ts pack",
-		"local": "LOCAL_PACKAGES=1 BUN_OPTIONS=--conditions=local NODE_OPTIONS=--conditions=local bun run"
+		"local": "KEROS3NE_DEV=1 BUN_OPTIONS=--conditions=keros3ne-dev NODE_OPTIONS=--conditions=keros3ne-dev bun run"
 	},
 	"dependencies": {
 		"@keros3ne/engine": "github:Keros3ne/engine#v0.8.0",

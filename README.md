@@ -112,7 +112,7 @@ To change the two together before either is released, clone the engine beside th
 repository and link it: `mkdir -p local && ln -s ../../engine local/engine`. Then
 `bun run local <script>` runs any script here on that clone (`bun run local test`,
 `bun run local test:browser`, `bun run typecheck:local`). The SDK reaches the engine
-through `imports` in `package.json` (`#engine/...`), whose `local` condition names the
+through `imports` in `package.json` (`#engine/...`), whose `keros3ne-dev` condition names the
 clone's files; without it, the same imports are the installed package.
 
 MIT licensed: see `LICENSE`.
