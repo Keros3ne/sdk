@@ -63,7 +63,7 @@ Created: 2026-11-19
 
 	/* Chosen, and waiting for play. */
 	:global(.sdk-bar-frame .sdk-autoplay[data-ready]) {
-		border-color: var(--bar-on, #d49791);
-		color: var(--bar-on, #d49791);
+		border-color: var(--bar-on, #8ab4f8);
+		color: var(--bar-on, #8ab4f8);
 	}
 </style>

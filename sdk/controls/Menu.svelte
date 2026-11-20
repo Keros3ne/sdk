@@ -12,6 +12,7 @@ Author: dwclake
 Created: 2026-11-17
 -->
 <script lang="ts" module>
+	import { getView } from "../view.svelte.ts";
 	import { controlProperties, dress, type ControlLook } from "../look.ts";
 	/** The most options a menu's list shows at once; more scroll. */
 	const MENU_ROWS = 8;
@@ -54,6 +55,8 @@ Created: 2026-11-17
 	let active = $state(0);
 	/** The way the list is open now, which may not be the way asked. */
 	let way = $state<"up" | "down">();
+	// The view it is in, if it is in one: what is measured on the screen is scaled by it.
+	const view = getView();
 
 	const selected = $derived(
 		Math.max(
@@ -100,8 +103,10 @@ Created: 2026-11-17
 		const whole = row * Math.min(options.length, MENU_ROWS) + frame + margin * 2;
 
 		// The way asked, unless it has no room for the whole list and the other way has more.
-		const above = from.top - top;
-		const below = bottom - from.bottom;
+		// Measured on the screen, and reckoned in the view's own pixels, as the list is laid out.
+		const shrunk = view?.scale || 1;
+		const above = (from.top - top) / shrunk;
+		const below = (bottom - from.bottom) / shrunk;
 		const [want, other] = opens === "down" ? [below, above] : [above, below];
 		const flip = want < whole && other > want;
 
@@ -116,7 +121,7 @@ Created: 2026-11-17
 		let shift = 0;
 		if (box.right > right - margin) shift = right - margin - box.right;
 		if (box.left + shift < left + margin) shift = left + margin - box.left;
-		list.style.setProperty("--sdk-shift", `${Math.round(shift)}px`);
+		list.style.setProperty("--sdk-shift", `${Math.round(shift / shrunk)}px`);
 	}
 
 	/** Opens or closes the list. Closing puts the keyboard back on the button unless told not to. */
@@ -246,10 +251,10 @@ Created: 2026-11-17
 	.sdk-menu-label {
 		font-size: 13px;
 		font-weight: 500;
-		color: var(--sdk-dim, #d6ccd2);
+		color: var(--sdk-dim, #b4b6ba);
 	}
 
-	/* An underlined field, as the site's own menus are: the line turns to the accent on focus. */
+	/* An underlined field: the line turns to the accent on focus. */
 	.sdk-menu-button {
 		display: inline-flex;
 		align-items: center;
@@ -258,10 +263,10 @@ Created: 2026-11-17
 		min-height: 44px;
 		padding: 0 2px;
 		border: 0;
-		border-bottom: 1px solid var(--sdk-line, #53474e);
+		border-bottom: 1px solid var(--sdk-line, #4c4e53);
 		border-radius: 0;
 		background: transparent;
-		color: var(--sdk-ink, #f4f1f2);
+		color: var(--sdk-ink, #f2f2f2);
 		font: inherit;
 		text-align: left;
 		cursor: pointer;
@@ -296,10 +301,10 @@ Created: 2026-11-17
 		margin: 0;
 		padding: 4px;
 		list-style: none;
-		border: 1px solid var(--sdk-line, #42363b);
+		border: 1px solid var(--sdk-line, #3b3d42);
 		border-radius: 6px;
-		background: var(--sdk-surface, #2f232b);
-		color: var(--sdk-ink, #f4f1f2);
+		background: var(--sdk-surface, #26272b);
+		color: var(--sdk-ink, #f2f2f2);
 		box-shadow:
 			0 1px 2px rgb(0 0 0 / 0.3),
 			0 10px 28px rgb(0 0 0 / 0.45);
@@ -337,7 +342,7 @@ Created: 2026-11-17
 		bottom: 25%;
 		width: 3px;
 		border-radius: 2px;
-		background: var(--sdk-accent, #d49791);
+		background: var(--sdk-accent, #8ab4f8);
 	}
 
 	.sdk-menu-option.sdk-active {
@@ -346,12 +351,12 @@ Created: 2026-11-17
 
 	.sdk-menu-button:focus-visible {
 		outline: none;
-		border-bottom-color: var(--sdk-accent, #d49791);
-		box-shadow: 0 1px 0 0 var(--sdk-accent, #d49791);
+		border-bottom-color: var(--sdk-accent, #8ab4f8);
+		box-shadow: 0 1px 0 0 var(--sdk-accent, #8ab4f8);
 	}
 
 	.sdk-menu-list:focus-visible {
-		outline: 2px solid var(--sdk-accent, #d49791);
+		outline: 2px solid var(--sdk-accent, #8ab4f8);
 		outline-offset: 2px;
 	}
 </style>

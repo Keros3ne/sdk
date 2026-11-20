@@ -1,7 +1,7 @@
 /**
  * How a studio makes the SDK's control bar and controls its game's own: the `look` each
  * component takes as a prop, and the properties their style sheets read that carry it
- * (./bar.css, ./ui.css). Everything left out stays as the site draws it.
+ * (./bar.css, ./ui.css). Everything left out stays as the SDK draws it: plain dark glass, near-white ink, and a light blue for what is on.
  *
  * A look changes how a thing is dressed, never what it is: the bar's segments, where a
  * popup opens and what a player needs to see are not in it.
@@ -98,7 +98,7 @@ export interface BarLook {
 	accent?: string;
 	/** The symbol on the play button. */
 	onAccent?: string;
-	/** Whatever is switched on or open, and focus. The site's accent, left out. */
+	/** Whatever is switched on or open, and focus. A light blue, left out. */
 	on?: string;
 	/** The last win, while it is the last play's own. */
 	win?: string;

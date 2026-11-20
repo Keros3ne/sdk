@@ -136,12 +136,12 @@ Created: 2026-11-17
 	}
 
 	.scenery span {
-		border: 1px solid #53474e;
+		border: 1px solid #4c4e53;
 		border-radius: 14%;
-		background: #2f232b;
+		background: #26272b;
 	}
 
 	.scenery span.lit {
-		background: #d49791;
+		background: #8ab4f8;
 	}
 </style>

@@ -47,7 +47,7 @@ Created: 2026-11-17
 	}
 
 	.sdk-action:hover:not(:disabled) {
-		border-color: var(--sdk-line, #42363b);
+		border-color: var(--sdk-line, #3b3d42);
 	}
 
 	.sdk-action:disabled {
@@ -56,7 +56,7 @@ Created: 2026-11-17
 	}
 
 	.sdk-action:focus-visible {
-		outline: 2px solid var(--sdk-accent, #d49791);
+		outline: 2px solid var(--sdk-accent, #8ab4f8);
 		outline-offset: 2px;
 	}
 </style>

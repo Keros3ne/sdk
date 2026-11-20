@@ -328,7 +328,7 @@ Created: 2026-11-19
 		inset: 0;
 		box-sizing: border-box;
 		pointer-events: none;
-		color: var(--bar-ink, #f4f1f2);
+		color: var(--bar-ink, #f2f2f2);
 		font:
 			500 calc(15px * var(--s))/1.2 var(--bar-font, "Geist Variable"),
 			ui-sans-serif,

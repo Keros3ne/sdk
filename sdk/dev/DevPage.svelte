@@ -341,7 +341,7 @@ Created: 2026-11-19
 	:global(body) {
 		margin: 0;
 		background: #17111a;
-		color: #f4f1f2;
+		color: #f2f2f2;
 		font:
 			15px/1.5 system-ui,
 			sans-serif;
@@ -381,14 +381,14 @@ Created: 2026-11-19
 		font-weight: 500;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
-		color: #c0aeb2;
+		color: #b4b6ba;
 	}
 
 	.about,
 	.note,
 	.size {
 		margin: 0;
-		color: #c0aeb2;
+		color: #b4b6ba;
 		font-size: 0.875rem;
 	}
 
@@ -467,11 +467,11 @@ Created: 2026-11-19
 
 	.segmented button {
 		padding: 0.375rem 0.75rem;
-		color: #c0aeb2;
+		color: #b4b6ba;
 	}
 
 	.segmented button[aria-pressed="true"] {
-		color: #f4f1f2;
+		color: #f2f2f2;
 		box-shadow: inset 0 -2px 0 #e86a8c;
 	}
 
@@ -488,7 +488,7 @@ Created: 2026-11-19
 	}
 
 	dt {
-		color: #c0aeb2;
+		color: #b4b6ba;
 		font-size: 0.8125rem;
 	}
 
@@ -529,7 +529,7 @@ Created: 2026-11-19
 
 	.log .time,
 	.log .who {
-		color: #c0aeb2;
+		color: #b4b6ba;
 	}
 
 	.log .text {

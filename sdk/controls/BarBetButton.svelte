@@ -86,7 +86,7 @@ Created: 2026-11-19
 		min-width: calc(36px * var(--s));
 	}
 	:global(.sdk-bar-frame .sdk-bar-betbutton .sdk-bar-label) {
-		color: color-mix(in srgb, var(--bar-ink, #f4f1f2) 82%, transparent);
+		color: color-mix(in srgb, var(--bar-ink, #f2f2f2) 82%, transparent);
 	}
 	:global(.sdk-bar-frame .sdk-bar-betbutton output) {
 		font-size: calc(17px * var(--s));
@@ -102,7 +102,7 @@ Created: 2026-11-19
 
 	/* Open: its edge and its figures in the colour of what is on. */
 	:global(.sdk-bar-frame .sdk-bar-betbutton[aria-expanded="true"]) {
-		border-color: var(--bar-on, #d49791);
-		color: var(--bar-on, #d49791);
+		border-color: var(--bar-on, #8ab4f8);
+		color: var(--bar-on, #8ab4f8);
 	}
 </style>

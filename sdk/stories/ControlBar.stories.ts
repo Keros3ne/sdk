@@ -34,7 +34,7 @@ export const FreeSpinsRunning: Story = { args: { freeSpins: 8 } };
 
 export const InATallView: Story = { args: { shape: "tall" } };
 
-export const Stained: Story = { args: { tint: "#d49791" } };
+export const Stained: Story = { args: { tint: "#8ab4f8" } };
 
 export const StainedInATallView: Story = { args: { tint: "#6a3df0", shape: "tall" } };
 

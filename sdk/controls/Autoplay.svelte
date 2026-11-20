@@ -165,17 +165,17 @@ Created: 2026-11-17
 		width: 100%;
 		min-height: 40px;
 		padding: 0 14px;
-		border: 1px solid var(--sdk-main, var(--sdk-ink, #f4f1f2));
+		border: 1px solid var(--sdk-main, var(--sdk-ink, #f2f2f2));
 		border-radius: var(--sdk-radius, 999px);
-		background: var(--sdk-main, var(--sdk-ink, #f4f1f2));
-		color: var(--sdk-on-main, #25191c);
+		background: var(--sdk-main, var(--sdk-ink, #f2f2f2));
+		color: var(--sdk-on-main, #17181a);
 		font: inherit;
 		font-weight: 500;
 		cursor: pointer;
 	}
 
 	.sdk-start:focus-visible {
-		outline: 2px solid var(--sdk-accent, #d49791);
+		outline: 2px solid var(--sdk-accent, #8ab4f8);
 		outline-offset: 2px;
 	}
 </style>

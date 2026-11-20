@@ -425,14 +425,20 @@ and refuses a client built for another version of the protocol.
     (`/controls`): `BarMenu`, `BarBalance`, `BarBet` (with minus and plus) or `BarBetButton`
     (one button that opens the bets), `BarPlay`, `BarAutoplay`, `BarSpeed` and `BarWin`.
     Write them inside a `BarFrame`, which takes what `ControlBar` takes and holds what the
-    items share, in one `BarPart` or several, each placed and dressed by your own style
-    sheet:
+    items share, in one `BarPart` or several, each placed and dressed by its own props
+    (`edge`, `inset` for a part afloat, clear of the game's edges, and `look`: what it is
+    drawn on, its edge, corners, padding, shadow and blur). What is inside a part you lay
+    out yourself, with elements and styles of your own component:
 
         <BarFrame {bets} {startBet} {limits} {play} {onplay} {balance} {win} {busy} bind:bet bind:bar>
           {#snippet children(shared)}
-            <BarPart edge="top" class="my-readouts"><BarBalance /><BarWin /></BarPart>
-            <BarPart class="my-bar">
-              <BarMenu /><BarBet arrange="column-end" /><BarPlay size={1.3} /><BarAutoplay /><BarSpeed />
+            <BarPart edge="top" inset={16} look={{ surface: "#0008", radius: "999px", padding: "8px 20px" }}>
+              <div class="readouts"><BarBalance /><BarWin /></div>
+            </BarPart>
+            <BarPart inset={16} gap={14} look={{ surface: "#0008", radius: "44px" }}>
+              <div class="row">
+                <BarMenu /><BarBet arrange="column-end" /><BarPlay size={1.3} /><BarAutoplay /><BarSpeed />
+              </div>
             </BarPart>
           {/snippet}
         </BarFrame>

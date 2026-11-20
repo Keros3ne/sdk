@@ -54,7 +54,7 @@ Created: 2026-11-19
 <style>
 	/* Switched on: fast, or turbo. */
 	:global(.sdk-bar-frame) .sdk-bar-speed:not([data-speed="0"]) {
-		border-color: var(--bar-on, #d49791);
-		color: var(--bar-on, #d49791);
+		border-color: var(--bar-on, #8ab4f8);
+		color: var(--bar-on, #8ab4f8);
 	}
 </style>

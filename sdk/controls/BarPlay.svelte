@@ -60,7 +60,7 @@ Created: 2026-11-19
 		place-items: center;
 		flex: none;
 		padding: 0;
-		border: 1px solid var(--bar-accent, #f4f1f2);
+		border: 1px solid var(--bar-accent, #f2f2f2);
 		font: inherit;
 		font-weight: 500;
 		cursor: pointer;
@@ -71,13 +71,13 @@ Created: 2026-11-19
 		min-width: calc(72px * var(--s));
 		height: calc(72px * var(--s));
 		min-height: calc(72px * var(--s));
-		border-color: var(--bar-accent, #f4f1f2);
+		border-color: var(--bar-accent, #f2f2f2);
 		border-radius: 50%;
-		background: var(--bar-accent, #f4f1f2);
+		background: var(--bar-accent, #f2f2f2);
 		box-shadow:
 			inset 0 calc(-3px * var(--s)) 0 rgb(0 0 0 / 0.12),
 			0 calc(6px * var(--s)) calc(18px * var(--s)) rgb(0 0 0 / 0.35);
-		color: var(--bar-on-accent, #25191c);
+		color: var(--bar-on-accent, #17181a);
 	}
 	.sdk-bar-play :global(svg) {
 		width: calc(36px * var(--s));

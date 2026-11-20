@@ -10,9 +10,9 @@
  * `calc(Npx * var(--s))`.
  *
  * How a bar looks is its `look` prop (./look.ts, `BarLook`), which sets these on its frame.
- * Left alone, the glass is the site's own dark surface seen through, the text and the play
- * button the site's ink, and the accent only for what is on and for focus. The values here
- * repeat the site's (src/app.css), which a game's frame cannot read; change both together.
+ * Left alone, the bar is plain: dark glass, near-white text and play button, and one accent,
+ * a light blue, only for what is on and for focus. They are the SDK's own and belong to no
+ * site: a game sets its own through `look`.
  *
  *   --bar-surface        what the bar is drawn on: glass, left alone
  *   --bar-tint           a colour the glass is stained with. Clear, left alone.
@@ -28,9 +28,9 @@
  *   --bar-button-radius  the corners of its buttons. Circles, left alone.
  *   --bar-accent         the play button. Left alone, solid ink.
  *   --bar-on-accent      the symbol on the play button
- *   --bar-on             whatever is switched on or open. Left alone, the site's accent.
- *   --bar-font           its typeface. Left alone it is the site's own.
- *   --bar-label-font     its small labels' typeface. Left alone, the site's mono.
+ *   --bar-on             whatever is switched on or open. Left alone, a light blue.
+ *   --bar-font           its typeface. Left alone, Geist.
+ *   --bar-label-font     its small labels' typeface. Left alone, Geist Mono.
  *   --bar-gap            the room between items
  *
  * Each item is a box of its own, drawn with nothing round it unless asked: an item's own
@@ -52,22 +52,22 @@
 	--bar-glass: color-mix(
 		in srgb,
 		var(--bar-tint, transparent) 26%,
-		rgb(30 22 28 / 0.6)
+		rgb(24 25 28 / 0.6)
 	);
 	--bar-glass-popup: color-mix(
 		in srgb,
 		var(--bar-tint, transparent) 30%,
-		rgb(26 19 24 / 0.82)
+		rgb(20 21 23 / 0.82)
 	);
 	--bar-glass-blur: blur(22px) saturate(1.25);
-	--sdk-ink: var(--bar-ink, #f4f1f2);
+	--sdk-ink: var(--bar-ink, #f2f2f2);
 	--sdk-surface: var(--bar-popup, var(--bar-glass-popup));
-	--sdk-dim: var(--bar-dim, #c0aeb2);
+	--sdk-dim: var(--bar-dim, #b4b6ba);
 	--sdk-line: var(--bar-line, rgb(255 255 255 / 0.22));
-	--sdk-accent: var(--bar-on, #d49791);
-	--sdk-on-accent: #25191c;
-	--sdk-main: var(--bar-accent, #f4f1f2);
-	--sdk-on-main: var(--bar-on-accent, #25191c);
+	--sdk-accent: var(--bar-on, #8ab4f8);
+	--sdk-on-accent: #17181a;
+	--sdk-main: var(--bar-accent, #f2f2f2);
+	--sdk-on-main: var(--bar-on-accent, #17181a);
 
 	/* The size chosen by the studio. The frame sets --bar-s on itself. */
 	--s: var(--bar-s, 1);
@@ -84,14 +84,14 @@
 .sdk-bar-segment {
 	--s: calc(var(--bar-s, 1) * var(--segment-scale, 1));
 	/* Said again here, so that an item's own colours reach the popup it opens. */
-	--sdk-ink: var(--bar-ink, #f4f1f2);
+	--sdk-ink: var(--bar-ink, #f2f2f2);
 	--sdk-surface: var(--bar-popup, var(--bar-glass-popup));
-	--sdk-dim: var(--bar-dim, #c0aeb2);
+	--sdk-dim: var(--bar-dim, #b4b6ba);
 	--sdk-line: var(--bar-line, rgb(255 255 255 / 0.22));
-	--sdk-accent: var(--bar-on, #d49791);
-	--sdk-main: var(--bar-accent, #f4f1f2);
-	--sdk-on-main: var(--bar-on-accent, #25191c);
-	color: var(--bar-ink, #f4f1f2);
+	--sdk-accent: var(--bar-on, #8ab4f8);
+	--sdk-main: var(--bar-accent, #f2f2f2);
+	--sdk-on-main: var(--bar-on-accent, #17181a);
+	color: var(--bar-ink, #f2f2f2);
 	display: flex;
 	align-items: center;
 	gap: calc(8px * var(--s));
@@ -116,7 +116,7 @@
 	font-weight: 500;
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
-	color: var(--bar-dim, #c0aeb2);
+	color: var(--bar-dim, #b4b6ba);
 }
 .sdk-bar-readout output {
 	font-size: calc(19px * var(--s));
@@ -159,7 +159,7 @@
 	border-radius: var(--bar-button-radius, 50%);
 	background: var(--bar-button, rgb(255 255 255 / 0.1));
 	box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
-	color: var(--bar-ink, #f4f1f2);
+	color: var(--bar-ink, #f2f2f2);
 	font: inherit;
 	font-weight: 500;
 	cursor: pointer;
@@ -177,10 +177,10 @@
 }
 /* A button whose popup is open: the menu's, autoplay's. */
 .sdk-bar-frame .sdk-bar-button[aria-expanded="true"] {
-	border-color: var(--bar-on, #d49791);
-	color: var(--bar-on, #d49791);
+	border-color: var(--bar-on, #8ab4f8);
+	color: var(--bar-on, #8ab4f8);
 }
 .sdk-bar-frame button:focus-visible {
-	outline: 2px solid var(--bar-on, #d49791);
+	outline: 2px solid var(--bar-on, #8ab4f8);
 	outline-offset: 2px;
 }

@@ -165,7 +165,7 @@ Created: 2026-11-17
 
 	.sdk-slider-amount {
 		font-variant-numeric: tabular-nums;
-		color: var(--sdk-dim, #d6ccd2);
+		color: var(--sdk-dim, #b4b6ba);
 	}
 
 	.sdk-slider-track {
@@ -189,9 +189,9 @@ Created: 2026-11-17
 		border-radius: 999px;
 		background: linear-gradient(
 			to right,
-			var(--sdk-main, var(--sdk-ink, #f4f1f2))
+			var(--sdk-main, var(--sdk-ink, #f2f2f2))
 				calc(var(--knob) / 2 + (100% - var(--knob)) * var(--sdk-at-share, 0)),
-			var(--sdk-line, #53474e) 0
+			var(--sdk-line, #4c4e53) 0
 		);
 	}
 
@@ -202,9 +202,9 @@ Created: 2026-11-17
 		width: var(--knob);
 		height: var(--knob);
 		margin-top: calc(var(--knob) / -2);
-		border: 1px solid var(--sdk-on-main, #25191c);
+		border: 1px solid var(--sdk-on-main, #17181a);
 		border-radius: 50%;
-		background: var(--sdk-main, var(--sdk-ink, #f4f1f2));
+		background: var(--sdk-main, var(--sdk-ink, #f2f2f2));
 	}
 
 	.sdk-slider.sdk-disabled {
@@ -216,7 +216,7 @@ Created: 2026-11-17
 	}
 
 	.sdk-slider-track:focus-visible {
-		outline: 2px solid var(--sdk-accent, #d49791);
+		outline: 2px solid var(--sdk-accent, #8ab4f8);
 		outline-offset: 2px;
 	}
 </style>

@@ -46,7 +46,7 @@ Created: 2026-11-19
 		margin: 0;
 		padding: 4px 8px;
 		min-height: 1.4em;
-		color: #c0aeb2;
+		color: #b4b6ba;
 		font:
 			13px/1.4 ui-monospace,
 			monospace;

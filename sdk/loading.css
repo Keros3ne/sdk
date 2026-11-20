@@ -22,8 +22,7 @@
  *   --loading-logo-width     the logo's width and --loading-logo-height the most it is tall
  *   --loading-gap            the room between the logo, the name and the bar
  *
- * The values left alone repeat the site's own (src/app.css), which a game's frame
- * cannot read.
+ * The values left alone are the SDK's own, plain and dark, and belong to no site.
  *
  * A client's page is rendered when it is built (./client-build.ts), so the screen is in
  * the page itself, since the game's code is most of what there is to wait for: filled by
@@ -50,8 +49,8 @@
 	place-content: center;
 	justify-items: center;
 	gap: var(--loading-gap, 18px);
-	background: var(--loading-surface, #281b1f);
-	color: var(--loading-ink, var(--bar-ink, #f4f1f2));
+	background: var(--loading-surface, #1d1e21);
+	color: var(--loading-ink, var(--bar-ink, #f2f2f2));
 	font:
 		var(--loading-title-weight, 500) var(--loading-title-size, 15px) / 1.2
 			var(--loading-font, var(--bar-font, "Geist Variable")),
@@ -86,11 +85,11 @@
 	height: var(--loading-bar-height, 4px);
 	overflow: hidden;
 	border-radius: var(--loading-bar-radius, 2px);
-	background: var(--loading-track, #42363b);
+	background: var(--loading-track, #3b3d42);
 }
 .sdk-loading-fill {
 	height: 100%;
-	background: var(--loading-fill, var(--bar-accent, #f4f1f2));
+	background: var(--loading-fill, var(--bar-accent, #f2f2f2));
 	transform: scaleX(0);
 	transform-origin: left;
 	transition: transform 200ms;

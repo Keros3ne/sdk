@@ -63,7 +63,7 @@ Created: 2026-11-17
 		border: 0;
 		border-radius: 14px;
 		background: none;
-		color: var(--sdk-ink, #f4f1f2);
+		color: var(--sdk-ink, #f2f2f2);
 		font: inherit;
 		text-align: left;
 		cursor: pointer;
@@ -81,7 +81,7 @@ Created: 2026-11-17
 		flex: none;
 		width: 40px;
 		height: 24px;
-		border: 1px solid var(--sdk-line, #53474e);
+		border: 1px solid var(--sdk-line, #4c4e53);
 		border-radius: 999px;
 		background: transparent;
 	}
@@ -94,18 +94,18 @@ Created: 2026-11-17
 		width: 16px;
 		height: 16px;
 		border-radius: 50%;
-		background: var(--sdk-dim, #d6ccd2);
+		background: var(--sdk-dim, #b4b6ba);
 		transition: transform 120ms;
 	}
 
 	.sdk-switch[aria-checked="true"] .sdk-switch-track {
-		border-color: var(--sdk-accent, #d49791);
-		background: var(--sdk-accent, #d49791);
+		border-color: var(--sdk-accent, #8ab4f8);
+		background: var(--sdk-accent, #8ab4f8);
 	}
 
 	.sdk-switch[aria-checked="true"] .sdk-switch-track::after {
 		transform: translateX(16px);
-		background: var(--sdk-on-accent, #25191c);
+		background: var(--sdk-on-accent, #17181a);
 	}
 
 	.sdk-switch:disabled {
@@ -114,7 +114,7 @@ Created: 2026-11-17
 	}
 
 	.sdk-switch:focus-visible {
-		outline: 2px solid var(--sdk-accent, #d49791);
+		outline: 2px solid var(--sdk-accent, #8ab4f8);
 		outline-offset: 2px;
 	}
 

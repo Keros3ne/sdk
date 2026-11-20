@@ -48,7 +48,7 @@ Created: 2026-11-19
 	}
 	/* The last win: green while it is the last play's own, greyed once it is an earlier play's. */
 	.sdk-bar-win output {
-		color: var(--bar-dim, #c0aeb2);
+		color: var(--bar-dim, #b4b6ba);
 	}
 	.sdk-bar-win[data-fresh] output {
 		color: var(--bar-win, #8fc79a);

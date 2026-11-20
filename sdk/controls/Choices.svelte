@@ -126,7 +126,7 @@ Created: 2026-11-17
 	.sdk-choices-label {
 		font-size: 13px;
 		font-weight: 500;
-		color: var(--sdk-dim, #d6ccd2);
+		color: var(--sdk-dim, #b4b6ba);
 	}
 
 	.sdk-choices-row {
@@ -155,7 +155,7 @@ Created: 2026-11-17
 		border: 0;
 		border-radius: var(--sdk-radius, 999px);
 		background: rgb(255 255 255 / 0.08);
-		color: var(--sdk-ink, #f4f1f2);
+		color: var(--sdk-ink, #f2f2f2);
 		font: inherit;
 		font-size: 14px;
 		font-weight: 500;
@@ -172,12 +172,12 @@ Created: 2026-11-17
 	}
 
 	.sdk-choice[aria-checked="true"] {
-		background: var(--sdk-main, #f4f1f2);
-		color: var(--sdk-on-main, #25191c);
+		background: var(--sdk-main, #f2f2f2);
+		color: var(--sdk-on-main, #17181a);
 	}
 
 	.sdk-choice:focus-visible {
-		outline: 2px solid var(--sdk-accent, #d49791);
+		outline: 2px solid var(--sdk-accent, #8ab4f8);
 		outline-offset: 2px;
 	}
 </style>

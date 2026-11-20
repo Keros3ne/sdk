@@ -4,11 +4,10 @@
  * <select> opens a menu the game cannot style, and one that may not open at all
  * inside a frame in full screen. These are the replacements.
  *
- * Left alone they are of the same glass as the control bar (./bar.css), in the site's
- * colours (src/app.css): popups of dark glass with round corners, choices as pills with
- * the one chosen solid ink, a menu that is an underlined field, the one main action
- * solid ink, and the accent only for focus and for what is on. The values here
- * repeat the site's, which a game's frame cannot read; change both together.
+ * Left alone they are of the same plain glass as the control bar (./bar.css): popups of
+ * dark glass with round corners, choices as pills with the one chosen solid, a menu that
+ * is an underlined field, the one main action solid, and the accent only for focus and
+ * for what is on. The colours are the SDK's own and belong to no site.
  *
  * A game makes them its own through each control's `look` prop (./look.ts,
  * `ControlLook`), which sets these on the control:
@@ -29,5 +28,5 @@
 	display: block;
 	font-size: 12px;
 	font-weight: 400;
-	color: var(--sdk-dim, #d6ccd2);
+	color: var(--sdk-dim, #b4b6ba);
 }

@@ -1,5 +1,5 @@
 <!--
-A field to type a value in, such as a target multiplier: underlined, as the site's own
+A field to type a value in, such as a target multiplier: underlined,
 fields are, the line turning to the accent while it is typed in. `inputMode` brings up the
 right keyboard on a phone. `bind:value` is what is typed, and `note` a line under it: what
 the value means, or what is wrong with it.
@@ -60,7 +60,7 @@ Created: 2026-11-17
 </label>
 
 <style>
-	/* A field to type in: underlined, as the site's are, the line turning to the accent while typing. */
+	/* A field to type in: underlined, the line turning to the accent while typing. */
 	.sdk-field {
 		display: inline-grid;
 		gap: 6px;
@@ -69,25 +69,25 @@ Created: 2026-11-17
 	.sdk-field-label {
 		font-size: 13px;
 		font-weight: 500;
-		color: var(--sdk-dim, #d6ccd2);
+		color: var(--sdk-dim, #b4b6ba);
 	}
 
 	.sdk-field-input {
 		min-height: 44px;
 		padding: 0 2px;
 		border: 0;
-		border-bottom: 1px solid var(--sdk-line, #53474e);
+		border-bottom: 1px solid var(--sdk-line, #4c4e53);
 		border-radius: 0;
 		background: transparent;
-		color: var(--sdk-ink, #f4f1f2);
+		color: var(--sdk-ink, #f2f2f2);
 		font: inherit;
 		font-variant-numeric: tabular-nums;
 	}
 
 	.sdk-field-input:focus {
 		outline: none;
-		border-bottom-color: var(--sdk-accent, #d49791);
-		box-shadow: 0 1px 0 0 var(--sdk-accent, #d49791);
+		border-bottom-color: var(--sdk-accent, #8ab4f8);
+		box-shadow: 0 1px 0 0 var(--sdk-accent, #8ab4f8);
 	}
 
 	.sdk-field-input:disabled {
@@ -97,6 +97,6 @@ Created: 2026-11-17
 	.sdk-field-note {
 		min-height: 1.2em;
 		font-size: 12px;
-		color: var(--sdk-dim, #d6ccd2);
+		color: var(--sdk-dim, #b4b6ba);
 	}
 </style>

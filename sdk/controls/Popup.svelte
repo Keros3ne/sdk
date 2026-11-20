@@ -15,6 +15,7 @@ Author: dwclake
 Created: 2026-11-17
 -->
 <script lang="ts">
+	import { getView } from "../view.svelte.ts";
 	import { controlProperties, dress, type ControlLook } from "../look.ts";
 	import { flushSync, type Snippet } from "svelte";
 
@@ -66,6 +67,8 @@ Created: 2026-11-17
 	let button = $state<HTMLButtonElement>();
 	let panel = $state<HTMLElement>();
 	let open = $state(false);
+	// The view it is in, if it is in one: what is measured on the screen is scaled by it.
+	const view = getView();
 
 	/** Slides the panel sideways so that none of it is outside the game. */
 	function place() {
@@ -83,7 +86,12 @@ Created: 2026-11-17
 		if (box.right > right - margin) shift = right - margin - box.right;
 		if (box.left + shift < left + margin) shift = left + margin - box.left;
 
-		panel.style.setProperty("--sdk-shift", `${Math.round(shift)}px`);
+		// Measured on the screen, and said in the view's own pixels: a view is scaled as a
+		// whole, and a panel slid by the screen's measure in a view shown small fell short.
+		panel.style.setProperty(
+			"--sdk-shift",
+			`${Math.round(shift / (view?.scale || 1))}px`
+		);
 	}
 
 	/** A press anywhere outside closes the panel. */
@@ -206,10 +214,10 @@ Created: 2026-11-17
 		justify-content: center;
 		min-height: 40px;
 		padding: 0 14px;
-		border: 1px solid var(--sdk-line, #42363b);
+		border: 1px solid var(--sdk-line, #3b3d42);
 		border-radius: var(--sdk-radius, 999px);
-		background: var(--sdk-surface, #2f232b);
-		color: var(--sdk-ink, #f4f1f2);
+		background: var(--sdk-surface, #26272b);
+		color: var(--sdk-ink, #f2f2f2);
 		font: inherit;
 		font-weight: 500;
 		cursor: pointer;
@@ -221,8 +229,8 @@ Created: 2026-11-17
 	}
 
 	:where(.sdk-popup-button)[aria-expanded="true"] {
-		border-color: var(--sdk-accent, #d49791);
-		color: var(--sdk-accent, #d49791);
+		border-color: var(--sdk-accent, #8ab4f8);
+		color: var(--sdk-accent, #8ab4f8);
 	}
 
 	.sdk-popup-panel {
@@ -239,9 +247,9 @@ Created: 2026-11-17
 		border: 1px solid var(--sdk-line, rgb(255 255 255 / 0.22));
 		border-radius: 22px;
 		/* Glass, as the bar is: what is behind shows through, blurred. */
-		background: var(--sdk-surface, rgb(26 19 24 / 0.82));
+		background: var(--sdk-surface, rgb(20 21 23 / 0.82));
 		backdrop-filter: blur(22px) saturate(1.25);
-		color: var(--sdk-ink, #f4f1f2);
+		color: var(--sdk-ink, #f2f2f2);
 		box-shadow:
 			inset 0 1px 0 rgb(255 255 255 / 0.2),
 			0 14px 36px rgb(0 0 0 / 0.45);
@@ -264,7 +272,7 @@ Created: 2026-11-17
 	}
 
 	:where(.sdk-popup-button):focus-visible {
-		outline: 2px solid var(--sdk-accent, #d49791);
+		outline: 2px solid var(--sdk-accent, #8ab4f8);
 		outline-offset: 2px;
 	}
 </style>
