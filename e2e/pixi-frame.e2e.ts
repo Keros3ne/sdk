@@ -1,10 +1,10 @@
 /**
  * Pixi under the policy a studio game's client is served with. The web SDK draws games
- * with Pixi, and the frame's policy (sdk/frame.ts) is not to be loosened for it:
+ * with Pixi, and the frame's policy (src/frame.ts) is not to be loosened for it:
  * no `unsafe-eval`, no requests, no workers. This holds the settings that make that so,
  * and shows that Pixi as it comes does not get by without them.
  *
- * The page is the SDK's own (sdk/test/pixi-frame), built as every client is and
+ * The page is the SDK's own (src/test/pixi-frame), built as every client is and
  * served here exactly as the site serves a client.
  *
  * Author: dwclake
@@ -20,7 +20,7 @@ let served: Awaited<ReturnType<typeof serveClient>>;
 
 test.beforeAll(async () => {
 	served = await serveClient(
-		"sdk/test/pixi-frame/client",
+		"src/test/pixi-frame/client",
 		"pixi-frame",
 		4230 + test.info().parallelIndex
 	);

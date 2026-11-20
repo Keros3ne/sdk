@@ -1,10 +1,10 @@
 /**
- * The SDK's Pixi bindings for Svelte (sdk/pixi), in a browser, under the policy a
+ * The SDK's Pixi bindings for Svelte (src/pixi), in a browser, under the policy a
  * studio game's client is served with: that what a component says is what Pixi draws,
  * that it follows state as it changes, that a piece comes and goes with its component,
  * and that presses and the ticker reach the pieces.
  *
- * The page is the SDK's own (sdk/test/pixi-svelte), built as every client is.
+ * The page is the SDK's own (src/test/pixi-svelte), built as every client is.
  *
  * Author: dwclake
  * Created: 2026-11-17
@@ -24,7 +24,7 @@ let served: Awaited<ReturnType<typeof serveClient>>;
 
 test.beforeAll(async () => {
 	served = await serveClient(
-		"sdk/test/pixi-svelte/client",
+		"src/test/pixi-svelte/client",
 		"pixi-svelte",
 		4240 + test.info().parallelIndex
 	);

@@ -665,13 +665,13 @@ rules; stories are for one piece, one event or one kind of round at a time.
 
 ## The command line
 
-`keros3ne-studio` is `sdk/cli.ts`, run with [Bun](https://bun.sh) in your studio's folder
+`keros3ne-studio` is `src/cli.ts`, run with [Bun](https://bun.sh) in your studio's folder
 (or pass `--root <folder>`). The repository's scripts run it:
 
 ```sh
 bun run books [slug...]     # make a game's books from its maths, and say what they hold
 bun run check [slug...]     # the site's checks: books, guide, maths, client
-bun sdk/cli.ts dev <slug>   # play it in a browser, run by the engine as a site runs it
+bun src/cli.ts dev <slug>   # play it in a browser, run by the engine as a site runs it
 bun run stories             # your stories, and the SDK's own, in Storybook
 ```
 

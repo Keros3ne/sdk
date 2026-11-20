@@ -11,7 +11,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 
-const STUDIO = "sdk/test/book-studio";
+const STUDIO = "src/test/book-studio";
 
 // Storybook builds a story the first time it is asked for, which takes a while when the
 // rest of the suite is running beside it.
@@ -25,7 +25,7 @@ test.beforeAll(async () => {
 
 	// The studio's books, for the stories that play from them.
 	const made = spawnSync("bun", [
-		"sdk/cli.ts",
+		"src/cli.ts",
 		"books",
 		"--root",
 		STUDIO,
@@ -38,7 +38,7 @@ test.beforeAll(async () => {
 	origin = `http://localhost:${port}`;
 	storybook = spawn(
 		"bun",
-		["sdk/cli.ts", "stories", "--root", STUDIO, "--port", String(port)],
+		["src/cli.ts", "stories", "--root", STUDIO, "--port", String(port)],
 		{ stdio: "ignore" }
 	);
 

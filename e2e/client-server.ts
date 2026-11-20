@@ -1,6 +1,6 @@
 /**
  * A client built and served as the site serves a studio game's: built by the SDK's one
- * build, every file under the policy and headers of the frame (sdk/frame.ts). For
+ * build, every file under the policy and headers of the frame (src/frame.ts). For
  * tests of what the SDK gives a client, on pages of the SDK's own.
  *
  * Author: dwclake

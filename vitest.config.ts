@@ -11,7 +11,7 @@
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
-import { localResolve } from "./sdk/local-packages.ts";
+import { localResolve } from "./src/local-packages.ts";
 
 export default defineConfig({
 	...localResolve(),
@@ -29,7 +29,7 @@ export default defineConfig({
 						provider: playwright(),
 						instances: [{ browser: "chromium", headless: true }]
 					},
-					include: ["sdk/**/*.svelte.spec.ts"]
+					include: ["src/**/*.svelte.spec.ts"]
 				}
 			},
 			{
@@ -38,9 +38,9 @@ export default defineConfig({
 					name: "node",
 					environment: "node",
 					testTimeout: 60_000,
-					include: ["sdk/**/*.spec.ts"],
+					include: ["src/**/*.spec.ts"],
 					exclude: [
-						"sdk/**/*.svelte.spec.ts",
+						"src/**/*.svelte.spec.ts",
 						"**/node_modules/**",
 						"**/dist/**"
 					]

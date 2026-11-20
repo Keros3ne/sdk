@@ -1,11 +1,11 @@
 /**
- * The SDK's shared slot pieces (sdk/slot), played from a round's events
- * (sdk/events.ts) in a browser, under the policy a studio game's client is served
+ * The SDK's shared slot pieces (src/slot), played from a round's events
+ * (src/events.ts) in a browser, under the policy a studio game's client is served
  * with: that a row's events are played in order, each waited for, that the board lands
  * where a spin says, falls as the maths says it does, and lights a win with its amount,
  * and that the meter fills.
  *
- * The page is the SDK's own (sdk/test/slot-board), built as every client is.
+ * The page is the SDK's own (src/test/slot-board), built as every client is.
  *
  * Author: dwclake
  * Created: 2026-11-17
@@ -20,7 +20,7 @@ import {
 	HELD_FALLEN,
 	TAKEN,
 	type Sym
-} from "../sdk/test/slot-board/client/src/round";
+} from "../src/test/slot-board/client/src/round";
 import { serveClient } from "./client-server";
 
 /** The colour of each symbol's picture, and of one dimmed because it did not win. */
@@ -42,7 +42,7 @@ let served: Awaited<ReturnType<typeof serveClient>>;
 
 test.beforeAll(async () => {
 	served = await serveClient(
-		"sdk/test/slot-board/client",
+		"src/test/slot-board/client",
 		"slot-board",
 		4250 + test.info().parallelIndex
 	);

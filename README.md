@@ -1,11 +1,11 @@
 # Keros3ne studio SDK
 
 Build games for Keros3ne, a social casino played with play money. This is the SDK
-(`sdk/`): how a game's outcomes are made into books, the client's bridge to the site, the
+(`src/`): how a game's outcomes are made into books, the client's bridge to the site, the
 two views a game is drawn in, the stage, the board, the control bar and controls,
 Storybook, the site's own checks, and the command line, `keros3ne-studio`.
 
-**Its README, [`sdk/README.md`](sdk/README.md), is the contract every game is held to.**
+**Its README, [`src/README.md`](src/README.md), is the contract every game is held to.**
 
 ## Starting a game
 
@@ -25,7 +25,7 @@ and what a studio needs of it is installed with it.
 
 ```sh
 bun install
-bun run books          # make the test studio's books (sdk/test/book-studio)
+bun run books          # make the test studio's books (src/test/book-studio)
 bun run test           # the SDK's unit tests and, in a browser, those of its bar and controls
 bun run test:browser   # its stage, its board, Storybook and `dev`, in a browser
 bun run dev            # the test studio's Reel Test, at http://localhost:4280/
@@ -34,7 +34,7 @@ bun run check          # the site's checks, on the test studio
 bun run typecheck
 ```
 
-The SDK is tested on a small studio of its own, `sdk/test/book-studio`: Gem Drop, which has
+The SDK is tested on a small studio of its own, `src/test/book-studio`: Gem Drop, which has
 one of everything a game played from books can have, and Reel Test, which has a client.
 Neither is an example to start from: that is the template's Game Title. The SDK's version
 is in `package.json`, and a release of it is a tag.

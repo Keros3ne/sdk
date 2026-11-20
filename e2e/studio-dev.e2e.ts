@@ -11,11 +11,11 @@ import {
 import { join, resolve } from "node:path";
 
 /** The SDK's test studio, and the game of it that has a client. */
-const STUDIO = "sdk/test/book-studio";
+const STUDIO = "src/test/book-studio";
 const GAME = "reel-test";
 
 /**
- * `keros3ne-studio dev`, the SDK's stand-in for the site (sdk/dev.ts), on a copy of the
+ * `keros3ne-studio dev`, the SDK's stand-in for the site (src/dev.ts), on a copy of the
  * test studio's game and its books: a copy, so that its rebuilds never touch the game itself.
  * Under test-results, so that it finds the SDK in this repository. Each test starts its
  * own, on a port of its parallel slot (4200 and up), so that tests running at once never
@@ -39,7 +39,7 @@ async function startDev() {
 	const dev: ChildProcess = spawn(
 		"bun",
 		[
-			"sdk/cli.ts",
+			"src/cli.ts",
 			"dev",
 			GAME,
 			"--root",
