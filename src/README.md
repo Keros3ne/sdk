@@ -714,6 +714,11 @@ bun run stories             # your stories, and the SDK's own, in Storybook
    client are committed, so this is how they travel; the records you did commit are what
    they are held to. It is an ordinary archive, which `tar -xzf` opens, so anyone given a
    release can see exactly what it sends.
+   In a repository of several games, send a file only for a game that changed: one whose
+   `books/books.json` or `client/client.json` is not as your last release had it
+   (`keros3ne-studio pack <slug>`). The site keeps the file an earlier tag sent for each
+   of the others, and refuses a release that changes a game's records and sends no file
+   for it.
 5. Send Keros3ne the repository and the tag. (The first time, Keros3ne registers your
    studio and gives it its id; after that a release of any of your repositories is
    taken in under it.)
