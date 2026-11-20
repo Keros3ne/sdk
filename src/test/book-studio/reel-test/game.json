@@ -1,5 +1,6 @@
 {
 	"slug": "reel-test",
+	"version": "1.0.0",
 	"name": "Reel Test",
 	"blurb": "Three reels and one line: the game the SDK's own tests build a client for.",
 	"category": "slots",

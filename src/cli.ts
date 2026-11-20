@@ -7,6 +7,7 @@
  *   keros3ne-studio client [slug...]  build a game's client, and put what was built on record
  *   keros3ne-studio check [slug...]   the site's checks: books, guide, maths, client
  *   keros3ne-studio pack [slug...]    pack each game into the one file a release sends for it
+ *   keros3ne-studio unreleased        the games whose version has no release yet
  *   keros3ne-studio dev <slug>        play the game against a stand-in for the site
  *   keros3ne-studio stories           the studio's stories, and the SDK's own, in Storybook
  *
@@ -45,9 +46,13 @@ Usage:
                                     guide, its maths, and its client as it was built
                                     and put on record
   keros3ne-studio pack [slug...]    pack each game's built client and books, checked,
-                                    into the one file a release sends for it with its
-                                    tag: <slug>.tar.gz, a client folder and a maths
-                                    folder
+                                    into the one file a release of it sends:
+                                    <slug>.tar.gz, a client folder and a maths folder
+  keros3ne-studio unreleased        say which games are due a release: each whose
+                                    version (game.json) has no tag <slug>-v<version>
+                                    in this repository. --json for a workflow to read.
+                                    It reads this machine's repository and nothing
+                                    else
   keros3ne-studio dev <slug>        build the client as it changes, and play the game in a
                                     browser against a stand-in for the site
 
@@ -373,7 +378,7 @@ async function packAllGames(
 		);
 
 	console.log(
-		`\nPacked into ${out}: one file for each game, a client folder and a maths folder in it. Send them with the tag, as the files of its release: gh release create <tag> ${packed.map((name) => join(shown, name)).join(" ")}`
+		`\nPacked into ${shown}: one file for each game, a client folder and a maths folder in it. A game's file is what a release of it sends, and the repository's own workflow makes that release.`
 	);
 
 	return 0;
@@ -473,6 +478,19 @@ async function main(argv: string[]): Promise<number> {
 			return new Promise<number>((done) =>
 				running.on("exit", (code) => done(code ?? 0))
 			);
+		}
+		case "unreleased": {
+			const { unreleased } = await import("./releases.ts");
+			const due = unreleased(root);
+
+			if ("json" in options) console.log(JSON.stringify(due));
+			else if (due.length === 0)
+				console.log("Every game's version has its release's tag.");
+			else
+				for (const { slug, version, tag } of due)
+					console.log(`${slug} is at ${version}, and there is no tag ${tag}.`);
+
+			return 0;
 		}
 		case "client":
 			return buildAllClients(root, slugs);

@@ -7,7 +7,7 @@
       "dependencies": {
         "@fontsource-variable/geist": "^5.3.0",
         "@fontsource-variable/geist-mono": "^5.3.0",
-        "@keros3ne/engine": "github:Keros3ne/engine#v0.8.0",
+        "@keros3ne/engine": "github:Keros3ne/engine#v0.9.0",
         "@noble/hashes": "^2.4.0",
         "@storybook/svelte-vite": "^10.6.7",
         "@sveltejs/adapter-static": "4.0.1",
@@ -121,7 +121,7 @@
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
 
-    "@keros3ne/engine": ["@keros3ne/engine@github:Keros3ne/engine#8d1d1fa", { "dependencies": { "@noble/hashes": "^2.4.0", "valibot": "^1.5.0" }, "peerDependencies": { "svelte": "^5.57.2" } }, "Keros3ne-engine-8d1d1fa", "sha512-gpHtW6YUuqyJ78kyRFiLZ1DgC44yp/13CMv3kVZRa5svXRu2r1UFS2AP5qsmiXsQ0q4FAYhnMQwx048bMEa0oQ=="],
+    "@keros3ne/engine": ["@keros3ne/engine@github:Keros3ne/engine#5c9ee0d", { "dependencies": { "@noble/hashes": "^2.4.0", "valibot": "^1.5.0" }, "peerDependencies": { "svelte": "^5.57.2" } }, "Keros3ne-engine-5c9ee0d", "sha512-FU3OKeanGpFUYAuB75X04Ycs4Z23kLCY1RVCw4Jn89SIk7KdH+BUBeh0x2CwKn4Le8rWQfxzURgspjHyd7OhUQ=="],
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.2.6", "", { "dependencies": { "@tybys/wasm-util": "^0.10.3" }, "peerDependencies": { "@emnapi/core": "^1.7.1 || 2.0.0-beta.2", "@emnapi/runtime": "^1.7.1 || 2.0.0-beta.2" } }, "sha512-mRyDmEw9/fCDXCGfL1sbgIw/GUK0PVxRW4YwgPN61F3LQ+fSyoBFarJVzgGyhF6kRzEQZ0FejDqm4WLXSeqQmw=="],
 

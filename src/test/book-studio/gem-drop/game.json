@@ -1,5 +1,6 @@
 {
 	"slug": "gem-drop",
+	"version": "1.0.0",
 	"name": "Gem Drop",
 	"blurb": "A small game for the SDK's own tests of books.",
 	"category": "slots",

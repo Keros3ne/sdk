@@ -43,7 +43,7 @@ fetched, built or checked again.
 ```
 package.json                the SDK as a dependency, at a tag; your shared packages too
 studio.json                 what this repository holds
-<slug>/game.json            the game: its name, blurb, section, modes and counters
+<slug>/game.json            the game: its version, name, blurb, section, modes and counters
 <slug>/guide.json           its rules and paytable, as data
 <slug>/maths/index.ts       how each table's rounds play out (exports defineBooks(...))
 <slug>/maths/*.spec.ts      your own tests of its rules
@@ -110,6 +110,7 @@ Maths shares nothing: a game's books are made from its own folder alone.
 ```json
 {
 	"slug": "glacier-drop",
+	"version": "1.0.0",
 	"name": "Glacier Drop",
 	"blurb": "Enough of a kind anywhere melts away and more tumbles in.",
 	"category": "slots",
@@ -121,6 +122,9 @@ Maths shares nothing: a game's books are made from its own folder alone.
 }
 ```
 
+- **`version`** is the game's own, three numbers with points between (`1.0.0`). A game is
+  released by itself at its version, whatever else its repository holds: raise it to
+  release the game again. It is no part of how the game plays.
 - **Modes** are the ways of opening a round, the ordinary one first: what each costs, as a
   multiple of the bet in basis points (`10000` is one bet; always a whole number of bets,
   so that a cost comes to whole cents at any bet), and the table its row is drawn
@@ -701,31 +705,50 @@ bun run stories             # your stories, and the SDK's own, in Storybook
 
 ## Sending a release
 
-1. Run `books`, `client`, `check` and your tests.
-2. Set `sdk` in `studio.json` to the version of the SDK you built on.
-3. Commit (`books/books.json` and `client/client.json` among it: the records of what you
-   are sending), tag the release (`git tag v0.1.0`) and push the tag.
-4. Run `keros3ne-studio pack`, which holds each game's books and built client to their
-   records and packs them into `release/`: one file for each game, `game-title.tar.gz`,
-   with two folders in it and nothing else. `client/` is the client as you built it, and
-   `maths/` is what your maths made: `books.json` and each table's `.index` and `.rows`.
-   Send it with the tag as the file of its release:
-   `gh release create v0.1.0 release/game-title.tar.gz`. Neither books nor a built
-   client are committed, so this is how they travel; the records you did commit are what
-   they are held to. It is an ordinary archive, which `tar -xzf` opens, so anyone given a
-   release can see exactly what it sends.
-   In a repository of several games, send a file only for a game that changed: one whose
-   `books/books.json` or `client/client.json` is not as your last release had it
-   (`keros3ne-studio pack <slug>`). The site keeps the file an earlier tag sent for each
-   of the others, and refuses a release that changes a game's records and sends no file
-   for it.
-5. Send Keros3ne the repository and the tag. (The first time, Keros3ne registers your
-   studio and gives it its id; after that a release of any of your repositories is
-   taken in under it.)
+**A game is released by itself.** Its `game.json` says its `version`, and a release of it
+is the tag `<slug>-v<version>` (`game-title-v1.2.0`) with one file, `<slug>.tar.gz`. A
+repository may hold one game or hundreds: each has its own version and its own releases,
+and releasing one says nothing of the others.
 
-The site takes in your manifest, readme, licence, games and shared folders, and the
-packages the manifest names, each fetched at its tag; nothing else of your repository: no
-build configuration, installed packages or lockfile. What it took in is pinned: the site
+**Your repository's own workflow makes the release**, on GitHub Actions, where you can
+read every step of it. Nothing in this package asks GitHub anything or changes anything
+there, from your machine or anywhere else: `keros3ne-studio` reads and writes the files
+of your repository and no more. The template has the workflow
+(`.github/workflows/release.yml`); it is yours to change.
+
+1. Change the game, and raise `version` in its `game.json`.
+2. Run `books`, `client`, `check` and your tests. Commit, with `books/books.json` and
+   `client/client.json` among it: the records of what the release will send.
+3. Push to `main`. The workflow finds each game whose version has no tag yet
+   (`keros3ne-studio unreleased --json`, which reads the tags of the checkout), and for
+   each: makes its books, builds its client again and holds both to the records you
+   committed (`check --build`), packs it (`pack`), and creates the release
+   `<slug>-v<version>` at that commit with the packed file.
+4. Send Keros3ne the repository and the tag. (The first time, Keros3ne registers your
+   studio and gives it its id; after that a release of any game of yours is taken in
+   under it.)
+
+What is packed is one file, `game-title.tar.gz`, with two folders in it and nothing else:
+`client/` is the client as it was built, and `maths/` is what your maths made
+(`books.json` and each table's `.index` and `.rows`). Neither books nor a built client
+are committed, so this is how they travel; the records you did commit are what they are
+held to. It is an ordinary archive, which `tar -xzf` opens, so anyone given a release can
+see exactly what it sends.
+
+Change the workflow as suits you: your own tests, another runner, a cache, an approval
+before the release, releasing on a tag you push yourself. What a site goes by must stay:
+
+- the release's tag is `<slug>-v<version>`, the version being the one `game.json` says
+  at the commit tagged;
+- its file is `<slug>.tar.gz`, as `keros3ne-studio pack` wrote it, unchanged;
+- it is a published release, not a draft;
+- a tag, once a release has been taken in, is never moved, and its file never replaced:
+  a changed game is a raised version and a new release.
+
+The site takes in, at the release's tag, your manifest, readme and licence, the game
+released, your shared folders, and the packages the manifest names, each fetched at its
+tag; nothing else of your repository: no other game, no build configuration, installed
+packages or lockfile. What it took in is pinned: the site
 records the commit and a digest of every file. It checks each
 game's `game.json` and `guide.json`, which are data, and reads the source of its maths and
 client, with none of it run. A person reads your maths in full, and your clients for the

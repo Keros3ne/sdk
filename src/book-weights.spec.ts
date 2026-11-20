@@ -93,6 +93,7 @@ describe("a table weighed", () => {
 		};
 		const game = checkGameManifest("game.json", {
 			slug: "weighed",
+			version: "1.0.0",
 			name: "Weighed",
 			blurb: "A table weighed.",
 			category: "slots",
