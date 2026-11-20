@@ -603,6 +603,24 @@ and refuses a client built for another version of the protocol.
     that needs it. Give each view a story (`<Views show="tall" ...>` shows one whatever the
     game is told), as Game Title does.
 
+**A package your games share, as you change it.** A studio with several games keeps what
+they share in a package of its own (a kit: its bar, its buttons, its sound), at a tag in
+each game's `package.json`. To try a change to it without tagging it first, give it a name
+in each game's `imports`, with a `local` condition that names its clone beside the game:
+
+    "imports": {
+      "#kit/*": { "local": "./local/kit/*", "default": "@studio/kit/*" }
+    },
+    "scripts": {
+      "local": "LOCAL_PACKAGES=1 BUN_OPTIONS=--conditions=local NODE_OPTIONS=--conditions=local bun run"
+    }
+
+Import it as `#kit/Bar.svelte` in the game, and link the clone once (`mkdir -p local && ln -s
+../../kit local/kit`; keep `local/` out of git). Then `bun run local dev` plays the game on
+the kit as it stands in its clone, and `bun run dev`, `bun run client` and a release are on
+the kit at its tag, as before. Never release a client built with `local`: `client.json`
+would record files no tag of the kit made.
+
 **The card.** Supply the picture for your game's card: `client/public/card.svg`, upright
 (three wide by four high), with nothing important in the bottom third, where the site lays
 the game's name over it. It is the only picture of the game the site shows. Do not use emoji
