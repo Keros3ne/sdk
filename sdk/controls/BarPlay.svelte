@@ -52,3 +52,79 @@ Created: 2026-11-19
 			</span>{/if}
 	</button>
 </div>
+
+<style>
+	/* Play: the bar's one solid button, standing proud of it. */
+	.sdk-bar-play {
+		display: inline-grid;
+		place-items: center;
+		flex: none;
+		padding: 0;
+		border: 1px solid var(--bar-accent, #f4f1f2);
+		font: inherit;
+		font-weight: 500;
+		cursor: pointer;
+	}
+
+	.sdk-bar-play {
+		width: calc(72px * var(--s));
+		min-width: calc(72px * var(--s));
+		height: calc(72px * var(--s));
+		min-height: calc(72px * var(--s));
+		border-color: var(--bar-accent, #f4f1f2);
+		border-radius: 50%;
+		background: var(--bar-accent, #f4f1f2);
+		box-shadow:
+			inset 0 calc(-3px * var(--s)) 0 rgb(0 0 0 / 0.12),
+			0 calc(6px * var(--s)) calc(18px * var(--s)) rgb(0 0 0 / 0.35);
+		color: var(--bar-on-accent, #25191c);
+	}
+	.sdk-bar-play :global(svg) {
+		width: calc(36px * var(--s));
+		height: calc(36px * var(--s));
+	}
+	/* Autoplay on play: a triangle while plays wait for it, a square while they run, the number
+	   in it. The symbol is as big as the round button holds, drawn with a fine line, so the
+	   number can be large and bold and still clear of it. */
+	.sdk-bar-play-auto {
+		display: grid;
+		place-items: center;
+	}
+	.sdk-bar-play-auto > :global(*) {
+		grid-area: 1 / 1;
+	}
+	.sdk-bar-play .sdk-bar-play-auto :global(svg) {
+		width: calc(54px * var(--s));
+		height: calc(54px * var(--s));
+		stroke-width: 0.6;
+	}
+	/* The triangle's middle is left of the button's: it is moved over, and the number with it. */
+	.sdk-bar-play[data-auto="ready"] .sdk-bar-play-auto :global(svg) {
+		translate: calc(4px * var(--s)) 0;
+	}
+	.sdk-bar-play-count {
+		font-size: calc(17px * var(--s));
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+		line-height: 1;
+	}
+	.sdk-bar-play[data-auto="ready"] .sdk-bar-play-count {
+		translate: calc(2px * var(--s)) 0;
+		font-size: calc(15px * var(--s));
+	}
+	/* Three figures are written smaller, to stay clear of the triangle round them. */
+	.sdk-bar-play[data-auto="ready"] .sdk-bar-play-count[data-long] {
+		translate: calc(1px * var(--s)) 0;
+		font-size: calc(11px * var(--s));
+	}
+	/* Free spins: the count over the spin symbol, drawn faint so the figure reads. */
+	.sdk-bar-play[data-auto="free"] .sdk-bar-play-auto :global(.sdk-bar-symbol) {
+		opacity: 0.22;
+	}
+	:global(.sdk-bar-frame) .sdk-bar-play[data-auto="free"]:disabled {
+		opacity: 1;
+	}
+	.sdk-bar-play[data-auto="free"] .sdk-bar-play-count {
+		font-size: calc(22px * var(--s));
+	}
+</style>

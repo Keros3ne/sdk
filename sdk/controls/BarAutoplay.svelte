@@ -53,3 +53,17 @@ Created: 2026-11-19
 		</Autoplay>
 	{/if}
 </div>
+
+<style>
+	/* Autoplay's button in a bar: its count in the bar's figures. */
+	:global(.sdk-bar-frame .sdk-autoplay) {
+		font-size: calc(13px * var(--s));
+		font-variant-numeric: tabular-nums;
+	}
+
+	/* Chosen, and waiting for play. */
+	:global(.sdk-bar-frame .sdk-autoplay[data-ready]) {
+		border-color: var(--bar-on, #d49791);
+		color: var(--bar-on, #d49791);
+	}
+</style>

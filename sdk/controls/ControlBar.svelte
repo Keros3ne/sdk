@@ -119,34 +119,131 @@ Created: 2026-11-17
 <BarFrame {...rest} {look} bind:bet bind:bar>
 	{#if readouts === "strip"}
 		<!-- What the player reads, along the other edge of the game. -->
-		<BarPart edge={across} class="sdk-bar-strip" label="Balance and last win">
-			<BarBalance look={of("balance")} />{#if shows("win")}<BarWin
-					look={of("win")}
-				/>{/if}
+		<BarPart edge={across} label="Balance and last win">
+			<div class="sdk-bar-strip" data-edge={across}>
+				<BarBalance look={of("balance")} />{#if shows("win")}<BarWin
+						look={of("win")}
+					/>{/if}
+			</div>
 		</BarPart>
 	{/if}
-	<BarPart
-		edge={place}
-		class={readouts === "strip" ? "sdk-bar sdk-bar-alone" : "sdk-bar"}
-	>
-		<div class="sdk-bar-left">
-			{#if shows("menu")}<BarMenu look={of("menu")}>
-					{@render menu?.()}
-				</BarMenu>{/if}
-			{#if readouts === "bar"}<BarBalance look={of("balance")} />{/if}
-			{#if betAs === "menu"}
-				<BarBetButton look={of("bet")} />
-			{:else}
-				<BarBet look={of("bet")} />
-			{/if}
-		</div>
-		<BarPlay look={of("play")} />
-		<div class="sdk-bar-right">
-			<!-- Autoplay and speed after play, together, so play alone is the bar's middle. -->
-			<div class="sdk-bar-pace">
-				<BarAutoplay look={of("autoplay")} /><BarSpeed look={of("speed")} />
+	<BarPart edge={place}>
+		<div
+			class={["sdk-bar", { "sdk-bar-alone": readouts === "strip" }]}
+			data-edge={place}
+		>
+			<div class="sdk-bar-left">
+				{#if shows("menu")}<BarMenu look={of("menu")}>
+						{@render menu?.()}
+					</BarMenu>{/if}
+				{#if readouts === "bar"}<BarBalance look={of("balance")} />{/if}
+				{#if betAs === "menu"}
+					<BarBetButton look={of("bet")} />
+				{:else}
+					<BarBet look={of("bet")} />
+				{/if}
 			</div>
-			{#if readouts === "bar" && shows("win")}<BarWin look={of("win")} />{/if}
+			<BarPlay look={of("play")} />
+			<div class="sdk-bar-right">
+				<!-- Autoplay and speed after play, together, so play alone is the bar's middle. -->
+				<div class="sdk-bar-pace">
+					<BarAutoplay look={of("autoplay")} /><BarSpeed look={of("speed")} />
+				</div>
+				{#if readouts === "bar" && shows("win")}<BarWin look={of("win")} />{/if}
+			</div>
 		</div>
 	</BarPart>
 </BarFrame>
+
+<style>
+	/*
+	 * The SDK's bar: a dock of glass, edge to edge. Play is the middle column; the two sides
+	 * take equal shares of what is left, so play is in the bar's dead centre.
+	 */
+	.sdk-bar {
+		min-height: calc(88px * var(--s));
+		display: grid;
+		grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+		align-items: center;
+		gap: var(--bar-gap, calc(14px * var(--s)));
+		padding: 0 calc(12px * var(--s));
+		background: var(--bar-surface, var(--bar-glass));
+		/* A hairline where it meets the game. */
+		box-shadow: inset 0 1px 0 var(--bar-rule, rgb(255 255 255 / 0.16));
+		backdrop-filter: var(--bar-blur, var(--bar-glass-blur));
+	}
+	.sdk-bar[data-edge="top"],
+	.sdk-bar-strip[data-edge="top"] {
+		box-shadow: inset 0 -1px 0 var(--bar-rule, rgb(255 255 255 / 0.16));
+	}
+	/*
+	 * The two sides of play. On each, what is next to play sits close beside it and the rest
+	 * go out to the bar's edge.
+	 */
+	.sdk-bar-left,
+	.sdk-bar-right {
+		display: flex;
+		align-items: center;
+		gap: var(--bar-gap, calc(14px * var(--s)));
+		min-width: 0;
+	}
+	.sdk-bar-left > :global(:last-child:not(:first-child)) {
+		margin-left: auto;
+	}
+	.sdk-bar-right {
+		justify-content: flex-end;
+	}
+	.sdk-bar-right > :global(:first-child:not(:last-child)) {
+		margin-right: auto;
+	}
+	/* Autoplay and speed, after play. */
+	.sdk-bar-pace {
+		display: flex;
+		align-items: center;
+		gap: calc(8px * var(--s));
+	}
+
+	/* A narrow game's strip: the balance and the last win, in the same glass. */
+	.sdk-bar-strip {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: calc(8px * var(--s)) calc(16px * var(--s));
+		background: var(--bar-surface, var(--bar-glass));
+		box-shadow: inset 0 -1px 0 var(--bar-rule, rgb(255 255 255 / 0.16));
+		backdrop-filter: var(--bar-blur, var(--bar-glass-blur));
+	}
+	.sdk-bar-strip[data-edge="bottom"] {
+		box-shadow: inset 0 1px 0 var(--bar-rule, rgb(255 255 255 / 0.16));
+	}
+	.sdk-bar-strip :global(.sdk-bar-balance),
+	.sdk-bar-strip :global(.sdk-bar-win) {
+		padding: 0;
+	}
+
+	/*
+	 * A bar left to its buttons (`readouts="strip"`): the menu and the bet, play, autoplay and
+	 * speed. Each side shares out what room it has left, so play stays in the middle.
+	 */
+	.sdk-bar.sdk-bar-alone {
+		grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+		gap: 0;
+		padding: 0 calc(6px * var(--s));
+	}
+	.sdk-bar.sdk-bar-alone .sdk-bar-left,
+	.sdk-bar.sdk-bar-alone .sdk-bar-right {
+		justify-content: space-evenly;
+		gap: 0;
+	}
+	.sdk-bar.sdk-bar-alone .sdk-bar-left > :global(*),
+	.sdk-bar.sdk-bar-alone .sdk-bar-right > :global(*) {
+		margin: 0;
+	}
+	/* Autoplay and speed stand each on its own there, not as a pair, so the five keep apart. */
+	.sdk-bar.sdk-bar-alone .sdk-bar-pace {
+		display: contents;
+	}
+	.sdk-bar-strip :global(.sdk-bar-readout output) {
+		font-size: calc(17px * var(--s));
+	}
+</style>

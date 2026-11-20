@@ -29,3 +29,34 @@ Created: 2026-11-17
 >
 	<span>{label}</span>{#if detail}<span class="sdk-detail">{detail}</span>{/if}
 </button>
+
+<style>
+	/* A line in a popup that does something. */
+	.sdk-action {
+		display: block;
+		width: 100%;
+		min-height: 44px;
+		padding: 6px 12px;
+		border: 1px solid transparent;
+		border-radius: 14px;
+		background: rgb(255 255 255 / 0.05);
+		color: inherit;
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+	}
+
+	.sdk-action:hover:not(:disabled) {
+		border-color: var(--sdk-line, #42363b);
+	}
+
+	.sdk-action:disabled {
+		opacity: 0.45;
+		cursor: default;
+	}
+
+	.sdk-action:focus-visible {
+		outline: 2px solid var(--sdk-accent, #d49791);
+		outline-offset: 2px;
+	}
+</style>

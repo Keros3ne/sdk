@@ -113,3 +113,71 @@ Created: 2026-11-17
 			</button>{/each}
 	</div>
 </div>
+
+<style>
+	/* A few options side by side, one of them chosen: a row in a sunken frame, the chosen one raised. */
+	.sdk-choices {
+		display: grid;
+		/* A column no wider than the choices' room, so a long row of them wraps (in a popup, say). */
+		grid-template-columns: minmax(0, 1fr);
+		gap: 6px;
+	}
+
+	.sdk-choices-label {
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--sdk-dim, #d6ccd2);
+	}
+
+	.sdk-choices-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px;
+		width: max-content;
+		max-width: 100%;
+	}
+
+	/* More options than a row holds: a grid of five, the first over the rest where it is the odd one. */
+	.sdk-choices-row[data-grid] {
+		display: grid;
+		grid-template-columns: repeat(var(--sdk-columns, 5), minmax(44px, 1fr));
+	}
+
+	.sdk-choices-row[data-lead] > :first-child {
+		grid-column: 1 / -1;
+	}
+
+	/* Each choice a pill of glass; the one chosen solid, as the bar's play button is. */
+	.sdk-choice {
+		min-width: 44px;
+		min-height: 40px;
+		padding: 0 12px;
+		border: 0;
+		border-radius: var(--sdk-radius, 999px);
+		background: rgb(255 255 255 / 0.08);
+		color: var(--sdk-ink, #f4f1f2);
+		font: inherit;
+		font-size: 14px;
+		font-weight: 500;
+		cursor: pointer;
+	}
+
+	.sdk-choice:hover:not(:disabled) {
+		background: rgb(255 255 255 / 0.16);
+	}
+
+	.sdk-choice:disabled {
+		opacity: 0.45;
+		cursor: default;
+	}
+
+	.sdk-choice[aria-checked="true"] {
+		background: var(--sdk-main, #f4f1f2);
+		color: var(--sdk-on-main, #25191c);
+	}
+
+	.sdk-choice:focus-visible {
+		outline: 2px solid var(--sdk-accent, #d49791);
+		outline-offset: 2px;
+	}
+</style>

@@ -319,3 +319,27 @@ Created: 2026-11-19
 		{@render children()}
 	</div>
 {/if}
+
+<style>
+	/* The frame: over the whole game, taking no presses itself. Its parts do. */
+	.sdk-bar-frame {
+		position: absolute;
+		z-index: 4;
+		inset: 0;
+		box-sizing: border-box;
+		pointer-events: none;
+		color: var(--bar-ink, #f4f1f2);
+		font:
+			500 calc(15px * var(--s))/1.2 var(--bar-font, "Geist Variable"),
+			ui-sans-serif,
+			system-ui,
+			sans-serif;
+		user-select: none;
+		/* A double tap on a button, even a disabled one, does not zoom the game. */
+		touch-action: manipulation;
+	}
+
+	.sdk-bar-frame > :global(*) {
+		pointer-events: auto;
+	}
+</style>

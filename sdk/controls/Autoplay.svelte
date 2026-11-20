@@ -143,3 +143,39 @@ Created: 2026-11-17
 			Start
 		</button>{/if}
 </Popup>
+
+<style>
+	/* A square, for a button that stops something. Drawn, so it needs no font to have it. */
+	.sdk-stop {
+		display: inline-block;
+		width: 0.7em;
+		height: 0.7em;
+		margin-right: 0.45em;
+		border-radius: 2px;
+		background: currentColor;
+	}
+
+	/* The autoplay button keeps its width whether it says "Auto" or counts down behind a stop sign. */
+	:global(.sdk-autoplay) {
+		min-width: 5em;
+	}
+
+	/* The button in a popup that sets something going: the one main action, solid ink. */
+	.sdk-start {
+		width: 100%;
+		min-height: 40px;
+		padding: 0 14px;
+		border: 1px solid var(--sdk-main, var(--sdk-ink, #f4f1f2));
+		border-radius: var(--sdk-radius, 999px);
+		background: var(--sdk-main, var(--sdk-ink, #f4f1f2));
+		color: var(--sdk-on-main, #25191c);
+		font: inherit;
+		font-weight: 500;
+		cursor: pointer;
+	}
+
+	.sdk-start:focus-visible {
+		outline: 2px solid var(--sdk-accent, #d49791);
+		outline-offset: 2px;
+	}
+</style>

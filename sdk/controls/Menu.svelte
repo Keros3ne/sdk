@@ -235,3 +235,123 @@ Created: 2026-11-17
 			</li>{/each}
 	</ul>
 </div>
+
+<style>
+	.sdk-menu {
+		position: relative;
+		display: inline-grid;
+		gap: 6px;
+	}
+
+	.sdk-menu-label {
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--sdk-dim, #d6ccd2);
+	}
+
+	/* An underlined field, as the site's own menus are: the line turns to the accent on focus. */
+	.sdk-menu-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		min-height: 44px;
+		padding: 0 2px;
+		border: 0;
+		border-bottom: 1px solid var(--sdk-line, #53474e);
+		border-radius: 0;
+		background: transparent;
+		color: var(--sdk-ink, #f4f1f2);
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+	}
+
+	.sdk-menu-button::after {
+		content: "";
+		flex: none;
+		width: 6px;
+		height: 6px;
+		margin: -3px 4px 0 0;
+		border-right: 1.4px solid currentColor;
+		border-bottom: 1.4px solid currentColor;
+		transform: rotate(45deg);
+	}
+
+	.sdk-menu-button[aria-expanded="true"]::after {
+		margin-top: 3px;
+		transform: rotate(225deg);
+	}
+
+	.sdk-menu-button:disabled {
+		opacity: 0.45;
+		cursor: default;
+	}
+
+	.sdk-menu-list {
+		position: absolute;
+		z-index: 20;
+		right: 0;
+		min-width: 100%;
+		margin: 0;
+		padding: 4px;
+		list-style: none;
+		border: 1px solid var(--sdk-line, #42363b);
+		border-radius: 6px;
+		background: var(--sdk-surface, #2f232b);
+		color: var(--sdk-ink, #f4f1f2);
+		box-shadow:
+			0 1px 2px rgb(0 0 0 / 0.3),
+			0 10px 28px rgb(0 0 0 / 0.45);
+		white-space: nowrap;
+		/* A long list scrolls, kept no taller than the room it has (ui.ts). */
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		/* Slid sideways to stay inside the game (ui.ts). */
+		transform: translateX(var(--sdk-shift, 0px));
+	}
+
+	/* Opens upward by default: a game's controls are usually along its bottom edge. */
+	.sdk-menu-list {
+		bottom: calc(100% + 6px);
+	}
+
+	.sdk-menu[data-opens="down"] .sdk-menu-list {
+		top: calc(100% + 6px);
+		bottom: auto;
+	}
+
+	.sdk-menu-option {
+		position: relative;
+		padding: 8px 12px 8px 14px;
+		border-radius: 4px;
+		cursor: pointer;
+	}
+
+	/* The chosen option: a short rounded bar down its left, clear of its corners. */
+	.sdk-menu-option[aria-selected="true"]::before {
+		content: "";
+		position: absolute;
+		left: 4px;
+		top: 25%;
+		bottom: 25%;
+		width: 3px;
+		border-radius: 2px;
+		background: var(--sdk-accent, #d49791);
+	}
+
+	.sdk-menu-option.sdk-active {
+		background: rgb(255 255 255 / 0.07);
+	}
+
+	.sdk-menu-button:focus-visible {
+		outline: none;
+		border-bottom-color: var(--sdk-accent, #d49791);
+		box-shadow: 0 1px 0 0 var(--sdk-accent, #d49791);
+	}
+
+	.sdk-menu-list:focus-visible {
+		outline: 2px solid var(--sdk-accent, #d49791);
+		outline-offset: 2px;
+	}
+</style>

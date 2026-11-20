@@ -71,3 +71,38 @@ Created: 2026-11-19
 		<Mark name="plus" />
 	</button>
 </div>
+
+<style>
+	/* The bet with plus over minus at one side of it. Buttons one over another are shorter, so the two fit the bar. */
+	.sdk-bar-segment[data-arrange^="column"] {
+		display: grid;
+		grid-auto-flow: column;
+		column-gap: calc(8px * var(--s));
+		row-gap: calc(4px * var(--s));
+		align-items: center;
+	}
+	.sdk-bar-segment[data-arrange^="column"] .sdk-bar-button {
+		height: calc(36px * var(--s));
+		min-height: calc(36px * var(--s));
+		border-radius: calc(18px * var(--s));
+	}
+	.sdk-bar-segment[data-arrange^="column"] .sdk-bar-button :global(svg) {
+		width: calc(20px * var(--s));
+		height: calc(20px * var(--s));
+	}
+	.sdk-bar-segment[data-arrange="column-start"] {
+		grid-template-areas: "plus value" "minus value";
+	}
+	.sdk-bar-segment[data-arrange="column-end"] {
+		grid-template-areas: "value plus" "value minus";
+	}
+	.sdk-bar-segment[data-arrange^="column"] .sdk-bar-plus {
+		grid-area: plus;
+	}
+	.sdk-bar-segment[data-arrange^="column"] .sdk-bar-minus {
+		grid-area: minus;
+	}
+	.sdk-bar-segment[data-arrange^="column"] .sdk-bar-betvalue {
+		grid-area: value;
+	}
+</style>

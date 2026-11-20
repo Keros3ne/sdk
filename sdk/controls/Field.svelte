@@ -58,3 +58,45 @@ Created: 2026-11-17
 		}}
 	/><small class="sdk-field-note" id="{id}-note">{note}</small>
 </label>
+
+<style>
+	/* A field to type in: underlined, as the site's are, the line turning to the accent while typing. */
+	.sdk-field {
+		display: inline-grid;
+		gap: 6px;
+	}
+
+	.sdk-field-label {
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--sdk-dim, #d6ccd2);
+	}
+
+	.sdk-field-input {
+		min-height: 44px;
+		padding: 0 2px;
+		border: 0;
+		border-bottom: 1px solid var(--sdk-line, #53474e);
+		border-radius: 0;
+		background: transparent;
+		color: var(--sdk-ink, #f4f1f2);
+		font: inherit;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.sdk-field-input:focus {
+		outline: none;
+		border-bottom-color: var(--sdk-accent, #d49791);
+		box-shadow: 0 1px 0 0 var(--sdk-accent, #d49791);
+	}
+
+	.sdk-field-input:disabled {
+		opacity: 0.45;
+	}
+
+	.sdk-field-note {
+		min-height: 1.2em;
+		font-size: 12px;
+		color: var(--sdk-dim, #d6ccd2);
+	}
+</style>

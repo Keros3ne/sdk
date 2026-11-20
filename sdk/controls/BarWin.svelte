@@ -40,3 +40,17 @@ Created: 2026-11-19
 		</output>
 	</div>
 </div>
+
+<style>
+	.sdk-bar-win {
+		padding-right: calc(6px * var(--s));
+		text-align: right;
+	}
+	/* The last win: green while it is the last play's own, greyed once it is an earlier play's. */
+	.sdk-bar-win output {
+		color: var(--bar-dim, #c0aeb2);
+	}
+	.sdk-bar-win[data-fresh] output {
+		color: var(--bar-win, #8fc79a);
+	}
+</style>

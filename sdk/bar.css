@@ -47,7 +47,7 @@
 @import "@fontsource-variable/geist/wght.css";
 @import "@fontsource-variable/geist-mono/wght.css";
 
-/* The frame: over the whole game, taking no presses itself. Its parts do. */
+/* What every part and item of a bar reads: set on its frame (./controls/BarFrame.svelte). */
 .sdk-bar-frame {
 	--bar-glass: color-mix(
 		in srgb,
@@ -71,135 +71,13 @@
 
 	/* The size chosen by the studio. The frame sets --bar-s on itself. */
 	--s: var(--bar-s, 1);
-
-	position: absolute;
-	z-index: 4;
-	inset: 0;
-	box-sizing: border-box;
-	pointer-events: none;
-	color: var(--bar-ink, #f4f1f2);
-	font:
-		500 calc(15px * var(--s))/1.2 var(--bar-font, "Geist Variable"),
-		ui-sans-serif,
-		system-ui,
-		sans-serif;
-	user-select: none;
-	/* A double tap on a button, even a disabled one, does not zoom the game. */
-	touch-action: manipulation;
 }
 .sdk-bar-frame * {
 	box-sizing: border-box;
 }
-.sdk-bar-frame > * {
-	pointer-events: auto;
-}
 /* What a game leaves out (the speed button, `speeds: "none"`), even where a rule gives it a display. */
 .sdk-bar-frame [hidden] {
 	display: none !important;
-}
-
-/* A part: one piece of the bar on the game. Along its edge, across the game, left alone. */
-.sdk-bar-part {
-	position: absolute;
-	left: 0;
-	right: 0;
-}
-.sdk-bar-part[data-edge="bottom"] {
-	bottom: 0;
-}
-.sdk-bar-part[data-edge="top"] {
-	top: 0;
-}
-
-/*
- * The SDK's bar: a dock of glass, edge to edge. Play is the middle column; the two sides
- * take equal shares of what is left, so play is in the bar's dead centre.
- */
-.sdk-bar {
-	min-height: calc(88px * var(--s));
-	display: grid;
-	grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
-	align-items: center;
-	gap: var(--bar-gap, calc(14px * var(--s)));
-	padding: 0 calc(12px * var(--s));
-	background: var(--bar-surface, var(--bar-glass));
-	/* A hairline where it meets the game. */
-	box-shadow: inset 0 1px 0 var(--bar-rule, rgb(255 255 255 / 0.16));
-	backdrop-filter: var(--bar-blur, var(--bar-glass-blur));
-}
-.sdk-bar[data-edge="top"],
-.sdk-bar-strip[data-edge="top"] {
-	box-shadow: inset 0 -1px 0 var(--bar-rule, rgb(255 255 255 / 0.16));
-}
-/*
- * The two sides of play. On each, what is next to play sits close beside it and the rest
- * go out to the bar's edge.
- */
-.sdk-bar-left,
-.sdk-bar-right {
-	display: flex;
-	align-items: center;
-	gap: var(--bar-gap, calc(14px * var(--s)));
-	min-width: 0;
-}
-.sdk-bar-left > :last-child:not(:first-child) {
-	margin-left: auto;
-}
-.sdk-bar-right {
-	justify-content: flex-end;
-}
-.sdk-bar-right > :first-child:not(:last-child) {
-	margin-right: auto;
-}
-/* Autoplay and speed, after play. */
-.sdk-bar-pace {
-	display: flex;
-	align-items: center;
-	gap: calc(8px * var(--s));
-}
-
-/* A narrow game's strip: the balance and the last win, in the same glass. */
-.sdk-bar-strip {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: calc(8px * var(--s)) calc(16px * var(--s));
-	background: var(--bar-surface, var(--bar-glass));
-	box-shadow: inset 0 -1px 0 var(--bar-rule, rgb(255 255 255 / 0.16));
-	backdrop-filter: var(--bar-blur, var(--bar-glass-blur));
-}
-.sdk-bar-strip[data-edge="bottom"] {
-	box-shadow: inset 0 1px 0 var(--bar-rule, rgb(255 255 255 / 0.16));
-}
-.sdk-bar-strip .sdk-bar-balance,
-.sdk-bar-strip .sdk-bar-win {
-	padding: 0;
-}
-
-/*
- * A bar left to its buttons (`readouts="strip"`): the menu and the bet, play, autoplay and
- * speed. Each side shares out what room it has left, so play stays in the middle.
- */
-.sdk-bar-frame .sdk-bar.sdk-bar-alone {
-	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-	gap: 0;
-	padding: 0 calc(6px * var(--s));
-}
-.sdk-bar-frame .sdk-bar-alone .sdk-bar-left,
-.sdk-bar-frame .sdk-bar-alone .sdk-bar-right {
-	justify-content: space-evenly;
-	gap: 0;
-}
-.sdk-bar-frame .sdk-bar-alone .sdk-bar-left > *,
-.sdk-bar-frame .sdk-bar-alone .sdk-bar-right > * {
-	margin: 0;
-}
-/* Autoplay and speed stand each on its own there, not as a pair, so the five keep apart. */
-.sdk-bar-frame .sdk-bar-alone .sdk-bar-pace {
-	display: contents;
-}
-.sdk-bar-frame .sdk-bar-strip .sdk-bar-readout output {
-	font-size: calc(17px * var(--s));
 }
 
 /* An item: one box, kept whole, sized by its own scale against the bar's. */
@@ -226,59 +104,11 @@
 	backdrop-filter: var(--bar-segment-blur, none);
 	font-size: calc(15px * var(--s));
 }
-/* The bet with plus over minus at one side of it. Buttons one over another are shorter, so the two fit the bar. */
-.sdk-bar-segment[data-arrange^="column"] {
-	display: grid;
-	grid-auto-flow: column;
-	column-gap: calc(8px * var(--s));
-	row-gap: calc(4px * var(--s));
-	align-items: center;
-}
-.sdk-bar-frame .sdk-bar-segment[data-arrange^="column"] .sdk-bar-button {
-	height: calc(36px * var(--s));
-	min-height: calc(36px * var(--s));
-	border-radius: calc(18px * var(--s));
-}
-.sdk-bar-frame .sdk-bar-segment[data-arrange^="column"] .sdk-bar-button svg {
-	width: calc(20px * var(--s));
-	height: calc(20px * var(--s));
-}
-.sdk-bar-segment[data-arrange="column-start"] {
-	grid-template-areas: "plus value" "minus value";
-}
-.sdk-bar-segment[data-arrange="column-end"] {
-	grid-template-areas: "value plus" "value minus";
-}
-.sdk-bar-segment[data-arrange^="column"] .sdk-bar-plus {
-	grid-area: plus;
-}
-.sdk-bar-segment[data-arrange^="column"] .sdk-bar-minus {
-	grid-area: minus;
-}
-.sdk-bar-segment[data-arrange^="column"] .sdk-bar-betvalue,
-.sdk-bar-segment[data-arrange^="column"] .sdk-bar-betfield {
-	grid-area: value;
-}
-
 /* What the player reads: a small label over an amount. */
 .sdk-bar-readout {
 	display: grid;
 	gap: 1px;
 	min-width: 0;
-}
-.sdk-bar-balance {
-	padding-left: calc(6px * var(--s));
-}
-.sdk-bar-win {
-	padding-right: calc(6px * var(--s));
-	text-align: right;
-}
-/* The last win: green while it is the last play's own, greyed once it is an earlier play's. */
-.sdk-bar-win output {
-	color: var(--bar-dim, #c0aeb2);
-}
-.sdk-bar-win[data-fresh] output {
-	color: var(--bar-win, #8fc79a);
 }
 .sdk-bar-label {
 	font-family: var(--bar-label-font, "Geist Mono Variable"), ui-monospace, monospace;
@@ -301,8 +131,7 @@
 
 /* The bet. Its names share one cell, so the label is as wide as the longest, and only the one
    in use is seen. The others are hidden by visibility, not left out, so they keep their room. */
-.sdk-bar-betvalue,
-.sdk-bar-betfield {
+.sdk-bar-betvalue {
 	min-width: calc(76px * var(--s));
 	text-align: center;
 }
@@ -316,68 +145,8 @@
 .sdk-bar-betlabel > span:not(.sdk-bar-betlabel-on) {
 	visibility: hidden;
 }
-/* Where the bet can be typed it is a button: pressed, it becomes a field to type a bet in. Drawn as the readout it is. */
-.sdk-bar-frame button.sdk-bar-betvalue {
-	padding: 0;
-	border: 0;
-	background: none;
-	color: inherit;
-	font: inherit;
-	cursor: text;
-}
-.sdk-bar-frame button.sdk-bar-betvalue:hover:not(:disabled) output {
-	text-decoration: underline;
-	text-decoration-color: var(--bar-line-strong, rgb(255 255 255 / 0.5));
-	text-underline-offset: 4px;
-}
-.sdk-bar-frame button.sdk-bar-betvalue:disabled {
-	opacity: 1;
-}
-.sdk-bar-betfield {
-	width: calc(84px * var(--s));
-	height: calc(40px * var(--s));
-	padding: 0 calc(4px * var(--s));
-	border: 0;
-	border-bottom: 1px solid var(--bar-on, #d49791);
-	border-radius: 0;
-	background: transparent;
-	color: inherit;
-	font: inherit;
-	font-size: calc(19px * var(--s));
-	font-variant-numeric: tabular-nums;
-	outline: none;
-}
-/* The bet as one button, which opens the bets on offer: a pill of the buttons' glass. */
-.sdk-bar-frame .sdk-bar-betbutton {
-	min-height: calc(52px * var(--s));
-	padding: 0 calc(12px * var(--s));
-	border: 1px solid var(--bar-line, rgb(255 255 255 / 0.22));
-	border-radius: 999px;
-	background: var(--bar-button, rgb(255 255 255 / 0.1));
-	box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
-	color: inherit;
-}
-.sdk-bar-frame .sdk-bar-betbutton .sdk-bar-betvalue {
-	min-width: calc(36px * var(--s));
-}
-.sdk-bar-frame .sdk-bar-betbutton .sdk-bar-label {
-	color: color-mix(in srgb, var(--bar-ink, #f4f1f2) 82%, transparent);
-}
-.sdk-bar-frame .sdk-bar-betbutton output {
-	font-size: calc(17px * var(--s));
-}
-.sdk-bar-frame .sdk-bar-bets .sdk-choices-row {
-	max-height: 232px;
-	overflow-y: auto;
-}
-.sdk-bar-frame .sdk-bar-bets .sdk-choice {
-	padding: 0 6px;
-	font-variant-numeric: tabular-nums;
-}
-
-/* Every button in the bar is round, of glass, with a symbol in it. */
-.sdk-bar-frame .sdk-bar-button,
-.sdk-bar-frame .sdk-bar-play {
+/* Every button in the bar but play is round, of glass, with a symbol in it. */
+.sdk-bar-frame .sdk-bar-button {
 	display: inline-grid;
 	place-items: center;
 	flex: none;
@@ -406,82 +175,10 @@
 .sdk-bar-frame .sdk-bar-button:hover:not(:disabled) {
 	border-color: var(--bar-line-strong, rgb(255 255 255 / 0.5));
 }
-/* Play: the bar's one solid button, standing proud of it. */
-.sdk-bar-frame .sdk-bar-play {
-	width: calc(72px * var(--s));
-	min-width: calc(72px * var(--s));
-	height: calc(72px * var(--s));
-	min-height: calc(72px * var(--s));
-	border-color: var(--bar-accent, #f4f1f2);
-	border-radius: 50%;
-	background: var(--bar-accent, #f4f1f2);
-	box-shadow:
-		inset 0 calc(-3px * var(--s)) 0 rgb(0 0 0 / 0.12),
-		0 calc(6px * var(--s)) calc(18px * var(--s)) rgb(0 0 0 / 0.35);
-	color: var(--bar-on-accent, #25191c);
-}
-.sdk-bar-frame .sdk-bar-play svg {
-	width: calc(36px * var(--s));
-	height: calc(36px * var(--s));
-}
-.sdk-bar-symbol {
-	display: grid;
-}
-/* Autoplay on play: a triangle while plays wait for it, a square while they run, the number
-   in it. The symbol is as big as the round button holds, drawn with a fine line, so the
-   number can be large and bold and still clear of it. */
-.sdk-bar-play-auto {
-	display: grid;
-	place-items: center;
-}
-.sdk-bar-play-auto > * {
-	grid-area: 1 / 1;
-}
-.sdk-bar-frame .sdk-bar-play .sdk-bar-play-auto svg {
-	width: calc(54px * var(--s));
-	height: calc(54px * var(--s));
-	stroke-width: 0.6;
-}
-/* The triangle's middle is left of the button's: it is moved over, and the number with it. */
-.sdk-bar-frame .sdk-bar-play[data-auto="ready"] .sdk-bar-play-auto svg {
-	translate: calc(4px * var(--s)) 0;
-}
-.sdk-bar-play-count {
-	font-size: calc(17px * var(--s));
-	font-weight: 700;
-	font-variant-numeric: tabular-nums;
-	line-height: 1;
-}
-.sdk-bar-play[data-auto="ready"] .sdk-bar-play-count {
-	translate: calc(2px * var(--s)) 0;
-	font-size: calc(15px * var(--s));
-}
-/* Three figures are written smaller, to stay clear of the triangle round them. */
-.sdk-bar-play[data-auto="ready"] .sdk-bar-play-count[data-long] {
-	translate: calc(1px * var(--s)) 0;
-	font-size: calc(11px * var(--s));
-}
-/* Free spins: the count over the spin symbol, drawn faint so the figure reads. */
-.sdk-bar-play[data-auto="free"] .sdk-bar-play-auto .sdk-bar-symbol {
-	opacity: 0.22;
-}
-.sdk-bar-frame .sdk-bar-play[data-auto="free"]:disabled {
-	opacity: 1;
-}
-.sdk-bar-play[data-auto="free"] .sdk-bar-play-count {
-	font-size: calc(22px * var(--s));
-}
-/* Switched on, open, or autoplay chosen and waiting for play. */
-.sdk-bar-frame .sdk-bar-speed:not([data-speed="0"]),
-.sdk-bar-frame .sdk-bar-button[aria-expanded="true"],
-.sdk-bar-frame .sdk-bar-betbutton[aria-expanded="true"],
-.sdk-bar-frame .sdk-autoplay[data-ready] {
+/* A button whose popup is open: the menu's, autoplay's. */
+.sdk-bar-frame .sdk-bar-button[aria-expanded="true"] {
 	border-color: var(--bar-on, #d49791);
 	color: var(--bar-on, #d49791);
-}
-.sdk-bar-frame .sdk-autoplay {
-	font-size: calc(13px * var(--s));
-	font-variant-numeric: tabular-nums;
 }
 .sdk-bar-frame button:focus-visible {
 	outline: 2px solid var(--bar-on, #d49791);

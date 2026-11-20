@@ -24,3 +24,9 @@ Created: 2026-11-17
 		{@html SYMBOL_PATHS[name]}
 	</svg>
 </span>
+
+<style>
+	.sdk-bar-symbol {
+		display: grid;
+	}
+</style>

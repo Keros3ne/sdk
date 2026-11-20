@@ -70,3 +70,39 @@ Created: 2026-11-19
 		/>
 	</Popup>
 </div>
+
+<style>
+	/* The bet as one button, which opens the bets on offer: a pill of the buttons' glass. */
+	:global(.sdk-bar-frame .sdk-bar-betbutton) {
+		min-height: calc(52px * var(--s));
+		padding: 0 calc(12px * var(--s));
+		border: 1px solid var(--bar-line, rgb(255 255 255 / 0.22));
+		border-radius: 999px;
+		background: var(--bar-button, rgb(255 255 255 / 0.1));
+		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
+		color: inherit;
+	}
+	:global(.sdk-bar-frame .sdk-bar-betbutton .sdk-bar-betvalue) {
+		min-width: calc(36px * var(--s));
+	}
+	:global(.sdk-bar-frame .sdk-bar-betbutton .sdk-bar-label) {
+		color: color-mix(in srgb, var(--bar-ink, #f4f1f2) 82%, transparent);
+	}
+	:global(.sdk-bar-frame .sdk-bar-betbutton output) {
+		font-size: calc(17px * var(--s));
+	}
+	:global(.sdk-bar-frame .sdk-bar-bets .sdk-choices-row) {
+		max-height: 232px;
+		overflow-y: auto;
+	}
+	:global(.sdk-bar-frame .sdk-bar-bets .sdk-choice) {
+		padding: 0 6px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	/* Open: its edge and its figures in the colour of what is on. */
+	:global(.sdk-bar-frame .sdk-bar-betbutton[aria-expanded="true"]) {
+		border-color: var(--bar-on, #d49791);
+		color: var(--bar-on, #d49791);
+	}
+</style>

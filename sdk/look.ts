@@ -154,6 +154,30 @@ export function controlProperties(look: ControlLook | undefined): Dressing[] {
 	return properties(look, "--sdk-");
 }
 
+/**
+ * How one part of a bar looks (./controls/BarPart.svelte): the box its items are in.
+ * Left out, nothing is drawn round them.
+ */
+export interface PartLook {
+	/** What it is drawn on: `"rgb(20 30 40 / 0.6)"`. */
+	surface?: string;
+	/** Its edge, as a `border`: `"1px solid #fff4"`. */
+	border?: string;
+	/** Its corners. */
+	radius?: string;
+	/** The room inside its edge. */
+	padding?: string;
+	/** A shadow under it. */
+	shadow?: string;
+	/** A `backdrop-filter` for a see-through part: `"blur(22px)"`. */
+	blur?: string;
+}
+
+/** A part's look as the properties its component reads. */
+export function partProperties(look: PartLook | undefined): Dressing[] {
+	return properties(look, "--part-");
+}
+
 /** The parts of an item's look that are its box: the rest are colours the whole bar has too. */
 const BOX = new Set(["surface", "border", "radius", "padding", "shadow", "blur"]);
 

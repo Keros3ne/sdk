@@ -41,3 +41,9 @@ Created: 2026-11-19
 		</output>
 	</div>
 </div>
+
+<style>
+	.sdk-bar-balance {
+		padding-left: calc(6px * var(--s));
+	}
+</style>

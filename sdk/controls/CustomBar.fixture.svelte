@@ -38,27 +38,30 @@ Created: 2026-11-19
 	{onready}
 >
 	{#snippet children()}
-		<BarPart edge="top" class="custom-top">
-			<BarWin label="Last win" unit={false} />
-			{#if without !== "balance"}<BarBalance
-					look={{ surface: "rgb(1, 2, 3)" }}
-				/>{/if}
+		<BarPart edge="top" look={{ padding: "6px 10px" }}>
+			<div class="custom-row custom-top">
+				<BarWin label="Last win" unit={false} />
+				{#if without !== "balance"}<BarBalance
+						look={{ surface: "rgb(1, 2, 3)" }}
+					/>{/if}
+			</div>
 		</BarPart>
-		<BarPart class="custom-bottom" gap={10}>
-			{#if without !== "play"}<BarPlay size={1.5} />{/if}
-			<BarSpeed look={{ on: "rgb(4, 5, 6)" }} /><BarAutoplay />
-			{#if without !== "bet"}<BarBet arrange="column-end" />{/if}
-			<BarMenu />
+		<BarPart gap={10} look={{ padding: "6px 10px" }}>
+			<div class="custom-row custom-bottom">
+				{#if without !== "play"}<BarPlay size={1.5} />{/if}
+				<BarSpeed look={{ on: "rgb(4, 5, 6)" }} /><BarAutoplay />
+				{#if without !== "bet"}<BarBet arrange="column-end" />{/if}
+				<BarMenu />
+			</div>
 		</BarPart>
 	{/snippet}
 </BarFrame>
 
 <style>
-	:global(.custom-top),
-	:global(.custom-bottom) {
+	/* What is in a part is laid out by the bar that writes it. */
+	.custom-row {
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		padding: 6px 10px;
 	}
 </style>

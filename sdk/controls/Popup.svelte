@@ -188,3 +188,83 @@ Created: 2026-11-17
 		{@render children?.()}
 	</div>
 </div>
+
+<style>
+	/*
+	 * A popup: a button, and a panel that opens over the game from it. The panel
+	 * is centred on its button and then slid sideways by --sdk-shift, which the
+	 * script sets so that it stays inside the frame.
+	 */
+	.sdk-popup {
+		position: relative;
+		display: inline-flex;
+	}
+
+	:where(.sdk-popup-button) {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 40px;
+		padding: 0 14px;
+		border: 1px solid var(--sdk-line, #42363b);
+		border-radius: var(--sdk-radius, 999px);
+		background: var(--sdk-surface, #2f232b);
+		color: var(--sdk-ink, #f4f1f2);
+		font: inherit;
+		font-weight: 500;
+		cursor: pointer;
+	}
+
+	:where(.sdk-popup-button):disabled {
+		opacity: 0.45;
+		cursor: default;
+	}
+
+	:where(.sdk-popup-button)[aria-expanded="true"] {
+		border-color: var(--sdk-accent, #d49791);
+		color: var(--sdk-accent, #d49791);
+	}
+
+	.sdk-popup-panel {
+		position: absolute;
+		z-index: 20;
+		left: 50%;
+		bottom: calc(100% + 8px);
+		transform: translateX(calc(-50% + var(--sdk-shift, 0px)));
+		display: grid;
+		gap: 6px;
+		width: max-content;
+		max-width: min(300px, calc(100vw - 12px));
+		padding: 12px;
+		border: 1px solid var(--sdk-line, rgb(255 255 255 / 0.22));
+		border-radius: 22px;
+		/* Glass, as the bar is: what is behind shows through, blurred. */
+		background: var(--sdk-surface, rgb(26 19 24 / 0.82));
+		backdrop-filter: blur(22px) saturate(1.25);
+		color: var(--sdk-ink, #f4f1f2);
+		box-shadow:
+			inset 0 1px 0 rgb(255 255 255 / 0.2),
+			0 14px 36px rgb(0 0 0 / 0.45);
+		font-weight: 500;
+		text-align: left;
+	}
+
+	/* What is in a popup may be no wider than it, so a long row of choices wraps rather than running out of it. */
+	.sdk-popup-panel > :global(*) {
+		min-width: 0;
+	}
+
+	.sdk-popup[data-opens="down"] .sdk-popup-panel {
+		top: calc(100% + 8px);
+		bottom: auto;
+	}
+
+	.sdk-popup-panel:focus {
+		outline: none;
+	}
+
+	:where(.sdk-popup-button):focus-visible {
+		outline: 2px solid var(--sdk-accent, #d49791);
+		outline-offset: 2px;
+	}
+</style>

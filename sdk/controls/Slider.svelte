@@ -145,3 +145,78 @@ Created: 2026-11-17
 		<span class="sdk-slider-knob" bind:this={knob}></span>
 	</div>
 </div>
+
+<style>
+	/*
+	 * A slider: a track with a knob on it. The filled part and the knob's place
+	 * both come from --sdk-at-share, which the script sets to the value, from 0 to 1.
+	 */
+	.sdk-slider {
+		display: grid;
+		gap: 6px;
+		min-width: 220px;
+	}
+
+	.sdk-slider-heading {
+		display: flex;
+		justify-content: space-between;
+		font-size: 13px;
+	}
+
+	.sdk-slider-amount {
+		font-variant-numeric: tabular-nums;
+		color: var(--sdk-dim, #d6ccd2);
+	}
+
+	.sdk-slider-track {
+		--knob: 20px;
+		position: relative;
+		height: 32px;
+		border-radius: 999px;
+		cursor: pointer;
+		touch-action: none;
+	}
+
+	/* The groove, filled as far as the knob. */
+	.sdk-slider-track::before {
+		content: "";
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 50%;
+		height: 4px;
+		margin-top: -2px;
+		border-radius: 999px;
+		background: linear-gradient(
+			to right,
+			var(--sdk-main, var(--sdk-ink, #f4f1f2))
+				calc(var(--knob) / 2 + (100% - var(--knob)) * var(--sdk-at-share, 0)),
+			var(--sdk-line, #53474e) 0
+		);
+	}
+
+	.sdk-slider-knob {
+		position: absolute;
+		top: 50%;
+		left: calc((100% - var(--knob)) * var(--sdk-at-share, 0));
+		width: var(--knob);
+		height: var(--knob);
+		margin-top: calc(var(--knob) / -2);
+		border: 1px solid var(--sdk-on-main, #25191c);
+		border-radius: 50%;
+		background: var(--sdk-main, var(--sdk-ink, #f4f1f2));
+	}
+
+	.sdk-slider.sdk-disabled {
+		opacity: 0.45;
+	}
+
+	.sdk-slider.sdk-disabled .sdk-slider-track {
+		cursor: default;
+	}
+
+	.sdk-slider-track:focus-visible {
+		outline: 2px solid var(--sdk-accent, #d49791);
+		outline-offset: 2px;
+	}
+</style>

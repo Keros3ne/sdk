@@ -50,3 +50,77 @@ Created: 2026-11-17
 			</span>{/if}
 	</span><span class="sdk-switch-track" aria-hidden="true"></span>
 </button>
+
+<style>
+	/* A switch: its words, then a track with a knob that slides across when it is on. */
+	.sdk-switch {
+		display: inline-flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 10px;
+		min-height: 40px;
+		padding: 0 4px;
+		border: 0;
+		border-radius: 14px;
+		background: none;
+		color: var(--sdk-ink, #f4f1f2);
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+	}
+
+	:global(.sdk-popup-panel) .sdk-switch {
+		width: 100%;
+		min-height: 44px;
+		padding: 6px 12px;
+		background: rgb(255 255 255 / 0.05);
+	}
+
+	.sdk-switch-track {
+		position: relative;
+		flex: none;
+		width: 40px;
+		height: 24px;
+		border: 1px solid var(--sdk-line, #53474e);
+		border-radius: 999px;
+		background: transparent;
+	}
+
+	.sdk-switch-track::after {
+		content: "";
+		position: absolute;
+		top: 3px;
+		left: 3px;
+		width: 16px;
+		height: 16px;
+		border-radius: 50%;
+		background: var(--sdk-dim, #d6ccd2);
+		transition: transform 120ms;
+	}
+
+	.sdk-switch[aria-checked="true"] .sdk-switch-track {
+		border-color: var(--sdk-accent, #d49791);
+		background: var(--sdk-accent, #d49791);
+	}
+
+	.sdk-switch[aria-checked="true"] .sdk-switch-track::after {
+		transform: translateX(16px);
+		background: var(--sdk-on-accent, #25191c);
+	}
+
+	.sdk-switch:disabled {
+		opacity: 0.45;
+		cursor: default;
+	}
+
+	.sdk-switch:focus-visible {
+		outline: 2px solid var(--sdk-accent, #d49791);
+		outline-offset: 2px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.sdk-switch-track::after {
+			transition: none;
+		}
+	}
+</style>
