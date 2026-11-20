@@ -92,7 +92,13 @@ function parse(argv: string[]) {
 		}
 		const [name, inline] = arg.slice(2).split("=", 2);
 		if (inline !== undefined) options[name] = inline;
-		else if (["root", "port", "balance", "workers", "build", "out"].includes(name))
+		else if (
+			["root", "port", "balance", "workers", "out"].includes(name) ||
+			// Only `stories --build <folder>` names something: `check --build` is a switch,
+			// and must not take the game named after it for its value.
+			(name === "build" &&
+				argv.find((word) => !word.startsWith("--")) === "stories")
+		)
 			options[name] = argv[++i] ?? "";
 		else options[name] = true;
 	}

@@ -1,5 +1,5 @@
 {
-	"sdk": "0.26.0",
+	"sdk": "0.26.1",
 	"protocol": "keros3ne-game/3",
 	"files": {
 		"_app/immutable/assets/2.CrMMulCK.css": "d57c4055e406a754d1d1390eb415b0415875391189d55cefeb4554acf1b072b5",
