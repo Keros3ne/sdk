@@ -87,29 +87,39 @@ export function gameFolders(root: string): string[] {
 		.sort();
 }
 
-/** Every game the studio's manifest lists, in its order. Throws naming one whose folder is not there. */
-export function findGames(root: string): GameFolder[] {
-	return readManifest(root).games.map((slug) => {
-		const folder = folderOf(root, slug);
-		if (!existsSync(join(folder.maths, "index.ts")))
-			throw new Error(
-				`studio.json lists "${slug}", but there is no ${slug}/maths/index.ts.`
-			);
-		return folder;
-	});
+/** A game the manifest lists, from its folder. Throws if the folder is not there. */
+function gameAt(root: string, slug: string): GameFolder {
+	const folder = folderOf(root, slug);
+	if (!existsSync(join(folder.maths, "index.ts")))
+		throw new Error(
+			`studio.json lists "${slug}", but there is no ${slug}/maths/index.ts.`
+		);
+
+	return folder;
 }
 
-/** The games asked for by slug, or all of them; throws naming any that are not there. */
+/** Every game the studio's manifest lists, in its order. Throws naming one whose folder is not there. */
+export function findGames(root: string): GameFolder[] {
+	return readManifest(root).games.map((slug) => gameAt(root, slug));
+}
+
+/**
+ * The games asked for by slug, or all of them; throws naming any that are not there. Only
+ * the games asked for are looked at: the others the manifest lists need not be here, as
+ * they are not where one game of a repository of many was taken by itself.
+ */
 export function pickGames(root: string, slugs: string[]): GameFolder[] {
-	const all = findGames(root);
-	if (slugs.length === 0) return all;
+	if (slugs.length === 0) return findGames(root);
+
+	const listed = readManifest(root).games;
+
 	return slugs.map((slug) => {
-		const folder = all.find((game) => game.slug === slug);
-		if (!folder)
+		if (!listed.includes(slug))
 			throw new Error(
-				`studio.json lists no game "${slug}". It lists: ${all.map((game) => game.slug).join(", ")}.`
+				`studio.json lists no game "${slug}". It lists: ${listed.join(", ")}.`
 			);
-		return folder;
+
+		return gameAt(root, slug);
 	});
 }
 
