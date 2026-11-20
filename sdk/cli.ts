@@ -60,6 +60,8 @@ Usage:
 Options:
   --root <folder>    the studio's folder, with its studio.json (default: here)
   --workers <number> books: how many workers to play on (default: one for each core)
+  --trial            pack: pack a client built on packages from their clones too, for
+                     taking a game in on trial. A release is never packed with it
   --own-names        check: allow the SDK under #sdk/... in maths. For the SDK's own test
                      game only: a release is never checked with it
   --build            check: build each client again first, and hold what the source
@@ -337,7 +339,12 @@ async function makeAllBooks(
  * files a release sends with its tag. Fails if any game's books are missing or do not
  * pass the check.
  */
-async function packAllBooks(root: string, slugs: string[], out: string): Promise<number> {
+async function packAllBooks(
+	root: string,
+	slugs: string[],
+	out: string,
+	trial = false
+): Promise<number> {
 	const { packBooks } = await import("./book-pack.ts");
 	let failed = false;
 
@@ -345,7 +352,7 @@ async function packAllBooks(root: string, slugs: string[], out: string): Promise
 		try {
 			const files = [
 				...(await packBooks(folder.dir, out)),
-				packClient(folder.dir, folder.slug, out)
+				packClient(folder.dir, folder.slug, out, { trial })
 			];
 
 			console.log(`${folder.slug}: ${files.length} files.`);
@@ -467,7 +474,8 @@ async function main(argv: string[]): Promise<number> {
 				slugs,
 				resolve(
 					typeof options.out === "string" ? options.out : join(root, "release")
-				)
+				),
+				"trial" in options
 			);
 		case "books": {
 			const workers =

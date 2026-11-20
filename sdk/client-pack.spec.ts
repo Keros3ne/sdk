@@ -22,6 +22,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { BOOK_VERSION } from "./book.ts";
 import { PROTOCOL } from "./protocol.ts";
 import {
+	builtOnClones,
 	checkBuiltClient,
 	hasItsClient,
 	packClient,
@@ -61,7 +62,7 @@ describe("a built client", () => {
 		const folder = game("recorded");
 		expect(checkBuiltClient(folder)[0]).toMatch(/no client\/client\.json/);
 
-		const record = writeClientRecord(folder);
+		const record = writeClientRecord(folder, []);
 		expect(Object.keys(record.files)).toEqual([
 			"_app/immutable/chunks/abc.js",
 			"card.svg",
@@ -90,7 +91,7 @@ describe("a built client", () => {
 
 	it("travels as one file of a release, and is unpacked as it was built", async () => {
 		const studio = game("sent");
-		writeClientRecord(studio);
+		writeClientRecord(studio, []);
 		const release = join(scratch, "release");
 		expect(packClient(studio, "sent", release)).toBe("sent.client.gz");
 
@@ -110,7 +111,7 @@ describe("a built client", () => {
 
 	it("is refused, and nothing put in place, where what a release sends is not what is on record", async () => {
 		const studio = game("true");
-		writeClientRecord(studio);
+		writeClientRecord(studio, []);
 		const site = join(scratch, "wary");
 		mkdirSync(join(site, "client"), { recursive: true });
 		writeFileSync(
@@ -155,7 +156,7 @@ describe("a built client", () => {
 
 	it("is taken by a site that speaks its protocol and reads its books, whatever SDK built it", () => {
 		const folder = game("understood");
-		const record = writeClientRecord(folder);
+		const record = writeClientRecord(folder, []);
 		expect(record.protocol).toBe(PROTOCOL);
 		mkdirSync(join(folder, "books"), { recursive: true });
 		const books = (version: number) =>
@@ -197,5 +198,28 @@ describe("a built client", () => {
 				)
 			)
 		]);
+	});
+
+	it("is never packed for a release when it was built on packages taken from their clones", () => {
+		const folder = game("on-clones");
+		const record = writeClientRecord(folder, []);
+		const out = join(scratch, "on-clones-out");
+
+		// Built on every package at its tag, the record says nothing of it, and it packs.
+		expect(record.conditions).toBeUndefined();
+		expect(builtOnClones(folder)).toBeNull();
+		expect(() => packClient(folder, "on-clones", out)).not.toThrow();
+
+		// As `bun run local client` records it: its files are of no tag's making.
+		writeFileSync(
+			join(folder, "client", "client.json"),
+			JSON.stringify({ ...record, conditions: ["local"] })
+		);
+		expect(builtOnClones(folder)).toMatch(/taken from their clones \(local\)/);
+		expect(() => packClient(folder, "on-clones", out)).toThrow(
+			/built on packages taken from their clones/
+		);
+		// For a trial, and only when asked.
+		expect(() => packClient(folder, "on-clones", out, { trial: true })).not.toThrow();
 	});
 });

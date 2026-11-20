@@ -27,6 +27,7 @@ import { fileURLToPath } from "node:url";
 import { gunzipSync, gzipSync } from "node:zlib";
 import * as v from "valibot";
 import { BOOK_VERSION } from "./book.ts";
+import { LOCAL_CONDITIONS } from "./local-packages.ts";
 import { PROTOCOL } from "./protocol.ts";
 
 /** A place in a built client: letters, figures and plain marks, folders apart by `/`, never up or out. */
@@ -47,6 +48,12 @@ const recordSchema = v.strictObject({
 	 */
 	protocol: v.optional(v.string(), PROTOCOL_BEFORE_RECORDED),
 	/** Every file of the built client, by its place in it, and its SHA-256 digest. */
+	/**
+	 * The conditions the client was built under, if any: packages taken from their clones,
+	 * not at their tags (./local-packages.ts). Such a client is for trying a change, and is
+	 * never a release: no tag of anything made its files.
+	 */
+	conditions: v.optional(v.array(v.string())),
 	files: v.record(
 		v.pipe(v.string(), v.regex(PLACE)),
 		v.pipe(v.string(), v.regex(/^[0-9a-f]{64}$/))
@@ -93,7 +100,11 @@ function filesIn(folder: string): string[] {
 }
 
 /** The record of the client built into a game's `client/dist`, as it is now. */
-export function recordClient(gameFolder: string): ClientRecord {
+export function recordClient(
+	gameFolder: string,
+	/** The conditions it was built under: those of this run, unless said. */
+	conditions: readonly string[] = LOCAL_CONDITIONS
+): ClientRecord {
 	const dist = join(gameFolder, "client", "dist");
 	if (!existsSync(join(dist, "index.html"))) {
 		throw new Error(`${dist} has no index.html: is the client built?`);
@@ -102,6 +113,7 @@ export function recordClient(gameFolder: string): ClientRecord {
 	return {
 		sdk: version,
 		protocol: PROTOCOL,
+		...(conditions.length > 0 ? { conditions: [...conditions] } : {}),
 		files: Object.fromEntries(
 			filesIn(dist).map((file) => [file, digest(readFileSync(join(dist, file)))])
 		)
@@ -109,8 +121,12 @@ export function recordClient(gameFolder: string): ClientRecord {
 }
 
 /** Writes the record of a game's built client beside its source, to be committed. */
-export function writeClientRecord(gameFolder: string): ClientRecord {
-	const record = recordClient(gameFolder);
+export function writeClientRecord(
+	gameFolder: string,
+	/** The conditions it was built under: those of this run, unless said. */
+	conditions: readonly string[] = LOCAL_CONDITIONS
+): ClientRecord {
+	const record = recordClient(gameFolder, conditions);
 	writeFileSync(
 		clientRecordFile(gameFolder),
 		`${JSON.stringify(record, null, "\t")}\n`
@@ -129,6 +145,25 @@ export function readClientRecord(gameFolder: string): ClientRecord {
 	}
 
 	return v.parse(recordSchema, JSON.parse(readFileSync(file, "utf8")));
+}
+
+/**
+ * Why a game's built client is not one to release, if it was built on packages taken from
+ * their clones (`bun run local client`): in words, or `null` for a client built on every
+ * package at its tag.
+ */
+export function builtOnClones(gameFolder: string): string | null {
+	let conditions: string[] | undefined;
+	try {
+		({ conditions } = readClientRecord(gameFolder));
+	} catch {
+		// No record, or not one: said by the check of the built client.
+		return null;
+	}
+
+	return conditions?.length
+		? `its client was built on packages taken from their clones (${conditions.join(", ")}), which no tag made: build it again with keros3ne-studio client, without them, before it is released`
+		: null;
 }
 
 /**
@@ -208,9 +243,20 @@ export function unsupported(gameFolder: string): string[] {
  * Packs a game's built client, held to its record first, into `into`: one file to send
  * with a release. Returns its name. Throws if the client is not the one recorded.
  */
-export function packClient(gameFolder: string, slug: string, into: string): string {
+export function packClient(
+	gameFolder: string,
+	slug: string,
+	into: string,
+	options: {
+		/** Pack a client built on clones too: for taking a game in on trial, never for a release. */
+		trial?: boolean;
+	} = {}
+): string {
 	const problems = checkBuiltClient(gameFolder);
 	if (problems.length > 0) throw new Error(`${slug}: ${problems.join("; ")}`);
+
+	const clones = builtOnClones(gameFolder);
+	if (clones && !options.trial) throw new Error(`${slug}: ${clones}`);
 
 	const dist = join(gameFolder, "client", "dist");
 	const files = Object.fromEntries(
