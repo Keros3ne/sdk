@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /// <reference types="bun" />
 /**
- * keros3ne-studio: a studio's tools for building games for KEROS3NE.
+ * keros3ne-studio: a studio's tools for building games for Keros3ne.
  *
  *   keros3ne-studio books [slug...]   make a game's books from its maths, and say what they hold
  *   keros3ne-studio client [slug...]  build a game's client, and put what was built on record
@@ -34,7 +34,7 @@ import {
 } from "./studio-folder.ts";
 import { scanClient, scanClientSource, scanMaths } from "./testing.ts";
 
-const HELP = `keros3ne-studio: build games for KEROS3NE
+const HELP = `keros3ne-studio: build games for Keros3ne
 
 Run it in the studio's folder: the one with studio.json, which lists the studio's games,
 each in a folder of its own beside it.

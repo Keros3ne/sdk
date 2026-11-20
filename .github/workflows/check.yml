@@ -1,7 +1,10 @@
 # Everything the site will run on a release, run on every push first: the types, each
 # game's books made and checked, the site's checks, and the tests.
 name: Check
-on: [push, pull_request]
+# Not on main: work is done on a branch, and merged only once this has passed there.
+on:
+    push:
+        branches-ignore: [main]
 jobs:
     check:
         runs-on: ubuntu-latest

@@ -705,7 +705,7 @@ bun run stories             # your stories, and the SDK's own, in Storybook
    (`game-title.client.gz`). Send them with the tag as the files of its release:
    `gh release create v0.1.0 release/*`. Neither books nor a built client are committed,
    so this is how they travel; the records you did commit are what they are held to.
-5. Send KEROS3NE the repository and the tag. (The first time, KEROS3NE registers your
+5. Send Keros3ne the repository and the tag. (The first time, Keros3ne registers your
    studio and gives it its id; after that a release of any of your repositories is
    taken in under it.)
 
