@@ -48,7 +48,7 @@ game-title/
 
 ```sh
 bun run books        # make each game's books from its maths, and say what they hold
-bun run dev          # play Game Title at http://localhost:4190/ against a stand-in for the site
+bun run dev          # play Game Title at http://localhost:4280/ against a stand-in for the site
 bun run stories      # the studio's stories, and the SDK's own, in Storybook
 bun run check        # the site's checks on each game's books, guide, maths and client
 bun run client       # build each game's client, and put what was built on record

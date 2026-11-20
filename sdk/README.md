@@ -660,7 +660,7 @@ bun run stories             # your stories, and the SDK's own, in Storybook
 - **`client`** builds each game's client into `client/dist` and writes the record of what
   it built, `client/client.json`, to commit.
 - **`dev`** builds the client whenever it changes and serves it at
-  `http://localhost:4190/`, sandboxed under the site's own policy, in a page that stands in
+  `http://localhost:4280/`, sandboxed under the site's own policy, in a page that stands in
   for the site. It plays the game from its books by the site's own rules, with a pretend
   balance and a pair of seeds: the same stake limits, refusals and rounding of payouts,
   counters kept for each size of bet. It holds the balance back until the game calls
