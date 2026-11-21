@@ -99,6 +99,14 @@ test("dev plays a game against the stand-in, logs what the site would ignore, an
 		await expect(page.locator(".figure")).toHaveText("10.00");
 		await expect(log).toContainText('"type":"init"');
 
+		// The game is asked to count its frames here, and the page says how smoothly it is
+		// drawn; the counts are kept out of the messages shown, which they would bury.
+		await expect(log).toContainText('"measure":true');
+		await expect(page.locator(".frames")).toContainText(/\d+ frames a second/, {
+			timeout: 10_000
+		});
+		await expect(log).not.toContainText('"type":"frames"');
+
 		// A message the site would ignore is logged as ignored, with why.
 		await page
 			.frames()

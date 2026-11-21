@@ -48,6 +48,13 @@ those under its own names (`/rng`, `/book-play`, `/bets`, ...), so a studio impo
 everything it writes a game with from one package, and `keros3ne-studio dev` plays a game
 on the engine's stand-in: the same pipeline, over a store in memory.
 
+The page `dev` plays a game in says how smoothly it is drawn: frames a second now, the
+fewest it has fallen to, and the longest wait between two frames. The game's end of the
+conversation counts them inside its frame, for a host that asks; a game does nothing for
+it. The page a game is reviewed on asks too, and a game that does not run smoothly there
+is not accepted, so watch the figure through the game's heaviest moments (a bonus, a big
+win, turbo) before it is submitted.
+
 To change the two together before either is released, clone the engine beside this
 repository and link it: `mkdir -p local && ln -s ../../engine local/engine`. Then
 `bun run local <script>` runs any script here on that clone (`bun run local test`,

@@ -15,6 +15,7 @@ Created: 2026-11-19
 -->
 <script lang="ts">
 	import GameFrame from "#engine/GameFrame.svelte";
+	import { addFrames, type FrameSummary } from "#engine/frame-rate";
 	import type { GameSite, SiteReply } from "#engine/bridge.svelte";
 	import type { HistoryBet, RoundMessage } from "#engine/protocol";
 	import type { Shape } from "#engine/shapes";
@@ -75,6 +76,8 @@ Created: 2026-11-19
 	/** The game is made again when this changes: a reload. */
 	let loaded = $state(0);
 	let drawn = $state<{ view: Shape; width: number; height: number } | null>(null);
+	/** How smoothly the game is drawn, as it reports it: counted since it was last loaded. */
+	let frames = $state.raw<FrameSummary | null>(null);
 	let problem = $state<string | null>(null);
 	let newBalance = $state("");
 	let balanceProblem = $state("");
@@ -139,6 +142,7 @@ Created: 2026-11-19
 		held = false;
 		shown = stands.balance;
 		loaded += 1;
+		frames = null;
 	}
 
 	async function setBalance(event: SubmitEvent) {
@@ -229,6 +233,7 @@ Created: 2026-11-19
 				onchange={() => {
 					remember.set("reduced-motion", String(reducedMotion));
 					loaded += 1;
+					frames = null;
 				}}
 			/>
 			Less motion
@@ -237,6 +242,12 @@ Created: 2026-11-19
 		<span class="size">
 			{#if drawn}
 				{drawn.view} view, {Math.round(drawn.width)} by {Math.round(drawn.height)}
+			{/if}
+		</span>
+		<span class="size frames">
+			{#if frames}
+				{frames.now.toFixed(0)} frames a second, {frames.lowest.toFixed(0)} at the fewest,
+				the longest wait {frames.longest} ms
 			{/if}
 		</span>
 	</div>
@@ -264,6 +275,7 @@ Created: 2026-11-19
 								JSON.stringify(message)
 							)}
 				onroom={(now) => (drawn = now)}
+				onframes={(report) => (frames = addFrames(frames, report))}
 				bind:problem
 			/>
 		{/key}
